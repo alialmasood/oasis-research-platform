@@ -130,7 +130,13 @@ export function Header({ userName, avatarUrl }: HeaderProps) {
               <Button variant="ghost" className="flex items-center gap-2 h-9 px-2">
                 <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#2563EB]/10 overflow-hidden">
                   {avatarUrl ? (
-                    <Image src={avatarUrl} alt={userName} fill className="object-cover" />
+                    <Image
+                      src={avatarUrl}
+                      alt={userName}
+                      fill
+                      className="object-cover"
+                      unoptimized={avatarUrl.startsWith("/api/avatar/") || avatarUrl.startsWith("/avatars/")}
+                    />
                   ) : (
                     <User className="h-4 w-4 text-[#2563EB]" />
                   )}

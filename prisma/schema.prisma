@@ -759,12 +759,14 @@ model Form21Submission {
 // ============================================
 
 model ResearcherProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique @map("user_id")
-  academicTitle String? @map("academic_title")
-  phone       String?
-  bio         String?  @db.Text
-  avatarUrl   String?  @map("avatar_url")
+  id             String   @id @default(cuid())
+  userId         String   @unique @map("user_id")
+  academicTitle  String?  @map("academic_title")
+  phone          String?
+  bio            String?  @db.Text
+  avatarUrl      String?  @map("avatar_url")   // للتوافق مع الطريقة القديمة (ملفات)
+  avatarData     Bytes?   @map("avatar_data")  // بيانات الصورة المخزنة في DB
+  avatarMimeType String?  @map("avatar_mime_type")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

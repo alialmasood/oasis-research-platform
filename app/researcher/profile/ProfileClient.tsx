@@ -246,7 +246,7 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                           width={56}
                           height={56}
                           className="object-cover"
-                          unoptimized={avatarUrl.startsWith("/avatars/")}
+                          unoptimized={avatarUrl.startsWith("/avatars/") || avatarUrl.startsWith("/api/avatar/")}
                         />
                       </div>
                     ) : (

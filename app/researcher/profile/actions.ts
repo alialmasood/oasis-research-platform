@@ -2,8 +2,6 @@
 
 import { getSessionUser } from "@/lib/middleware";
 import { prisma } from "@/lib/db";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
@@ -65,15 +63,21 @@ export async function getProfile(): Promise<ProfileData | null> {
 
   let profile = await prisma.researcherProfile.findUnique({
     where: { userId: user.id },
-    select: { avatarUrl: true },
+    select: { avatarUrl: true, avatarData: true },
   });
 
   if (!profile) {
     await prisma.researcherProfile.create({
       data: { userId: user.id },
     });
-    profile = { avatarUrl: null };
+    profile = { avatarUrl: null, avatarData: null };
   }
+
+  // إرجاع URL الصورة: من DB عبر API أو من الملفات (للتوافق مع الطريقة القديمة)
+  const avatarUrl: string | null =
+    profile.avatarData != null
+      ? `/api/avatar/${user.id}`
+      : profile.avatarUrl;
 
   const profileCv = await prisma.profileCV.findUnique({
     where: { userId: user.id },
@@ -102,7 +106,7 @@ export async function getProfile(): Promise<ProfileData | null> {
       employeeNumber: user.employeeNumber,
       appointmentYear: user.appointmentYear,
     },
-    profile: { avatarUrl: profile.avatarUrl },
+    profile: { avatarUrl },
     cvPersonal,
   };
 }
@@ -118,24 +122,25 @@ export async function uploadAvatar(formData: FormData): Promise<{ error?: string
     return { error: "نوع الملف غير مدعوم. استخدم JPG أو PNG أو WebP" };
   if (file.size > MAX_SIZE) return { error: "حجم الصورة يجب أن لا يتجاوز 2 ميجابايت" };
 
-  const ext = file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : "webp";
-  const filename = `${session.id}-${Date.now()}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "avatars");
-
-  await mkdir(dir, { recursive: true });
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  await writeFile(path.join(dir, filename), buffer);
-
-  const url = `/avatars/${filename}`;
 
   await prisma.researcherProfile.upsert({
     where: { userId: session.id },
-    create: { userId: session.id, avatarUrl: url },
-    update: { avatarUrl: url },
+    create: {
+      userId: session.id,
+      avatarData: buffer,
+      avatarMimeType: file.type,
+      avatarUrl: null,
+    },
+    update: {
+      avatarData: buffer,
+      avatarMimeType: file.type,
+      avatarUrl: null,
+    },
   });
 
-  return { url };
+  return { url: `/api/avatar/${session.id}` };
 }
 
 export async function removeAvatar(): Promise<{ error?: string }> {
@@ -144,7 +149,7 @@ export async function removeAvatar(): Promise<{ error?: string }> {
 
   await prisma.researcherProfile.updateMany({
     where: { userId: session.id },
-    data: { avatarUrl: null },
+    data: { avatarUrl: null, avatarData: null, avatarMimeType: null },
   });
 
   return {};

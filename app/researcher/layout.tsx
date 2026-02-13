@@ -22,12 +22,15 @@ export default async function ResearcherLayout({
   const activityCounts = await getResearcherActivityCounts(user.id);
   const profile = await prisma.researcherProfile.findUnique({
     where: { userId: user.id },
-    select: { avatarUrl: true },
+    select: { avatarUrl: true, avatarData: true },
   });
+
+  const avatarUrl =
+    profile?.avatarData != null ? `/api/avatar/${user.id}` : profile?.avatarUrl ?? null;
 
   return (
     <ResearcherLayoutClient
-      user={{ ...user, avatarUrl: profile?.avatarUrl ?? null }}
+      user={{ ...user, avatarUrl }}
       activityCounts={activityCounts}
     >
       {children}
