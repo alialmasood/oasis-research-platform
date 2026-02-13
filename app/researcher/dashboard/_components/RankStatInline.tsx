@@ -98,7 +98,9 @@ export function RankStatInline({
     <span className="inline-flex items-center gap-1 shrink-0">
       <span className={`${config.iconColor} flex-shrink-0 [&>svg]:h-3 [&>svg]:w-3 md:[&>svg]:h-3.5 md:[&>svg]:w-3.5`}>{icon}</span>
       <span className="text-[10px] md:text-xs text-slate-600 leading-tight whitespace-nowrap">{label}</span>
-      <span className={`${config.badgeText} text-xs md:text-sm font-semibold transition-all duration-150`}>#{displayValue}</span>
+      <span className={`${config.badgeText} text-xs md:text-sm font-semibold transition-all duration-150`}>
+        {displayValue > 0 ? `#${displayValue}` : "—"}
+      </span>
     </span>
   );
 }

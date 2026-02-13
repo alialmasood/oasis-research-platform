@@ -9,7 +9,13 @@ import { prisma } from "@/lib/db";
 const profileCvSchema = z.object({
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   nationality: z.string().optional(),
-  dateOfBirth: z.string().optional().transform((val) => (val ? new Date(val) : null)),
+  dateOfBirth: z
+    .string()
+    .optional()
+    .refine((val) => !val || new Date(val) <= new Date(), {
+      message: "تاريخ الميلاد لا يجب أن يكون في المستقبل",
+    })
+    .transform((val) => (val ? new Date(val) : null)),
   province: z.string().optional(),
   district: z.string().optional(),
   area: z.string().optional(),
@@ -26,13 +32,22 @@ const skillSchema = z.object({
   level: z.enum(["LEVEL_1", "LEVEL_2", "LEVEL_3", "LEVEL_4", "LEVEL_5"]),
 });
 
-const experienceSchema = z.object({
-  title: z.string().min(1, "العنوان الوظيفي مطلوب"),
-  organization: z.string().min(1, "الجهة مطلوبة"),
-  startDate: z.string().transform((val) => new Date(val)),
-  endDate: z.string().optional().transform((val) => (val ? new Date(val) : null)),
-  description: z.string().optional(),
-});
+const experienceSchema = z
+  .object({
+    title: z.string().min(1, "العنوان الوظيفي مطلوب"),
+    organization: z.string().min(1, "الجهة مطلوبة"),
+    startDate: z.string().transform((val) => new Date(val)),
+    endDate: z.string().optional().transform((val) => (val ? new Date(val) : null)),
+    description: z.string().optional(),
+  })
+  .refine(
+    (data) => data.startDate <= new Date(),
+    { message: "تاريخ البدء لا يجب أن يكون في المستقبل", path: ["startDate"] }
+  )
+  .refine(
+    (data) => !data.endDate || data.endDate <= new Date(),
+    { message: "تاريخ الانتهاء لا يجب أن يكون في المستقبل", path: ["endDate"] }
+  );
 
 // Create or Update Profile CV
 export async function upsertProfileCv(formData: FormData) {

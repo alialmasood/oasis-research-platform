@@ -41,7 +41,7 @@ export const createResearchSchema = fullResearchFieldsSchema.superRefine((data, 
     if (data.publishStatus != null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "publishStatus مسموح فقط عندما تكون الحالة مكتملة",
+        message: "publishStatus مسموح فقط عندما تكون الحالة منجز",
         path: ["publishStatus"],
       });
     }

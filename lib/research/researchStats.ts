@@ -122,3 +122,17 @@ export async function getResearchStats(researcherId: string): Promise<ResearchSt
     availableCategories,
   };
 }
+
+/** أقوى تصنيف فهرسة للباحث (SCOPUS Q1 > Q2 > Q3 > Q4 > ISI > عالمي > محلي) */
+export function getTopResearchIndexing(stats: ResearchStats): string {
+  const { scopusQuartiles, availableCategories } = stats;
+  if (scopusQuartiles.Q1 > 0) return "SCOPUS Q1";
+  if (scopusQuartiles.Q2 > 0) return "SCOPUS Q2";
+  if (scopusQuartiles.Q3 > 0) return "SCOPUS Q3";
+  if (scopusQuartiles.Q4 > 0) return "SCOPUS Q4";
+  if (availableCategories.includes("ISI")) return "ISI (Web of Science)";
+  if (availableCategories.includes("INTERNATIONAL")) return "عالمي";
+  if (availableCategories.includes("LOCAL")) return "محلي";
+  if (availableCategories.includes("SCOPUS")) return "SCOPUS";
+  return "—";
+}

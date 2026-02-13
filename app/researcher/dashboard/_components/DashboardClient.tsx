@@ -49,6 +49,14 @@ type DashboardClientProps = {
   initialEvaluation: { score: number; suggestions: string[] };
   initialWeeklyPlan: WeeklyTask[];
   initialPointsScore: number;
+  initialRanks: { universityRank: number; collegeRank: number; departmentRank: number };
+  initialKpiData: {
+    currentScore: number;
+    previousScore: number;
+    topIndexing: string;
+    topActivity: string;
+    lastUpdate: string;
+  };
 };
 
 export function DashboardClient({
@@ -66,6 +74,8 @@ export function DashboardClient({
   initialEvaluation,
   initialWeeklyPlan,
   initialPointsScore,
+  initialRanks,
+  initialKpiData,
 }: DashboardClientProps) {
   const router = useRouter();
   const [selectedYear, setSelectedYear] = useState(initialYear);
@@ -91,6 +101,8 @@ export function DashboardClient({
   const [evaluation, setEvaluation] = useState(initialEvaluation);
   const [weeklyPlan, setWeeklyPlan] = useState(initialWeeklyPlan);
   const [pointsScore, setPointsScore] = useState(initialPointsScore);
+  const [ranks, setRanks] = useState(initialRanks);
+  const [kpiData, setKpiData] = useState(initialKpiData);
   const [isMobile, setIsMobile] = useState(false);
 
   const handleExportReport = () => {
@@ -351,19 +363,19 @@ export function DashboardClient({
               <div className="flex items-center gap-2 md:gap-3 flex-shrink-0 order-last">
                 <RankStatInline
                   label="ترتيبك في الجامعة"
-                  value={12}
+                  value={ranks.universityRank}
                   icon={<Trophy className="h-3 w-3 md:h-3.5 md:w-3.5" />}
                   tone="amber"
                 />
                 <RankStatInline
                   label="ترتيبك في الكلية"
-                  value={5}
+                  value={ranks.collegeRank}
                   icon={<Award className="h-3 w-3 md:h-3.5 md:w-3.5" />}
                   tone="blue"
                 />
                 <RankStatInline
                   label="ترتيبك في القسم"
-                  value={2}
+                  value={ranks.departmentRank}
                   icon={<Medal className="h-3 w-3 md:h-3.5 md:w-3.5" />}
                   tone="purple"
                 />
@@ -377,11 +389,11 @@ export function DashboardClient({
         <CardContent className="space-y-3 md:space-y-4 px-0 pb-0 pt-0">
           {/* KPI Row */}
           <KpiRow
-            currentScore={72.5}
-            previousScore={70.0}
-            topIndexing="Scopus"
-            topActivity="المؤتمرات"
-            lastUpdate="منذ يومين"
+            currentScore={kpiData.currentScore}
+            previousScore={kpiData.previousScore}
+            topIndexing={kpiData.topIndexing}
+            topActivity={kpiData.topActivity}
+            lastUpdate={kpiData.lastUpdate}
           />
           {/* Research KPI Strip */}
           <div>

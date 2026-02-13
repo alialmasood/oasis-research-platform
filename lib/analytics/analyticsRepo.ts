@@ -188,7 +188,7 @@ async function buildConferences(userId: string, filters: AnalyticsFilters): Prom
     const year = conf.date.getFullYear();
     yearlyCounts.set(year, (yearlyCounts.get(year) ?? 0) + 1);
 
-    const scopeLabel = conf.scope === "GLOBAL" ? "دولي" : "محلي";
+    const scopeLabel = conf.scope === "GLOBAL" ? "عالمي" : "محلي";
     scopeCounts.set(scopeLabel, (scopeCounts.get(scopeLabel) ?? 0) + 1);
 
     const participationLabel = conf.isCommitteeMember

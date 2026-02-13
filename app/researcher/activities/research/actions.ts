@@ -26,7 +26,7 @@ export async function createResearch(formData: unknown): Promise<{ error?: strin
 
   const data = parsed.data as CreateResearchInput;
   if (data.status !== "COMPLETED" && data.publishStatus != null) {
-    return { error: "publishStatus مسموح فقط عندما تكون الحالة مكتملة" };
+    return { error: "publishStatus مسموح فقط عندما تكون الحالة منجز" };
   }
   if (data.status === "COMPLETED" && data.publishStatus === "PUBLISHED") {
     if (!data.publishType) return { error: "نوع النشر مطلوب عند النشر" };
@@ -68,7 +68,7 @@ export async function updateResearch(formData: unknown): Promise<{ error?: strin
   const categories = data.categories ?? (await repo.getResearchById(id, session.id))?.categories ?? [];
 
   if (status !== "COMPLETED" && publishStatus != null) {
-    return { error: "publishStatus مسموح فقط عندما تكون الحالة مكتملة" };
+    return { error: "publishStatus مسموح فقط عندما تكون الحالة منجز" };
   }
   if (categories.includes("SCOPUS") && data.scopusQuartile == null) {
     const current = await repo.getResearchById(id, session.id);

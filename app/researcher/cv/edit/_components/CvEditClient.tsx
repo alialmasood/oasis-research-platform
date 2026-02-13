@@ -704,6 +704,7 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                         id="dateOfBirth"
                         name="dateOfBirth"
                         type="date"
+                        max={new Date().toISOString().split("T")[0]}
                         value={formValues.dateOfBirth}
                         onChange={(e) => setFormValues((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
                         className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
@@ -979,6 +980,7 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                       </Label>
                       <Input
                         type="date"
+                        max={new Date().toISOString().split("T")[0]}
                         value={experienceStartDate}
                         onChange={(e) => setExperienceStartDate(e.target.value)}
                         className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
@@ -991,6 +993,7 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                       </Label>
                       <Input
                         type="date"
+                        max={new Date().toISOString().split("T")[0]}
                         value={experienceEndDate}
                         onChange={(e) => setExperienceEndDate(e.target.value)}
                         className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"

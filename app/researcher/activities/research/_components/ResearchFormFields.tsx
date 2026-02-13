@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Research } from "@prisma/client";
+import { RESEARCH_CATEGORY_LABELS, ISI_DESCRIPTION, RESEARCH_STATUS_LABELS } from "@/lib/research/categoryLabels";
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: currentYear - 1940 + 1 }, (_, i) => 1940 + i).reverse();
@@ -62,10 +63,10 @@ const scopusQuartileOptions = [
 ];
 
 const categoryOptions = [
-  { value: "SCOPUS", label: "SCOPUS" },
-  { value: "ISI", label: "ISI" },
-  { value: "LOCAL", label: "محلي" },
-  { value: "INTERNATIONAL", label: "دولي" },
+  { value: "SCOPUS", label: RESEARCH_CATEGORY_LABELS.SCOPUS },
+  { value: "ISI", label: RESEARCH_CATEGORY_LABELS.ISI },
+  { value: "LOCAL", label: RESEARCH_CATEGORY_LABELS.LOCAL },
+  { value: "INTERNATIONAL", label: RESEARCH_CATEGORY_LABELS.INTERNATIONAL },
 ];
 
 interface ResearchFormFieldsProps {
@@ -156,8 +157,8 @@ export function ResearchFormFields({
               <SelectValue placeholder="اختر الحالة" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="IN_PROGRESS">قيد التنفيذ</SelectItem>
-              <SelectItem value="COMPLETED">مكتمل</SelectItem>
+              <SelectItem value="IN_PROGRESS">{RESEARCH_STATUS_LABELS.IN_PROGRESS}</SelectItem>
+              <SelectItem value="COMPLETED">{RESEARCH_STATUS_LABELS.COMPLETED}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -316,6 +317,7 @@ export function ResearchFormFields({
         <>
           <div className="space-y-2">
             <Label>التصنيفات *</Label>
+            <p className="text-xs text-slate-500">{ISI_DESCRIPTION}</p>
             <div className="flex flex-wrap gap-2">
               {categoryOptions.map((cat) => (
                 <label

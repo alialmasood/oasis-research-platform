@@ -178,6 +178,7 @@ export function CvDialog({
                         id="dateOfBirth"
                         name="dateOfBirth"
                         type="date"
+                        max={new Date().toISOString().split("T")[0]}
                         defaultValue={formatDateForInput(profileCv?.dateOfBirth)}
                         className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                         dir="ltr"

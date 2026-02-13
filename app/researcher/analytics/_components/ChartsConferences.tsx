@@ -85,7 +85,7 @@ export function ChartsConferences({ data }: ChartsConferencesProps) {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="text-sm text-slate-500">لا يتوفر تصنيف محلي/دولي.</div>
+                <div className="text-sm text-slate-500">لا يتوفر تصنيف محلي/عالمي.</div>
               )}
             </div>
             <div className="h-[140px]">

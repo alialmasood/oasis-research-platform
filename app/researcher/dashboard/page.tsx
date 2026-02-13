@@ -11,6 +11,9 @@ import { getGoals } from "@/lib/researcherGoalsRepo";
 import { computeOverallScore } from "@/app/researcher/evaluation/types";
 import { buildEvaluationSuggestions } from "@/lib/evaluationSuggestions";
 import { getWeeklyPlan } from "@/lib/weeklyPlan";
+import { getComparisonData } from "@/lib/comparisonRepo";
+import { getResearchStats, getTopResearchIndexing } from "@/lib/research/researchStats";
+import { getLastActivityUpdate, formatRelativeTime } from "@/lib/lastActivityUpdate";
 import { DashboardClient } from "./_components/DashboardClient";
 
 export default async function ResearcherDashboardPage() {
@@ -63,6 +66,20 @@ export default async function ResearcherDashboardPage() {
   });
   const weeklyPlan = await getWeeklyPlan(user.id, initialYear ? Number(initialYear) : undefined);
 
+  const comparisonData = await getComparisonData(user.id);
+  const ranks = comparisonData.ranks;
+  const topActivityLabel = comparisonData.topActivityLabel;
+
+  const baseYear = initialYear ? Number(initialYear) : new Date().getFullYear();
+  const prevYearAggregates = await getAggregatedCounts(user.id, { year: baseYear - 1 });
+  const previousScore = computeOverallScore(prevYearAggregates);
+
+  const researchStats = await getResearchStats(user.id);
+  const topIndexing = getTopResearchIndexing(researchStats);
+
+  const lastUpdateDate = await getLastActivityUpdate(user.id);
+  const lastUpdateLabel = lastUpdateDate ? formatRelativeTime(lastUpdateDate) : "—";
+
   return (
     <DashboardClient
       initialYear={initialYear}
@@ -79,6 +96,14 @@ export default async function ResearcherDashboardPage() {
       initialEvaluation={{ score: evaluationScore, suggestions: evaluationSuggestions }}
       initialPointsScore={evaluationScore}
       initialWeeklyPlan={weeklyPlan}
+      initialRanks={ranks}
+      initialKpiData={{
+        currentScore: evaluationScore,
+        previousScore,
+        topIndexing,
+        topActivity: topActivityLabel ?? "—",
+        lastUpdate: lastUpdateLabel,
+      }}
     />
   );
 }

@@ -45,8 +45,8 @@ export function ResearchChartsSection({ stats }: { stats: ResearchStats }) {
 
   // byStatus: { completed, inProgress }
   const completedVsInProgressData = [
-    { name: "مكتمل", value: toInt(byStatus.completed), color: "#10b981" },
-    { name: "قيد التنفيذ", value: toInt(byStatus.inProgress), color: "#f59e0b" },
+    { name: "منجز", value: toInt(byStatus.completed), color: "#10b981" },
+    { name: "غير منجز", value: toInt(byStatus.inProgress), color: "#f59e0b" },
   ].filter((d) => d.value > 0);
   const hasCompletedVsInProgress = completedVsInProgressData.length > 0;
 
@@ -114,7 +114,7 @@ export function ResearchChartsSection({ stats }: { stats: ResearchStats }) {
         {/* completed vs inProgress (pie) */}
         <Card className="border-slate-100 bg-white shadow-lg">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">مكتمل مقابل قيد التنفيذ</CardTitle>
+            <CardTitle className="text-base font-semibold text-gray-900">منجز مقابل غير منجز</CardTitle>
           </CardHeader>
           <CardContent>
             <div style={{ height: "220px" }}>

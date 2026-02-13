@@ -15,6 +15,7 @@ import { Toast } from "@/components/ui/toast";
 import { createResearch, updateResearch, deleteResearch, listResearch, listResearchAll, getResearchStatsAction } from "../actions";
 import type { Research } from "@prisma/client";
 import { notifyDashboardUpdate } from "@/lib/dashboardSync";
+import { RESEARCH_CATEGORY_LABELS, RESEARCH_STATUS_LABELS } from "@/lib/research/categoryLabels";
 import * as XLSX from "xlsx";
 
 interface ResearchClientProps {
@@ -52,10 +53,7 @@ export function ResearchClient({ initialData, initialStats }: ResearchClientProp
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  const statusLabels: Record<string, string> = {
-    IN_PROGRESS: "قيد التنفيذ",
-    COMPLETED: "مكتمل",
-  };
+  const statusLabels = RESEARCH_STATUS_LABELS;
   const publishStatusLabels: Record<string, string> = {
     DRAFT: "غير منشور",
     PUBLISHED: "منشور",
@@ -99,7 +97,7 @@ export function ResearchClient({ initialData, initialStats }: ResearchClientProp
       "نوع النشر": r.publishType ? (publishTypeLabels[r.publishType] ?? r.publishType) : "—",
       الناشر: r.publisher ?? "—",
       الملكية: r.ownership ?? "—",
-      التصنيفات: (r.categories ?? []).join(" | ") || "—",
+      التصنيفات: (r.categories ?? []).map((c) => RESEARCH_CATEGORY_LABELS[c] ?? c).join(" | ") || "—",
       "تصنيف سكوبس": r.scopusQuartile ?? "—",
       DOI: r.doi ?? "—",
       "رابط البحث": r.researchUrl ?? "—",
@@ -140,7 +138,7 @@ export function ResearchClient({ initialData, initialStats }: ResearchClientProp
           <td>${r.publishType ? (publishTypeLabels[r.publishType] ?? r.publishType) : "—"}</td>
           <td>${r.publisher ?? "—"}</td>
           <td>${r.ownership ?? "—"}</td>
-          <td>${(r.categories ?? []).join(" | ") || "—"}</td>
+          <td>${(r.categories ?? []).map((c) => RESEARCH_CATEGORY_LABELS[c] ?? c).join(" | ") || "—"}</td>
           <td>${r.scopusQuartile ?? "—"}</td>
           <td>${r.doi ?? "—"}</td>
           <td>${r.researchUrl ?? "—"}</td>

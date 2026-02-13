@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Pencil, Trash2, Download, Copy, Check, MessageCircle } from "lucide-react";
 import type { Research } from "@prisma/client";
+import { RESEARCH_CATEGORY_LABELS, RESEARCH_STATUS_LABELS } from "@/lib/research/categoryLabels";
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -16,10 +17,7 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
   );
 }
 
-const statusLabels: Record<string, string> = {
-  IN_PROGRESS: "قيد التنفيذ",
-  COMPLETED: "مكتمل",
-};
+const statusLabels = RESEARCH_STATUS_LABELS;
 
 const publishStatusLabels: Record<string, string> = {
   DRAFT: "غير منشور",
@@ -45,12 +43,7 @@ const publishTypeLabels: Record<string, string> = {
   OTHER: "أخرى",
 };
 
-const categoryLabels: Record<string, string> = {
-  SCOPUS: "SCOPUS",
-  ISI: "ISI",
-  LOCAL: "محلي",
-  INTERNATIONAL: "دولي",
-};
+const categoryLabels = RESEARCH_CATEGORY_LABELS;
 
 const months: Record<number, string> = {
   1: "يناير", 2: "فبراير", 3: "مارس", 4: "أبريل", 5: "مايو", 6: "يونيو",
@@ -251,7 +244,7 @@ export function ResearchDetailsModal({
               </div>
             ) : (
               <Badge className="bg-green-50 text-green-700 border-green-200">
-                مكتمل
+                {statusLabels.COMPLETED}
               </Badge>
             )}
           </section>

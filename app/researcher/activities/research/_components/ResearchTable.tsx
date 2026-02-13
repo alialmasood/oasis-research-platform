@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Research } from "@prisma/client";
+import { RESEARCH_CATEGORY_LABELS, RESEARCH_STATUS_LABELS } from "@/lib/research/categoryLabels";
 
 interface ResearchTableProps {
   research: Research[];
@@ -57,10 +58,7 @@ interface ResearchTableProps {
   availableScopusQuartiles?: string[]; // e.g. ["Q1", "Q2"]
 }
 
-const statusLabels: Record<string, string> = {
-  IN_PROGRESS: "قيد التنفيذ",
-  COMPLETED: "مكتمل",
-};
+const statusLabels = RESEARCH_STATUS_LABELS;
 
 const publishStatusLabels: Record<string, string> = {
   DRAFT: "غير منشور",
@@ -80,12 +78,7 @@ const publishTypeLabels: Record<string, string> = {
   OTHER: "أخرى",
 };
 
-const categoryLabels: Record<string, string> = {
-  SCOPUS: "SCOPUS",
-  ISI: "ISI",
-  LOCAL: "محلي",
-  INTERNATIONAL: "دولي",
-};
+const categoryLabels = RESEARCH_CATEGORY_LABELS;
 
 const scopusQuartileLabels: Record<string, string> = {
   Q1: "Q1",
@@ -340,14 +333,14 @@ export function ResearchTable({
               <TableHead className="text-center font-medium text-slate-600 bg-slate-50 px-2 py-3 whitespace-nowrap align-middle">
                 SCOPUS
               </TableHead>
-              <TableHead className="text-center font-medium text-slate-600 bg-slate-50 px-2 py-3 whitespace-nowrap align-middle">
+              <TableHead className="text-center font-medium text-slate-600 bg-slate-50 px-2 py-3 whitespace-nowrap align-middle" title="ISI (Web of Science)">
                 ISI
               </TableHead>
               <TableHead className="text-center font-medium text-slate-600 bg-slate-50 px-2 py-3 whitespace-nowrap align-middle">
                 محلي
               </TableHead>
               <TableHead className="text-center font-medium text-slate-600 bg-slate-50 px-2 py-3 whitespace-nowrap align-middle">
-                دولي
+                عالمي
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -460,7 +453,7 @@ export function ResearchTable({
                       {statusLabels[r.status]}
                     </Badge>
                   </TableCell>
-                  {/* حالة النشر: قيد التنفيذ "—"، مكتمل badge */}
+                  {/* حالة النشر: غير منجز "—"، منجز badge */}
                   <TableCell className="px-4 py-3 align-middle text-center whitespace-nowrap">
                     {r.status === "IN_PROGRESS" ? (
                       <span className="text-slate-400">—</span>
@@ -478,7 +471,7 @@ export function ResearchTable({
                       <span className="text-slate-400">—</span>
                     )}
                   </TableCell>
-                  {/* نوع النشر: غير منشور أو قيد التنفيذ "—"، وإلا badge صغيرة */}
+                  {/* نوع النشر: غير منشور أو غير منجز "—"، وإلا badge صغيرة */}
                   <TableCell className="px-4 py-3 align-middle text-center whitespace-nowrap">
                     {r.status === "IN_PROGRESS" || r.publishStatus !== "PUBLISHED" ? (
                       <span className="text-slate-400">—</span>

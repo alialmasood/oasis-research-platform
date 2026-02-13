@@ -138,6 +138,8 @@ export type ComparisonPageData = {
     collegeRank: number;
     departmentRank: number;
   };
+  /** النشاط الأكثر مساهمة في النقاط (للـ KPI) */
+  topActivityLabel: string | null;
   top3University: ComparisonFaculty[];
   top10University: ComparisonFaculty[];
   top5College: ComparisonFaculty[];
@@ -879,6 +881,7 @@ export async function getComparisonData(
       collegeRank,
       departmentRank,
     },
+    topActivityLabel: topMetricLabel,
     top3University: sorted.slice(0, 3).map((entry) => ({
       id: entry.userId,
       fullName: entry.name,

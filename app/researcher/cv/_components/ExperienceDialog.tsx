@@ -108,6 +108,7 @@ export function ExperienceDialog({
                   id="startDate"
                   name="startDate"
                   type="date"
+                  max={new Date().toISOString().split("T")[0]}
                   defaultValue={formatDateForInput(editingExperience?.startDate)}
                   required
                   className="h-11 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
@@ -123,6 +124,7 @@ export function ExperienceDialog({
                   id="endDate"
                   name="endDate"
                   type="date"
+                  max={new Date().toISOString().split("T")[0]}
                   defaultValue={formatDateForInput(editingExperience?.endDate)}
                   className="h-11 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                   dir="ltr"

@@ -52,7 +52,7 @@ export function ChartsPublications({ data }: ChartsPublicationsProps) {
       ) : (
         <div className="space-y-4">
           <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-            نسبة النشر المحلي/الدولي: {localPct}% محلي — {internationalPct}% دولي · أفضل جهة نشر: {topVenue}
+            نسبة النشر المحلي/العالمي: {localPct}% محلي — {internationalPct}% عالمي · أفضل جهة نشر: {topVenue}
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">

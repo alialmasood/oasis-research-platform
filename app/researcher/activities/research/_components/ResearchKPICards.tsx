@@ -19,13 +19,13 @@ const kpis: Array<{
   format?: (v: number) => string;
 }> = [
   { key: "total", label: "إجمالي البحوث", icon: BookOpen, color: "bg-blue-500" },
-  { key: "completed", label: "مكتمل", icon: CheckCircle2, color: "bg-green-500" },
-  { key: "inProgress", label: "قيد التنفيذ", icon: Loader2, color: "bg-amber-500" },
+  { key: "completed", label: "منجز", icon: CheckCircle2, color: "bg-green-500" },
+  { key: "inProgress", label: "غير منجز", icon: Loader2, color: "bg-amber-500" },
   { key: "published", label: "منشور", icon: FileEdit, color: "bg-purple-500" },
   { key: "scopus", label: "سكوبس", icon: Database, color: "bg-cyan-500" },
   {
     key: "avgProgressInProgress",
-    label: "متوسط التقدّم % (قيد التنفيذ)",
+    label: "متوسط التقدّم % (غير منجز)",
     icon: Percent,
     color: "bg-slate-600",
     format: (v) => `${v}%`,
