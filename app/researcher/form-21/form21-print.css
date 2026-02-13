@@ -1,0 +1,48 @@
+/* استمارة 21 - أنماط الطباعة */
+@page {
+  size: A4;
+  margin: 10mm;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    font-family: "Cairo", "Noto Kufi Arabic", "Segoe UI", Tahoma, sans-serif;
+    font-size: 12px;
+    color: #000;
+    background: #fff;
+  }
+
+  .form21-print-table {
+    width: 100%;
+    border-collapse: collapse;
+    direction: rtl;
+  }
+
+  .form21-print-table th,
+  .form21-print-table td {
+    border: 1px solid #333;
+    padding: 6px 8px;
+    text-align: right;
+  }
+
+  .form21-print-table th {
+    background-color: #fef9c3 !important; /* أصفر فاتح */
+    font-weight: bold;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .form21-print-table tr:nth-child(even) td {
+    background-color: #fafafa;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

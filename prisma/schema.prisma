@@ -1,0 +1,903 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// Core Authentication & Authorization
+// ============================================
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String    @map("password_hash") @db.Text
+  
+  fullNameAr     String?   @map("full_name_ar")
+  fullNameEn     String?   @map("full_name_en")
+  phone          String?
+  
+  academicTitle  String?   @map("academic_title")
+  entity         String?
+  department     String?   @map("department")
+  generalSpecialization  String?  @map("general_specialization")  // التخصص العام
+  specificSpecialization String?  @map("specific_specialization") // التخصص الدقيق
+  
+  gender         String?   // ذكر / أنثى
+  dateOfBirth    DateTime? @map("date_of_birth")
+  employeeNumber String?   @map("employee_number")
+  appointmentYear Int?     @map("appointment_year")
+  
+  role           String    @default("RESEARCHER")
+  
+  departmentId   String?   @map("department_id")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  departmentRelation Department?      @relation("UserDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  userRoles       UserRole[]
+  publications    Publication[]
+  conferences     Conference[]
+  books           Book[]
+  activities      Activity[]
+  positions       Position[] @relation("UserPositions")
+  recognitions    Recognition[]
+  fileUploads     FileUpload[]
+  researcherProfile ResearcherProfile?
+  academicDegrees AcademicDegree[]
+  profileCv      ProfileCV?
+  research        Research[]
+  researcherConferences ResearcherConference[]
+  seminars        Seminar[] @relation("UserSeminars")
+  courses         Course[] @relation("UserCourses")
+  workshops       Workshop[] @relation("UserWorkshops")
+  assignments     Assignment[] @relation("UserAssignments")
+  thankYouLetters ThankYouLetter[] @relation("UserThankYouLetters")
+  committees      Committee[] @relation("UserCommittees")
+  certificates    Certificate[] @relation("UserCertificates")
+  journals        Journal[] @relation("UserJournals")
+  supervisions    Supervision[] @relation("UserSupervisions")
+  reviewings      Reviewing[] @relation("UserReviewings")
+  volunteerings   Volunteering[] @relation("UserVolunteerings")
+  fieldVisits     FieldVisit[] @relation("UserFieldVisits")
+  form21Submissions Form21Submission[] @relation("UserForm21Submissions")
+  researcherGoals ResearcherGoals[] @relation("UserResearcherGoals")
+
+  @@map("users")
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users User[] @relation("UserDepartment")
+
+  @@map("departments")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  resource    String   // e.g., "users", "publications", "conferences"
+  action      String   // e.g., "create", "read", "update", "delete"
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String   @map("role_id")
+  permissionId String   @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ============================================
+// Scientific Modules
+// ============================================
+
+enum PublicationStatus {
+  PUBLISHED
+  UNPUBLISHED
+  SUBMITTED
+  UNDER_REVIEW
+}
+
+enum PublicationCategory {
+  SCOPUS
+  Q1
+  Q2
+  Q3
+  Q4
+  OTHER
+}
+
+model Publication {
+  id          String            @id @default(cuid())
+  userId      String            @map("user_id")
+  title       String
+  authors     String[]          // Array of author names
+  journal     String?
+  publisher   String?
+  year        Int?
+  doi         String?           @unique
+  url         String?           @db.Text
+  status      PublicationStatus @default(UNPUBLISHED)
+  category    PublicationCategory?
+  abstract    String?           @db.Text
+  keywords    String[]
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("publications")
+}
+
+model Conference {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  eventName   String   @map("event_name")
+  location    String?
+  date        DateTime
+  type        String?  // e.g., "International", "National", "Regional"
+  role        String?  // e.g., "Presenter", "Organizer", "Attendee"
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("conferences")
+}
+
+model Book {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  authors     String[] // Array of author names
+  publisher   String?
+  isbn        String?  @unique
+  year        Int?
+  pages       Int?
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("books")
+}
+
+enum ActivityType {
+  COURSE
+  SEMINAR
+  WORKSHOP
+  TRAINING
+  OTHER
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  userId      String       @map("user_id")
+  type        ActivityType
+  title       String
+  description String?       @db.Text
+  date        DateTime
+  location    String?
+  duration    String?       // e.g., "2 hours", "3 days"
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+// ============================================
+// Research module
+// ============================================
+
+enum ResearchType {
+  PLANNED   // مخطط
+  UNPLANNED // غير مخطط
+}
+
+enum ResearchOwnership {
+  INDIVIDUAL
+  TEAM
+  INSTITUTIONAL
+}
+
+enum ResearchStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum PublishType {
+  JOURNAL
+  CONFERENCE
+  BOOK_CHAPTER
+  REPORT
+  OTHER
+}
+
+enum ScopusQuartile {
+  Q1
+  Q2
+  Q3
+  Q4
+}
+
+model Research {
+  id              String            @id @default(cuid())
+  researcherId    String            @map("researcher_id")
+  title           String
+  researchType    ResearchType      @map("research_type")
+  ownership       ResearchOwnership
+  status          ResearchStatus
+  progressPercent Int?              @map("progress_percent")
+  year            Int
+  publishStatus   PublishStatus?    @map("publish_status")   // only if status=COMPLETED
+  researchUrl     String?           @map("research_url")     // if publishStatus=PUBLISHED
+  publishType     PublishType?      @map("publish_type")     // if PUBLISHED
+  publisher       String?                                   // if PUBLISHED
+  doi             String?                                    // if PUBLISHED
+  publishMonth    Int?              @map("publish_month")   // 1-12, if PUBLISHED
+  downloadUrl     String?           @map("download_url")    // if PUBLISHED
+  categories      String[]                                   // multi; if includes SCOPUS => scopusQuartile required
+  scopusQuartile  ScopusQuartile?   @map("scopus_quartile") // Q1..Q4 when categories includes SCOPUS
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  researcher User @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("research")
+}
+
+// مؤتمرات الباحث (وحدة الأنشطة الأكاديمية)
+enum ResearcherConferenceScope {
+  GLOBAL   // عالمي
+  LOCAL    // محلي
+}
+
+enum ResearcherConferenceParticipationType {
+  ATTENDEE   // حضور
+  RESEARCHER // باحث
+}
+
+model ResearcherConference {
+  id                String                            @id @default(cuid())
+  researcherId      String                            @map("researcher_id")
+  title             String
+  sponsor           String
+  date              DateTime
+  location          String
+  scope             ResearcherConferenceScope
+  isCommitteeMember Boolean                           @default(false) @map("is_committee_member")
+  participationType ResearcherConferenceParticipationType @map("participation_type")
+  createdAt         DateTime                          @default(now()) @map("created_at")
+  updatedAt        DateTime                          @updatedAt @map("updated_at")
+
+  researcher User @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("researcher_conferences")
+}
+
+model Position {
+  id            String   @id @default(cuid())
+  researcherId  String   @map("researcher_id")
+  title         String
+  positionDate  DateTime @map("position_date")
+  durationYears Int      @default(0) @map("duration_years")
+  durationMonths Int     @default(0) @map("duration_months")
+  durationDays  Int      @default(0) @map("duration_days")
+  organization  String
+  description   String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  researcher User @relation("UserPositions", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("positions")
+}
+
+// ندوات الباحث (وحدة الأنشطة الأكاديمية)
+enum SeminarParticipationType {
+  PRESENTER   // محاضر
+  PARTICIPANT // مشترك
+}
+
+model Seminar {
+  id                String                    @id @default(cuid())
+  researcherId      String                    @map("researcher_id")
+  title             String
+  date              DateTime
+  beneficiary       String                    // الجهة المستفيدة
+  location          String                    // مكان انعقاد الندوة
+  participationType SeminarParticipationType  @map("participation_type")
+  description       String?                   @db.Text
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  updatedAt         DateTime                  @updatedAt @map("updated_at")
+
+  researcher User @relation("UserSeminars", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("seminars")
+}
+
+// دورات الباحث (وحدة الأنشطة الأكاديمية)
+enum CourseParticipationType {
+  PRESENTER   // محاضر
+  PARTICIPANT // مشترك
+}
+
+model Course {
+  id                String                  @id @default(cuid())
+  researcherId      String                  @map("researcher_id")
+  title             String
+  date              DateTime
+  beneficiary       String                  // الجهة المستفيدة
+  location          String                  // مكان انعقاد الدورة
+  participationType CourseParticipationType @map("participation_type")
+  description       String?                 @db.Text
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
+
+  researcher User @relation("UserCourses", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("courses")
+}
+
+// ورش عمل الباحث (وحدة الأنشطة الأكاديمية)
+enum WorkshopParticipationType {
+  PRESENTER   // محاضر
+  PARTICIPANT // مشترك
+}
+
+model Workshop {
+  id                String                    @id @default(cuid())
+  researcherId      String                    @map("researcher_id")
+  title             String
+  date              DateTime
+  beneficiary       String                    // الجهة المستفيدة
+  location          String                    // مكان انعقاد ورشة العمل
+  participationType WorkshopParticipationType @map("participation_type")
+  description       String?                   @db.Text
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  updatedAt         DateTime                  @updatedAt @map("updated_at")
+
+  researcher User @relation("UserWorkshops", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("workshops")
+}
+
+// تكليفات الباحث (وحدة الأنشطة الأكاديمية)
+enum AssignmentStatus {
+  COMPLETED   // منتهي
+  IN_PROGRESS // غير منتهي
+}
+
+model Assignment {
+  id             String          @id @default(cuid())
+  researcherId  String          @map("researcher_id")
+  title          String          // موضوع التكليف
+  assignmentDate DateTime        @map("assignment_date") // تاريخ التكليف
+  status         AssignmentStatus
+  completionDate DateTime?       @map("completion_date") // تاريخ الانتهاء (nullable)
+  description    String?         @db.Text
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  researcher User @relation("UserAssignments", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("assignments")
+}
+
+// كتب الشكر والتقدير (وحدة الأنشطة الأكاديمية)
+enum ThankYouParticipationType {
+  PRESENTER   // محاضر
+  PARTICIPANT // مشترك
+}
+
+model ThankYouLetter {
+  id                String                       @id @default(cuid())
+  researcherId      String                       @map("researcher_id")
+  issuingOrganization String                     @map("issuing_organization") // الجهة المانحة للشكر
+  reason            String                       @db.Text // توجيه الشكر
+  date              DateTime
+  participationType ThankYouParticipationType?   @map("participation_type")
+  description       String?                      @db.Text
+  createdAt         DateTime                     @default(now()) @map("created_at")
+  updatedAt         DateTime                    @updatedAt @map("updated_at")
+
+  researcher User @relation("UserThankYouLetters", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("thank_you_letters")
+}
+
+// لجان الباحث (وحدة الأنشطة الأكاديمية)
+enum CommitteeRole {
+  MEMBER      // عضو لجنة
+  CHAIRPERSON // رئيس لجنة
+}
+
+model Committee {
+  id             String        @id @default(cuid())
+  researcherId   String        @map("researcher_id")
+  title          String        // عنوان اللجنة
+  assignmentDate DateTime      @map("assignment_date") // تاريخ التكليف
+  role           CommitteeRole
+  description    String?       @db.Text
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  researcher User @relation("UserCommittees", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("committees")
+}
+
+// شهادات المشاركة (وحدة الأنشطة الأكاديمية)
+model Certificate {
+  id             String   @id @default(cuid())
+  researcherId   String   @map("researcher_id")
+  title          String   // عنوان الشهادة
+  issuingOrganization String @map("issuing_organization") // الجهة المانحة
+  date           DateTime // التاريخ (يُخزن كأول يوم من الشهر)
+  description    String?  @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  researcher User @relation("UserCertificates", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("certificates")
+}
+
+// عضوية المجلات (وحدة الأنشطة الأكاديمية)
+enum JournalRole {
+  EDITOR_IN_CHIEF      // مدير تحرير
+  ASSOCIATE_EDITOR     // محرر مساعد
+  EDITORIAL_BOARD      // عضو هيئة تحرير
+  REVIEWER             // محكم
+}
+
+enum JournalType {
+  LOCAL        // محلية
+  INTERNATIONAL // عالمية
+  ARABIC       // عربية
+  ENGLISH      // انكليزية
+}
+
+model Journal {
+  id                String      @id @default(cuid())
+  researcherId      String      @map("researcher_id")
+  name              String      // اسم المجلة
+  role              JournalRole
+  type              JournalType
+  startDate         DateTime    @map("start_date") // تاريخ البداية
+  isActive          Boolean     @default(true) @map("is_active") // نشط حالياً
+  endDate           DateTime?   @map("end_date") // تاريخ النهاية (إذا غير نشط)
+  impactFactor      Float?      @map("impact_factor") // معامل التأثير
+  description       String?     @db.Text
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  researcher User @relation("UserJournals", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("journals")
+}
+
+// الإشراف على الطلبة (وحدة الأنشطة الأكاديمية)
+enum DegreeType {
+  PHD           // دكتوراه
+  MASTERS       // ماجستير
+  BACHELORS     // بكالوريوس
+  HIGHER_DIPLOMA // دبلوم عالي
+}
+
+enum SupervisionType {
+  SOLE          // منفرد
+  JOINT         // مشترك
+}
+
+enum ProjectStatus {
+  COMPLETED     // مكتمل
+  IN_PROGRESS   // غير مكتمل
+}
+
+model Supervision {
+  id                String          @id @default(cuid())
+  researcherId      String          @map("researcher_id")
+  studentName       String          @map("student_name") // اسم الطالب
+  degreeType        DegreeType      @map("degree_type") // نوع الدرجة
+  thesisTitle       String          @db.Text @map("thesis_title") // عنوان الرسالة/المشروع
+  startDate         DateTime        @map("start_date") // تاريخ البداية
+  endDate           DateTime?       @map("end_date") // تاريخ الانتهاء (إذا مكتمل)
+  status            ProjectStatus   // حالة المشروع
+  supervisionType   SupervisionType? @map("supervision_type") // نوع الإشراف (منفرد/مشترك) - فقط لدكتوراه وماجستير
+  description       String?         @db.Text
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  researcher User @relation("UserSupervisions", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("supervisions")
+}
+
+// التقويم العلمي (وحدة الأنشطة الأكاديمية)
+enum ReviewingType {
+  RESEARCHES        // بحوث
+  SCIENTIFIC_ARTICLES // مقالات علمية
+  THESES           // رسائل وأطاريح
+  PATENTS          // براءات اختراع
+  SCIENTIFIC_CONSULTATIONS // استشارات علمية
+}
+
+enum ReviewingStatus {
+  PLANNED          // مخطط
+  IN_PROGRESS      // قيد التنفيذ
+  COMPLETED        // مكتمل
+}
+
+model Reviewing {
+  id                String          @id @default(cuid())
+  researcherId      String          @map("researcher_id")
+  title             String          @db.Text // عنوان التقويم
+  type              ReviewingType   // نوع التقويم
+  date              DateTime        // تاريخ التقويم
+  description       String?         @db.Text
+  status            ReviewingStatus // حالة التقويم
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  researcher User @relation("UserReviewings", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("reviewings")
+}
+
+// الأعمال الطوعية (وحدة الأنشطة الأكاديمية)
+enum VolunteeringType {
+  HELPING_POOR_NEEDY                    // مساعدة الفقراء والمحتاجين
+  ENVIRONMENTAL_PROTECTION              // حماية البيئة
+  EMERGENCY_SUPPORT                     // تقديم الدعم في حالة الطوارئ
+  CULTURAL_EDUCATIONAL_ACTIVITIES       // المساهمة في الانشطة الثقافية والتعليمية
+  HELPING_ELDERLY                       // مساعدة كبار السن
+  SPORTS_ACTIVITIES                     // المشاركة في الانشطة الرياضية
+  SOCIAL_ACTIVITIES                     // المشاركة في الانشطة الاجتماعية
+  HOSPITALS_ORPHANAGES                  // التطوع في المشتشفيات ودور الايتام
+  EDUCATION_FIELD                       // التطوع في مجال التعليم
+  COMMUNITY_DEVELOPMENT                 // التطوع في مجال التنمية المجتمعية
+  HUMAN_RIGHTS                          // التطوع في مجال حقوق الانسان
+  ARTS_CULTURE                          // التطوع في مجال الفنون والثقافة
+  TECHNOLOGY_COMMUNICATIONS             // التطوع في مجال التكنولوجيا والاتصالات
+  LAW_FIELD                             // التطوع في مجال القانون
+  HEALTH_FIELD                          // التطوع في مجال الصحة
+  FIRST_AID                             // التطوع في مجال الاسعافات الأولية
+  ANIMAL_WELFARE                        // التطوع في مجال رعاية الحيوان
+}
+
+enum VolunteeringRole {
+  COORDINATOR   // منسق
+  LEADER        // قائد
+  PARTICIPANT   // مشارك
+  MEMBER        // عضو
+  VOLUNTEER     // متطوع
+}
+
+enum DurationUnit {
+  YEAR    // سنة
+  MONTH   // شهر
+  DAY     // يوم
+}
+
+model Volunteering {
+  id                String          @id @default(cuid())
+  researcherId      String          @map("researcher_id")
+  title             String          @db.Text // عنوان العمل الطوعي
+  type              VolunteeringType // نوع العمل
+  role              VolunteeringRole // الدور
+  organizationName  String          @map("organization_name") // اسم الجهة المنظمة
+  startDate         DateTime        @map("start_date") // تاريخ البداية
+  endDate           DateTime?       @map("end_date") // تاريخ النهاية (إذا غير مستمر)
+  isOngoing         Boolean         @default(false) @map("is_ongoing") // العمل الطوعي مستمر
+  durationYears     Int             @default(0) @map("duration_years") // المدة - سنوات
+  durationMonths    Int             @default(0) @map("duration_months") // المدة - أشهر
+  durationDays      Int             @default(0) @map("duration_days") // المدة - أيام
+  durationUnit      DurationUnit    @map("duration_unit") // وحدة المدة
+  location          String?         @db.Text // الموقع
+  beneficiaries     String?         @db.Text // المستفيدون
+  certificates      String?         @db.Text // الشهادات أو الوثائق
+  description       String?         @db.Text // الوصف الإضافي
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  researcher User @relation("UserVolunteerings", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("volunteerings")
+}
+
+// الزيارات الميدانية والحقلية والأعمال التطوعية (استمارة النشاط)
+// 12 درجة: زيارة ميدانية إشراف طلبة، 8: عمل تطوعي داخل الوزارة، 6: خدمة/استشارة خارج الوزارة. الحد الأقصى 30.
+enum FieldVisitActivityType {
+  FIELD_VISIT_SUPERVISION   // 12 نقطة - زيارة ميدانية لإشراف الطلبة
+  VOLUNTARY_INSIDE_MINISTRY // 8 نقاط - عمل تطوعي داخل وزارة التعليم العالي
+  SERVICE_OUTSIDE_MINISTRY  // 6 نقاط - خدمة/استشارة/ندوة/ورشة... خارج الوزارة
+}
+
+model FieldVisit {
+  id               String                 @id @default(cuid())
+  researcherId     String                 @map("researcher_id")
+  type             FieldVisitActivityType
+  title            String                 @db.Text
+  activityDate     DateTime               @map("activity_date")
+  description      String?                @db.Text
+  documentationRef String?                @map("documentation_ref") @db.Text // توثيق: استمارة الدليل أو كتاب رسمي
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  researcher User @relation("UserFieldVisits", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("field_visits")
+}
+
+// أهداف الخطة العلمية السنوية للتقييم ونسبة الإنجاز
+model ResearcherGoals {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  year      Int      // السنة الميلادية
+  goals     Json     // { research: number, conferences: number, seminars: number, ... }
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation("UserResearcherGoals", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year])
+  @@map("researcher_goals")
+}
+
+enum RecognitionType {
+  COMMITTEE
+  VOLUNTEER
+  THANKS
+  SUPERVISION
+  AWARD
+  OTHER
+}
+
+model Recognition {
+  id          String          @id @default(cuid())
+  userId      String          @map("user_id")
+  type        RecognitionType
+  title       String
+  description String?         @db.Text
+  date        DateTime
+  issuer      String?        // Organization or person who issued the recognition
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("recognitions")
+}
+
+// استمارة رقم 21 - تقييم أداء أعضاء الهيئة التدريسية
+model Form21Submission {
+  id                String   @id @default(cuid())
+  researcherId      String   @map("researcher_id")
+  year              String   // العام الدراسي مثلاً "2024-2025"
+  axis1Raw          Float    @map("axis1_raw")
+  axis2Raw          Float    @map("axis2_raw")
+  axis3Raw          Float    @map("axis3_raw")
+  axis1Weighted    Float    @map("axis1_weighted")
+  axis2Weighted    Float    @map("axis2_weighted")
+  axis3Weighted    Float    @map("axis3_weighted")
+  strengthScore    Float    @map("strength_score")
+  penaltyScore     Float    @map("penalty_score")
+  finalScore       Float    @map("final_score")
+  finalGrade       String   @map("final_grade")
+  formData         Json?    @map("form_data") // بيانات كاملة لإعادة ملء النموذج
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  researcher User @relation("UserForm21Submissions", fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("form21_submissions")
+}
+
+// ============================================
+// Supporting Models
+// ============================================
+
+model ResearcherProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  academicTitle String? @map("academic_title")
+  phone       String?
+  bio         String?  @db.Text
+  avatarUrl   String?  @map("avatar_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("researcher_profiles")
+}
+
+model FileUpload {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  kind      String   // e.g., "publication", "conference", "book"
+  url       String   @db.Text
+  filename  String
+  size      Int?     // File size in bytes
+  mimeType  String?  @map("mime_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("file_uploads")
+}
+
+enum AcademicDegreeType {
+  BACHELORS
+  DIPLOMA
+  HIGHER_DIPLOMA
+  MASTERS
+  PHD
+  BOARD
+}
+
+model AcademicDegree {
+  id            String             @id @default(cuid())
+  userId        String             @map("user_id")
+  degree        AcademicDegreeType
+  graduationYear Int                @map("graduation_year")
+  majorGeneral  String             @map("major_general")
+  majorSpecific String?            @map("major_specific")
+  university    String
+  country       String
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("academic_degrees")
+}
+
+// ============================================
+// Profile CV Models
+// ============================================
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum LanguageLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  NATIVE
+}
+
+enum SkillLevel {
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+  LEVEL_5
+}
+
+model ProfileCV {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  gender      Gender?
+  nationality String?
+  dateOfBirth DateTime? @map("date_of_birth")
+  province    String?  // المحافظة
+  district    String?  // القضاء
+  area        String?  // المنطقة
+  address     String?  @db.Text // تفاصيل العنوان
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  languages  Language[]
+  skills     Skill[]
+  experiences Experience[]
+
+  @@map("profile_cvs")
+}
+
+model Language {
+  id          String        @id @default(cuid())
+  profileCvId String        @map("profile_cv_id")
+  name        String
+  level       LanguageLevel
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  profileCv ProfileCV @relation(fields: [profileCvId], references: [id], onDelete: Cascade)
+
+  @@map("languages")
+}
+
+model Skill {
+  id          String     @id @default(cuid())
+  profileCvId String     @map("profile_cv_id")
+  name        String
+  level       SkillLevel
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  profileCv ProfileCV @relation(fields: [profileCvId], references: [id], onDelete: Cascade)
+
+  @@map("skills")
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  profileCvId String    @map("profile_cv_id")
+  title       String    // العنوان الوظيفي
+  organization String   // الجهة
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime? @map("end_date")
+  description String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  profileCv ProfileCV @relation(fields: [profileCvId], references: [id], onDelete: Cascade)
+
+  @@map("experiences")
+}

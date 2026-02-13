@@ -1,0 +1,16 @@
+services:
+  research_platform_postgres:
+    image: postgres:16-alpine
+    container_name: research_platform_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "BASbas@2026"
+      POSTGRES_DB: research_platform
+    ports:
+      - "5443:5432"
+    volumes:
+      - research_platform_db:/var/lib/postgresql/data
+
+volumes:
+  research_platform_db:
