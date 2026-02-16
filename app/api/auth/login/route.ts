@@ -45,8 +45,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // عدم إرجاع تفاصيل الخطأ الداخلية للعميل (منع تسريب معلومات)
     return NextResponse.json(
-      { error: "حدث خطأ أثناء تسجيل الدخول", details: error.message },
+      { error: "حدث خطأ أثناء تسجيل الدخول" },
       { status: 500 }
     );
   }

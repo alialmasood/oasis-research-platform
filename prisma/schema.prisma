@@ -68,8 +68,37 @@ model User {
   fieldVisits     FieldVisit[] @relation("UserFieldVisits")
   form21Submissions Form21Submission[] @relation("UserForm21Submissions")
   researcherGoals ResearcherGoals[] @relation("UserResearcherGoals")
+  researcherLinks ResearcherLinks?  @relation("UserResearcherLinks")
+  collaborationProjectsOwned CollaborationProject[] @relation("CollaborationProjectOwner")
+  projectMembers ProjectMember[]
+  joinRequestsSent JoinRequest[]
+  researcherSkills ResearcherSkill[]
+  recommendationSnapshots RecommendationSnapshot[]
+  notifications Notification[]
 
   @@map("users")
+}
+
+// روابط الباحث (حسابات Google Scholar، ResearchGate، إلخ)
+model ResearcherLinks {
+  id              String   @id @default(cuid())
+  userId          String   @unique @map("user_id")
+  googleScholar   String?  @map("google_scholar")   @db.Text
+  researchGate    String?  @map("research_gate")    @db.Text
+  webOfScience    String?  @map("web_of_science")  @db.Text
+  scopus          String?  @db.Text
+  orcid           String?  @db.Text
+  linkedIn        String?  @map("linked_in")       @db.Text
+  pubmed          String?  @db.Text
+  github          String?  @db.Text
+  personalWebsite String?  @map("personal_website") @db.Text
+  otherLinks      Json?    @map("other_links")      // [{ "label": "اسم الرابط", "url": "https://..." }]
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation("UserResearcherLinks", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("researcher_links")
 }
 
 model Department {
@@ -80,6 +109,8 @@ model Department {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   users User[] @relation("UserDepartment")
+  researcherProfiles ResearcherProfile[] @relation("ResearcherProfileDepartment")
+  collaborationProjects CollaborationProject[] @relation("CollaborationProjectDepartment")
 
   @@map("departments")
 }
@@ -758,21 +789,178 @@ model Form21Submission {
 // Supporting Models
 // ============================================
 
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  LIMITED
+}
+
 model ResearcherProfile {
-  id             String   @id @default(cuid())
-  userId         String   @unique @map("user_id")
-  academicTitle  String?  @map("academic_title")
-  phone          String?
-  bio            String?  @db.Text
-  avatarUrl      String?  @map("avatar_url")   // للتوافق مع الطريقة القديمة (ملفات)
-  avatarData     Bytes?   @map("avatar_data")  // بيانات الصورة المخزنة في DB
-  avatarMimeType String?  @map("avatar_mime_type")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id                String             @id @default(cuid())
+  userId            String             @unique @map("user_id")
+  academicTitle     String?            @map("academic_title")
+  phone             String?
+  bio               String?            @db.Text
+  headline          String?           @db.Text
+  avatarUrl         String?            @map("avatar_url")
+  avatarData        Bytes?             @map("avatar_data")
+  avatarMimeType    String?            @map("avatar_mime_type")
+  departmentId      String?            @map("department_id")
+  interests         String[]           // تخصصات/اهتمامات للتعاون
+  availabilityStatus AvailabilityStatus? @default(AVAILABLE) @map("availability_status")
+  lastActiveAt      DateTime?          @map("last_active_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department? @relation("ResearcherProfileDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@map("researcher_profiles")
+}
+
+// ============================================
+// التعاون الأكاديمي المشترك
+// ============================================
+
+enum CollaborationProjectStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum CollaborationVisibility {
+  UNIVERSITY
+  COLLEGE_ONLY
+  PRIVATE
+}
+
+enum ProjectMemberRole {
+  OWNER
+  CO_LEAD
+  MEMBER
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+enum RecommendationType {
+  PROJECTS_FOR_YOU
+  RESEARCHERS_FOR_PROJECT
+}
+
+model CollaborationProject {
+  id              String                   @id @default(cuid())
+  ownerId         String                   @map("owner_id")
+  title           String                   @db.Text
+  summary         String?                  @db.Text
+  description     String?                  @db.Text
+  status          CollaborationProjectStatus @default(DRAFT)
+  visibility      CollaborationVisibility   @default(UNIVERSITY)
+  departmentId    String?                  @map("department_id")
+  fields          String[]                 // تخصصات/مجالات
+  requiredRoles   String[]                 @map("required_roles") // أدوار مطلوبة
+  capacity        Int                      @default(5)
+  startDate       DateTime?                @map("start_date")
+  endDate         DateTime?                @map("end_date")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+
+  owner      User         @relation("CollaborationProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  department Department?  @relation("CollaborationProjectDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  tags       ProjectTag[]
+  members    ProjectMember[]
+  joinRequests JoinRequest[]
+
+  @@map("collaboration_projects")
+}
+
+model ProjectTag {
+  id        String   @id @default(cuid())
+  projectId String   @map("project_id")
+  tag       String   @db.Text
+
+  project CollaborationProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, tag])
+  @@map("project_tags")
+}
+
+model ProjectMember {
+  id           String           @id @default(cuid())
+  projectId    String           @map("project_id")
+  researcherId String           @map("researcher_id")
+  role         ProjectMemberRole @default(MEMBER)
+  joinedAt     DateTime         @default(now()) @map("joined_at")
+  isActive     Boolean          @default(true) @map("is_active")
+
+  project    CollaborationProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  researcher User                 @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, researcherId])
+  @@map("project_members")
+}
+
+model JoinRequest {
+  id         String           @id @default(cuid())
+  projectId  String           @map("project_id")
+  requesterId String          @map("requester_id")
+  message    String?          @db.Text
+  status     JoinRequestStatus @default(PENDING)
+  decidedAt  DateTime?        @map("decided_at")
+  decidedBy  String?          @map("decided_by")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  project   CollaborationProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requester User                 @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, requesterId])
+  @@map("join_requests")
+}
+
+model ResearcherSkill {
+  id           String   @id @default(cuid())
+  researcherId String   @map("researcher_id")
+  skill        String   @db.Text
+  level        Int?     // 1..5 اختياري
+
+  researcher User @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@map("researcher_skills")
+}
+
+model RecommendationSnapshot {
+  id           String             @id @default(cuid())
+  researcherId String             @map("researcher_id")
+  type         RecommendationType
+  payloadJson  Json               @map("payload_json")
+  createdAt    DateTime           @default(now()) @map("created_at")
+
+  researcher User @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+
+  @@unique([researcherId, type])
+  @@map("recommendation_snapshots")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String   @db.Text
+  title     String   @db.Text
+  body      String?  @db.Text
+  link      String?  @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("researcher_profiles")
+  @@map("notifications")
 }
 
 model FileUpload {

@@ -27,11 +27,13 @@ function getPrismaInstance(): PrismaClient {
     instance = createPrismaClient();
     if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = instance;
   }
-  // في وضع التطوير: إذا كان العميل يفتقد موديلات جديدة (مثل fieldVisit)، أعد تحميل العميل
+  // في وضع التطوير: إذا كان العميل يفتقد موديلات جديدة، أعد تحميل العميل
   if (process.env.NODE_ENV !== "production") {
     const hasFieldVisit = typeof (instance as any).fieldVisit?.findMany === "function";
     const hasResearcherGoals = typeof (instance as any).researcherGoals?.findMany === "function";
-    if (!hasFieldVisit || !hasResearcherGoals) {
+    const hasResearcherLinks = typeof (instance as any).researcherLinks?.findUnique === "function";
+    const hasCollaborationProject = typeof (instance as any).collaborationProject?.findMany === "function";
+    if (!hasFieldVisit || !hasResearcherGoals || !hasResearcherLinks || !hasCollaborationProject) {
       try {
         const clientPath = require.resolve("@prisma/client");
         if (require.cache[clientPath]) delete require.cache[clientPath];
@@ -45,7 +47,7 @@ function getPrismaInstance(): PrismaClient {
           log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
         });
         globalForPrisma.prisma = instance;
-        console.warn("[Prisma] Reloaded client (fieldVisit was missing).");
+        console.warn("[Prisma] Reloaded client (missing model: fieldVisit, researcherGoals, researcherLinks, or collaboration).");
       } catch (e) {
         console.warn("[Prisma] Could not reload client. Restart the dev server after running: npx prisma generate", e);
       }

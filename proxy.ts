@@ -1,7 +1,23 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+/** في الإنتاج: إجبار HTTPS لحماية بيانات الاعتماد أثناء النقل */
+function ensureHttps(request: NextRequest): NextResponse | null {
+  if (!isProduction) return null;
+  const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
+  if (proto === "https") return null;
+  const url = request.nextUrl.clone();
+  url.protocol = "https:";
+  url.host = request.headers.get("x-forwarded-host") ?? request.nextUrl.host;
+  return NextResponse.redirect(url, 301);
+}
+
 export function proxy(request: NextRequest) {
+  const httpsRedirect = ensureHttps(request);
+  if (httpsRedirect) return httpsRedirect;
+
   // Allow public routes
   const publicRoutes = ["/", "/login", "/register", "/api/auth/login"];
   const isPublicRoute = publicRoutes.some((route) =>
@@ -9,7 +25,9 @@ export function proxy(request: NextRequest) {
   );
 
   if (isPublicRoute) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    addSecurityHeaders(res);
+    return res;
   }
 
   // Check for session cookie
@@ -19,7 +37,22 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  addSecurityHeaders(response);
+  return response;
+}
+
+function addSecurityHeaders(response: NextResponse) {
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (isProduction) {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload"
+    );
+  }
 }
 
 export const config = {

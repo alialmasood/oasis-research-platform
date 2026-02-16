@@ -56,6 +56,8 @@ const pageTitles: Record<string, string> = {
   "/researcher/online": "المتصلون",
   "/researcher/report": "التقرير",
   "/researcher/settings": "الإعدادات",
+  "/researcher/links": "روابط الباحث",
+  "/researcher/collaboration": "التعاون المشترك",
 };
 
 function getPageTitle(pathname: string): string {
