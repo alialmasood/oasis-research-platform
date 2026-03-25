@@ -18,6 +18,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "منصة البحث العلمي - جامعة البصرة",
   description: "منصة بحثية لجامعة البصرة",
+  icons: {
+    icon: "/ooiissiiss.png",
+  },
 };
 
 export default function RootLayout({
