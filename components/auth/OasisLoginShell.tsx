@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "oasis-intro-seen";
+const STORAGE_KEY = "oasis-intro-seen-v2";
 
 /**
  * Actual timeline (ms) from sequence start:
@@ -17,6 +17,11 @@ const STORAGE_KEY = "oasis-intro-seen";
  * 3350       split begins (1400ms → ~4750); ring fades 280ms
  * 3650       form content reveal (700ms)
  * 4750       ready / stable
+ *
+ * Entry behavior:
+ * - `/` and `/login` play the full intro on first visit in the session
+ * - Later visits in the same session jump to the final split layout
+ * - `?intro=1` forces a full replay (dev / QA)
  */
 
 type Phase = "waiting" | "intro" | "splitting" | "ready";
@@ -38,14 +43,6 @@ function markIntroSeen() {
     sessionStorage.setItem(STORAGE_KEY, "1");
   } catch {
     /* ignore */
-  }
-}
-
-function prefersReducedMotion(): boolean {
-  try {
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  } catch {
-    return false;
   }
 }
 
@@ -109,21 +106,18 @@ export function OasisLoginShell({ children }: OasisLoginShellProps) {
   useEffect(() => {
     const id = window.setTimeout(() => {
       const force = shouldForceIntro();
-      const reducedMotion = prefersReducedMotion();
+      const seen = readIntroSeen();
 
-      if (force) {
+      // Primary entry `/` and `/login`: play cinematic intro on first session visit.
+      // Ignore OS prefers-reduced-motion so Windows users still see the brand intro.
+      // `?intro=1` forces replay anytime.
+      if (force || !seen) {
         setForceMotion(true);
         setDecision("play");
         return;
       }
 
-      if (reducedMotion || readIntroSeen()) {
-        setDecision("skip");
-        return;
-      }
-
-      setForceMotion(true);
-      setDecision("play");
+      setDecision("skip");
     }, 0);
     return () => window.clearTimeout(id);
   }, []);
