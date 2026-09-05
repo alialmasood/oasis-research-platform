@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -391,5 +391,515 @@
   }
   .print-page-number::after {
     content: " " counter(page) " / " counter(pages);
+  }
+}
+
+
+/* Oasis cinematic login experience */
+
+/* Intro: readable brand without killing campus atmosphere */
+.oasis-campus-overlay {
+  background:
+    linear-gradient(180deg, rgba(11, 31, 74, 0.32) 0%, rgba(11, 31, 74, 0.22) 42%, rgba(11, 31, 74, 0.48) 100%),
+    radial-gradient(ellipse 55% 50% at 50% 46%, rgba(8, 18, 42, 0.55) 0%, rgba(8, 18, 42, 0.22) 48%, transparent 72%);
+  transition: background 1.5s ease;
+}
+
+/* Split: lighter so the photo stays alive beside the form */
+.oasis-campus-overlay-split {
+  background:
+    linear-gradient(180deg, rgba(11, 31, 74, 0.24) 0%, rgba(11, 31, 74, 0.18) 45%, rgba(11, 31, 74, 0.38) 100%),
+    radial-gradient(ellipse 60% 48% at 50% 42%, rgba(8, 18, 42, 0.42) 0%, rgba(8, 18, 42, 0.14) 55%, transparent 75%);
+}
+
+/* Anchor right; animate LEFT inset so the panel visibly retracts */
+.oasis-image-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  transition: left 1.4s cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: left;
+}
+
+.oasis-instant .oasis-image-panel,
+.oasis-instant .oasis-form-content,
+.oasis-instant .oasis-logo-disk,
+.oasis-instant .oasis-title,
+.oasis-instant .oasis-english,
+.oasis-instant .oasis-ring-svg,
+.oasis-instant .oasis-campus-overlay,
+.oasis-instant .oasis-logo-wrap,
+.oasis-instant .oasis-brand-tagline,
+.oasis-instant .oasis-brand-rule {
+  transition: none !important;
+  animation: none !important;
+}
+
+.oasis-image-panel-full {
+  left: 0;
+}
+
+@media (min-width: 1024px) {
+  .oasis-image-panel-split {
+    left: 52%;
+  }
+
+  .oasis-form-panel-split {
+    padding-right: 48%;
+  }
+}
+
+@media (max-width: 1023px) {
+  .oasis-image-panel {
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    bottom: auto;
+    transition: height 1.4s cubic-bezier(0.65, 0, 0.35, 1);
+    will-change: height;
+  }
+
+  .oasis-image-panel-full {
+    height: 100%;
+  }
+
+  .oasis-image-panel-split {
+    height: 32vh;
+    min-height: 180px;
+    max-height: 280px;
+    left: 0;
+  }
+
+  .oasis-form-panel-split {
+    padding-top: 32vh;
+  }
+
+  .oasis-login-split .oasis-brand-en {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .oasis-image-panel-split {
+    height: 34vh;
+  }
+
+  .oasis-form-panel-split {
+    padding-top: 34vh;
+  }
+}
+
+.oasis-form-panel {
+  pointer-events: none;
+}
+
+.oasis-form-panel-split {
+  pointer-events: auto;
+}
+
+.oasis-form-content {
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.oasis-form-content-hidden {
+  opacity: 0;
+  transform: translateX(-24px);
+  pointer-events: none;
+}
+
+.oasis-form-content-visible {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+@media (max-width: 1023px) {
+  .oasis-form-content-hidden {
+    transform: translateY(22px);
+  }
+
+  .oasis-form-content-visible {
+    transform: translateY(0);
+  }
+}
+
+.oasis-logo-disk {
+  width: 9.75rem;
+  height: 9.75rem;
+  padding: 0.95rem;
+  transition:
+    width 1.4s cubic-bezier(0.65, 0, 0.35, 1),
+    height 1.4s cubic-bezier(0.65, 0, 0.35, 1),
+    padding 1.4s ease;
+}
+
+@media (min-width: 640px) {
+  .oasis-logo-disk {
+    width: 10.75rem;
+    height: 10.75rem;
+  }
+}
+
+.oasis-logo-split-size .oasis-logo-disk {
+  width: 5.25rem;
+  height: 5.25rem;
+  padding: 0.55rem;
+}
+
+@media (min-width: 640px) {
+  .oasis-logo-split-size .oasis-logo-disk {
+    width: 5.75rem;
+    height: 5.75rem;
+  }
+}
+
+.oasis-logo-hidden {
+  opacity: 0;
+  transform: scale(0.28);
+  visibility: hidden;
+}
+
+.oasis-logo-visible {
+  opacity: 1;
+  transform: scale(1);
+  visibility: visible;
+}
+
+.oasis-logo-js {
+  visibility: visible;
+  opacity: 0;
+  transform: scale(0.28);
+}
+
+.oasis-logo-enter {
+  visibility: visible;
+  animation: oasis-logo-zoom 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes oasis-logo-zoom {
+  0% {
+    opacity: 0;
+    transform: scale(0.28);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Brand stage — optical center slightly above geometric mid */
+.oasis-brand-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.oasis-login-split .oasis-brand-stage {
+  /* ~46–48% optical center */
+  justify-content: center;
+  padding-bottom: 6%;
+}
+
+.oasis-brand-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(100% - 48px);
+  max-width: 420px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.oasis-brand-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  margin-top: 22px; /* logo → Arabic title */
+  text-align: center;
+}
+
+/* Intro: larger title; Final split: clamp(30px, 2.2vw, 40px) */
+.oasis-title {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-cairo), system-ui, sans-serif;
+  font-size: clamp(2.625rem, 3.2vw, 3rem); /* intro ~42–48px */
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.28);
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    font-size 1.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.oasis-login-split .oasis-title {
+  font-size: clamp(1.875rem, 2.2vw, 2.5rem); /* final 30–40px */
+}
+
+.oasis-title-hidden {
+  opacity: 0;
+  transform: translateY(18px) scale(0.96);
+}
+
+.oasis-title-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.oasis-english {
+  margin: 7px 0 0;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: clamp(1rem, 1.2vw, 1.25rem); /* intro ~16–20px */
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.4;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+  transition:
+    opacity 0.55s ease,
+    transform 0.55s ease,
+    font-size 1.4s ease,
+    color 1.2s ease;
+}
+
+.oasis-login-split .oasis-english {
+  font-size: clamp(0.875rem, 1.05vw, 1.125rem); /* final 14–18px */
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.oasis-english-hidden {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.oasis-english-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Separator between English and Arabic description */
+.oasis-brand-rule {
+  display: block;
+  width: 44px;
+  height: 1px;
+  margin: 16px auto 0;
+  background: rgba(255, 255, 255, 0.4);
+  border: 0;
+  opacity: 0;
+  transition: opacity 0.65s ease;
+}
+
+.oasis-rule-hidden {
+  opacity: 0;
+}
+
+.oasis-rule-visible {
+  opacity: 1;
+}
+
+/* Description — after split only */
+.oasis-brand-tagline {
+  margin: 16px 0 0;
+  max-width: 100%;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-cairo), system-ui, sans-serif;
+  font-size: clamp(0.8125rem, 0.9vw, 1rem); /* 13–16px */
+  font-weight: 400;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.22);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+
+.oasis-tagline-hidden {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.oasis-tagline-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .oasis-login-split .oasis-brand-copy {
+    margin-top: 16px;
+  }
+
+  .oasis-login-split .oasis-title {
+    font-size: clamp(1.75rem, 2.4vw, 2rem); /* 28–32px */
+  }
+
+  .oasis-login-split .oasis-english {
+    margin-top: 6px;
+    font-size: clamp(0.8125rem, 1vw, 0.9375rem); /* 13–15px */
+  }
+
+  .oasis-login-split .oasis-brand-tagline {
+    margin-top: 12px;
+    font-size: clamp(0.75rem, 0.95vw, 0.875rem); /* 12–14px */
+  }
+
+  .oasis-login-split .oasis-brand-rule {
+    margin-top: 12px;
+    width: 36px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .oasis-brand-group {
+    width: calc(100% - 32px);
+  }
+
+  .oasis-brand-copy {
+    margin-top: 14px;
+  }
+
+  .oasis-title {
+    font-size: clamp(1.75rem, 6vw, 2rem);
+  }
+
+  .oasis-login-split .oasis-title {
+    font-size: clamp(1.5rem, 5.5vw, 1.75rem); /* 24–28px */
+  }
+
+  .oasis-english {
+    margin-top: 5px;
+    font-size: 0.875rem;
+  }
+
+  .oasis-login-split .oasis-english {
+    font-size: clamp(0.75rem, 3.2vw, 0.875rem); /* 12–14px */
+  }
+
+  .oasis-login-split .oasis-brand-tagline {
+    margin-top: 10px;
+    font-size: clamp(0.6875rem, 3vw, 0.8125rem); /* 11–13px */
+    line-height: 1.55;
+  }
+
+  .oasis-login-split .oasis-brand-rule {
+    margin-top: 10px;
+    width: 32px;
+  }
+
+  .oasis-login-split .oasis-brand-stage {
+    padding-bottom: 2%;
+  }
+}
+
+.oasis-ring-svg {
+  width: 13rem;
+  height: 13rem;
+  opacity: 0;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+  transition:
+    opacity 0.35s ease,
+    width 1.5s cubic-bezier(0.65, 0, 0.35, 1),
+    height 1.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@media (min-width: 640px) {
+  .oasis-ring-svg {
+    width: 14.25rem;
+    height: 14.25rem;
+  }
+}
+
+.oasis-logo-split-size .oasis-ring-svg {
+  width: 7.25rem;
+  height: 7.25rem;
+}
+
+.oasis-ring-animate {
+  opacity: 1;
+}
+
+.oasis-ring-fade {
+  opacity: 0 !important;
+  transition: opacity 0.28s ease;
+}
+
+.oasis-ring-progress {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.oasis-ring-animate .oasis-ring-progress {
+  animation: oasis-ring-draw 2.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes oasis-ring-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* JS WAAPI drives logo/ring/split when .oasis-force-motion is on */
+.oasis-force-motion .oasis-image-panel {
+  transition: none !important;
+}
+
+.oasis-force-motion .oasis-logo-enter,
+.oasis-force-motion .oasis-ring-animate .oasis-ring-progress {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oasis-login-root:not(.oasis-force-motion) .oasis-image-panel,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-form-content,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-ring-svg,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-logo-disk,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-title,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-english,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-campus-overlay,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-brand-tagline {
+    transition: none !important;
+  }
+
+  .oasis-login-root:not(.oasis-force-motion) .oasis-logo-enter,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-ring-animate .oasis-ring-progress {
+    animation: none !important;
+  }
+
+  .oasis-login-root:not(.oasis-force-motion) .oasis-logo-enter,
+  .oasis-login-root:not(.oasis-force-motion) .oasis-logo-visible {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+  }
+
+  .oasis-login-root:not(.oasis-force-motion) .oasis-ring-progress {
+    stroke-dashoffset: 0 !important;
   }
 }
