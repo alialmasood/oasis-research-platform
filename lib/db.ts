@@ -15,9 +15,10 @@ if (pool.setMaxListeners) pool.setMaxListeners(64);
 const adapter = new PrismaPg(pool);
 
 function createPrismaClient(): PrismaClient {
+  const logQueries = process.env.PRISMA_LOG_QUERIES === "true";
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    log: logQueries ? ["query", "error", "warn"] : ["error", "warn"],
   });
 }
 
@@ -44,7 +45,7 @@ function getPrismaInstance(): PrismaClient {
         const { PrismaClient: NewPrismaClient } = require("@prisma/client");
         instance = new NewPrismaClient({
           adapter,
-          log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+          log: process.env.PRISMA_LOG_QUERIES === "true" ? ["query", "error", "warn"] : ["error", "warn"],
         });
         globalForPrisma.prisma = instance;
         console.warn("[Prisma] Reloaded client (missing model: fieldVisit, researcherGoals, researcherLinks, or collaboration).");

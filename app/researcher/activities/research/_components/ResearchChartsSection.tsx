@@ -14,20 +14,23 @@ const PUBLISH_TYPE_LABELS: Record<string, string> = {
   other: "أخرى",
 };
 
-const RESEARCH_TYPE_LABELS: Record<string, string> = {
-  planned: "مخطط",
-  unplanned: "غير مخطط",
-};
+export type ResearchChartId =
+  | "completedVsInProgress"
+  | "publishedVsUnpublished"
+  | "plannedVsUnplanned";
 
-export function ResearchChartsSection({ stats }: { stats: ResearchStats }) {
+interface ResearchChartsSectionProps {
+  stats: ResearchStats;
+  hiddenCharts?: ResearchChartId[];
+}
+
+export function ResearchChartsSection({ stats, hiddenCharts = [] }: ResearchChartsSectionProps) {
+  const hidden = new Set(hiddenCharts);
   const {
-    totals,
     byYear,
-    byStatus,
     byPublishStatus,
     byPublishType,
     byResearchType,
-    scopusQuartiles,
   } = stats;
 
   // كل قيم الرسوم أعداد صحيحة (Integer) — النسبة الوحيدة هي "متوسط الإنجاز" في KPI فقط
@@ -43,21 +46,18 @@ export function ResearchChartsSection({ stats }: { stats: ResearchStats }) {
   }));
   const hasByYear = byYearData.length > 0;
 
-  // byStatus: { completed, inProgress }
   const completedVsInProgressData = [
-    { name: "منجز", value: toInt(byStatus.completed), color: "#10b981" },
-    { name: "غير منجز", value: toInt(byStatus.inProgress), color: "#f59e0b" },
+    { name: "منجز", value: toInt(stats.byStatus.completed), color: "#10b981" },
+    { name: "غير منجز", value: toInt(stats.byStatus.inProgress), color: "#f59e0b" },
   ].filter((d) => d.value > 0);
   const hasCompletedVsInProgress = completedVsInProgressData.length > 0;
 
-  // byPublishStatus: { published, unpublished }
   const publishedVsUnpublishedData = [
     { name: "منشور", [COUNT_KEY]: toInt(byPublishStatus.published) },
     { name: "غير منشور", [COUNT_KEY]: toInt(byPublishStatus.unpublished) },
   ];
   const hasPublishedVsUnpublished = publishedVsUnpublishedData.some((d) => d[COUNT_KEY] > 0);
 
-  // byPublishType: { journal, conference, bookChapter, report, other }
   const publishTypeData = Object.entries(byPublishType)
     .filter(([_, count]) => count > 0)
     .map(([k, v]) => ({
@@ -82,15 +82,6 @@ export function ResearchChartsSection({ stats }: { stats: ResearchStats }) {
   ].filter((d) => d.value > 0);
   const hasPlannedVsUnplanned = plannedVsUnplannedData.length > 0;
 
-  // byResearchType: { planned, unplanned } - للرسم Bar
-  const byResearchTypeData = Object.entries(byResearchType)
-    .filter(([_, count]) => count > 0)
-    .map(([k, v]) => ({
-      name: RESEARCH_TYPE_LABELS[k] ?? k,
-      [COUNT_KEY]: toInt(v),
-    }));
-  const hasByResearchType = byResearchTypeData.length > 0;
-
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900">الرسوم البيانية</h3>
@@ -111,41 +102,43 @@ export function ResearchChartsSection({ stats }: { stats: ResearchStats }) {
           </CardContent>
         </Card>
 
-        {/* completed vs inProgress (pie) */}
-        <Card className="border-slate-100 bg-white shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">منجز مقابل غير منجز</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: "220px" }}>
-              {hasCompletedVsInProgress ? (
-                <PieChart data={completedVsInProgressData} />
-              ) : (
-                <EmptyChartState type="pie" />
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {!hidden.has("completedVsInProgress") && (
+          <Card className="border-slate-100 bg-white shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900">منجز مقابل غير منجز</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ height: "220px" }}>
+                {hasCompletedVsInProgress ? (
+                  <PieChart data={completedVsInProgressData} />
+                ) : (
+                  <EmptyChartState type="pie" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* published vs unpublished (bar) */}
-        <Card className="border-slate-100 bg-white shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">منشور مقابل غير منشور</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: "220px" }}>
-              {hasPublishedVsUnpublished ? (
-                <BarChart
-                  data={publishedVsUnpublishedData}
-                  dataKeys={[COUNT_KEY]}
-                  colors={["#8b5cf6", "#94a3b8"]}
-                />
-              ) : (
-                <EmptyChartState type="bar" />
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {!hidden.has("publishedVsUnpublished") && (
+          <Card className="border-slate-100 bg-white shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900">منشور مقابل غير منشور</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ height: "220px" }}>
+                {hasPublishedVsUnpublished ? (
+                  <BarChart
+                    data={publishedVsUnpublishedData}
+                    dataKeys={[COUNT_KEY]}
+                    colors={["#8b5cf6", "#94a3b8"]}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* نوع النشر (bar) */}
         <Card className="border-slate-100 bg-white shadow-lg">
@@ -183,21 +176,22 @@ export function ResearchChartsSection({ stats }: { stats: ResearchStats }) {
           </CardContent>
         </Card>
 
-        {/* مخطط مقابل غير مخطط (pie) */}
-        <Card className="border-slate-100 bg-white shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">مخطط مقابل غير مخطط</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: "220px" }}>
-              {hasPlannedVsUnplanned ? (
-                <PieChart data={plannedVsUnplannedData} />
-              ) : (
-                <EmptyChartState type="pie" />
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {!hidden.has("plannedVsUnplanned") && (
+          <Card className="border-slate-100 bg-white shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900">مخطط مقابل غير مخطط</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ height: "220px" }}>
+                {hasPlannedVsUnplanned ? (
+                  <PieChart data={plannedVsUnplannedData} />
+                ) : (
+                  <EmptyChartState type="pie" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

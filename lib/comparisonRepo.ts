@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/db";
+import { FACULTY_BASE_WHERE } from "@/lib/admin/facultyRepo";
+
+/** حسابات تُستبعد من لوحات المقارنة والترتيب */
+const EXCLUDED_COMPARISON_EMAILS = ["admin@uobasrah.edu.iq"];
 
 export type ComparisonMetric = {
   key: string;
@@ -448,7 +452,19 @@ export async function getComparisonData(
 ): Promise<ComparisonPageData> {
   const range = getDateRange(filters);
   const users = await prisma.user.findMany({
-    where: { role: "RESEARCHER", isActive: true },
+    where: {
+      AND: [
+        FACULTY_BASE_WHERE,
+        { isActive: true },
+        {
+          NOT: {
+            OR: EXCLUDED_COMPARISON_EMAILS.map((email) => ({
+              email: { equals: email, mode: "insensitive" as const },
+            })),
+          },
+        },
+      ],
+    },
     select: {
       id: true,
       email: true,

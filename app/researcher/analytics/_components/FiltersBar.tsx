@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Clock3, Filter } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -89,20 +90,20 @@ export function FiltersBar({
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">من</label>
-              <input
+              <Input
                 type="date"
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">إلى</label>
-              <input
+              <Input
                 type="date"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700"
               />
             </div>
           </div>
@@ -158,22 +159,22 @@ export function FiltersBar({
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">من (مقارنة)</label>
-            <input
+            <Input
               type="date"
               value={compareFrom}
               onChange={(e) => setCompareFrom(e.target.value)}
               disabled={compareDisabled}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:bg-slate-50"
+              className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:bg-slate-50"
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">إلى (مقارنة)</label>
-            <input
+            <Input
               type="date"
               value={compareTo}
               onChange={(e) => setCompareTo(e.target.value)}
               disabled={compareDisabled}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:bg-slate-50"
+              className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:bg-slate-50"
             />
           </div>
         </div>

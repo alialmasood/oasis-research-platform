@@ -1,3 +1,8 @@
+/**
+ * @deprecated النسخة القديمة من تخطيط لوحة التحكم.
+ * النسخة الجديدة: app/admin/_components/AdminLayoutClient.tsx
+ * النسخة السابقة من الصفحة: app/admin/dashboard/page.legacy.tsx
+ */
 "use client";
 
 import { Sidebar } from "./sidebar";

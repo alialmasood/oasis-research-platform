@@ -1,3 +1,6 @@
+/**
+ * @deprecated الشريط الجانبي القديم — النسخة الجديدة: app/admin/_components/AdminSidebar.tsx
+ */
 "use client";
 
 import Link from "next/link";

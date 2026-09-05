@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/middleware";
 import { ResearcherLayoutClient } from "./_components/ResearcherLayoutClient";
 import { getResearcherActivityCounts } from "@/lib/researcherActivityCounts";
 import { prisma } from "@/lib/db";
+import { resolvePublicUrl } from "@/lib/utils";
 
 export default async function ResearcherLayout({
   children,
@@ -25,8 +26,9 @@ export default async function ResearcherLayout({
     select: { avatarUrl: true, avatarData: true },
   });
 
-  const avatarUrl =
-    profile?.avatarData != null ? `/api/avatar/${user.id}` : profile?.avatarUrl ?? null;
+  const avatarUrl = profile?.avatarData
+    ? `/api/avatar/${user.id}`
+    : resolvePublicUrl(profile?.avatarUrl);
 
   return (
     <ResearcherLayoutClient

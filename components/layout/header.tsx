@@ -1,3 +1,6 @@
+/**
+ * @deprecated الهيدر القديم — النسخة الجديدة: app/admin/_components/AdminHeader.tsx
+ */
 "use client";
 
 import { Bell, Search } from "lucide-react";

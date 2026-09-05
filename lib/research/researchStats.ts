@@ -1,5 +1,17 @@
 import { prisma } from "@/lib/db";
 
+export type ResearchRecordForStats = {
+  status: string;
+  publishStatus: string | null;
+  publishType: string | null;
+  researchType: string;
+  ownership: string;
+  categories: string[];
+  progressPercent: number | null;
+  year: number;
+  scopusQuartile: string | null;
+};
+
 export type ResearchStats = {
   totals: {
     total: number;
@@ -8,7 +20,13 @@ export type ResearchStats = {
     published: number;
     unpublished: number;
     scopus: number;
-    avgProgressInProgress: number; // 0..100
+    avgProgressInProgress: number;
+    planned: number;
+    unplanned: number;
+    international: number;
+    local: number;
+    individual: number;
+    isi: number;
   };
   byYear: Array<{ year: number; count: number }>;
   byStatus: { completed: number; inProgress: number };
@@ -22,23 +40,26 @@ export type ResearchStats = {
   };
   byResearchType: { planned: number; unplanned: number };
   scopusQuartiles: { Q1: number; Q2: number; Q3: number; Q4: number };
-  /** التصنيفات الموجودة فعلياً في البيانات */
   availableCategories: string[];
 };
 
-export async function getResearchStats(researcherId: string): Promise<ResearchStats> {
-  const all = await prisma.research.findMany({
-    where: { researcherId },
-  });
-
+export function computeResearchStatsFromRecords(
+  all: ResearchRecordForStats[]
+): ResearchStats {
   const total = all.length;
   const completed = all.filter((r) => r.status === "COMPLETED").length;
   const inProgress = all.filter((r) => r.status === "IN_PROGRESS").length;
   const published = all.filter((r) => r.publishStatus === "PUBLISHED").length;
   const unpublished = total - published;
+  const planned = all.filter((r) => r.researchType === "PLANNED").length;
+  const unplanned = all.filter((r) => r.researchType === "UNPLANNED").length;
+  const international = all.filter((r) => r.categories.includes("INTERNATIONAL")).length;
+  const local = all.filter((r) => r.categories.includes("LOCAL")).length;
+  const individual = all.filter((r) => r.ownership === "INDIVIDUAL").length;
+  const isi = all.filter((r) => r.categories.includes("ISI")).length;
 
-  const inProgressItems = all.filter((r) => r.status === "IN_PROGRESS");
-  const progressValues = inProgressItems
+  const progressValues = all
+    .filter((r) => r.status === "IN_PROGRESS")
     .map((r) => r.progressPercent ?? 0)
     .filter((n) => n >= 0);
   const avgProgressInProgress =
@@ -49,7 +70,6 @@ export async function getResearchStats(researcherId: string): Promise<ResearchSt
   const scopusItems = all.filter((r) => r.categories.includes("SCOPUS"));
   const scopus = scopusItems.length;
 
-  // byYear: Array<{ year: number; count: number }>
   const byYearMap: Record<number, number> = {};
   for (const r of all) {
     byYearMap[r.year] = (byYearMap[r.year] ?? 0) + 1;
@@ -58,12 +78,10 @@ export async function getResearchStats(researcherId: string): Promise<ResearchSt
     .map(([year, count]) => ({ year: Number(year), count }))
     .sort((a, b) => a.year - b.year);
 
-  // byPublishType: map enum values to camelCase keys
   const byPublishTypeMap: Record<string, number> = {};
   for (const r of all) {
     if (r.publishType) {
       let key = r.publishType.toLowerCase();
-      // Convert BOOK_CHAPTER -> bookChapter, etc.
       if (key.includes("_")) {
         const parts = key.split("_");
         key = parts[0] + parts.slice(1).map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join("");
@@ -79,18 +97,6 @@ export async function getResearchStats(researcherId: string): Promise<ResearchSt
     other: byPublishTypeMap.other ?? 0,
   };
 
-  // byResearchType
-  const byResearchTypeMap: Record<string, number> = {};
-  for (const r of all) {
-    const key = r.researchType.toLowerCase();
-    byResearchTypeMap[key] = (byResearchTypeMap[key] ?? 0) + 1;
-  }
-  const byResearchType = {
-    planned: byResearchTypeMap.planned ?? 0,
-    unplanned: byResearchTypeMap.unplanned ?? 0,
-  };
-
-  // scopusQuartiles
   const scopusQuartiles = {
     Q1: scopusItems.filter((r) => r.scopusQuartile === "Q1").length,
     Q2: scopusItems.filter((r) => r.scopusQuartile === "Q2").length,
@@ -98,10 +104,7 @@ export async function getResearchStats(researcherId: string): Promise<ResearchSt
     Q4: scopusItems.filter((r) => r.scopusQuartile === "Q4").length,
   };
 
-  // التصنيفات الموجودة فعلياً (من كل البحوث)
-  const availableCategories = Array.from(
-    new Set(all.flatMap((r) => r.categories))
-  ).sort();
+  const availableCategories = Array.from(new Set(all.flatMap((r) => r.categories))).sort();
 
   return {
     totals: {
@@ -112,15 +115,29 @@ export async function getResearchStats(researcherId: string): Promise<ResearchSt
       unpublished,
       scopus,
       avgProgressInProgress,
+      planned,
+      unplanned,
+      international,
+      local,
+      individual,
+      isi,
     },
     byYear,
     byStatus: { completed, inProgress },
     byPublishStatus: { published, unpublished },
     byPublishType,
-    byResearchType,
+    byResearchType: { planned, unplanned },
     scopusQuartiles,
     availableCategories,
   };
+}
+
+export async function getResearchStats(researcherId: string): Promise<ResearchStats> {
+  const all = await prisma.research.findMany({
+    where: { researcherId },
+  });
+
+  return computeResearchStatsFromRecords(all);
 }
 
 /** أقوى تصنيف فهرسة للباحث (SCOPUS Q1 > Q2 > Q3 > Q4 > ISI > عالمي > محلي) */
