@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import {
   PieChart as RechartsPieChart,
   Pie,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   Legend,
 } from "recharts";
+import { ChartContainer } from "./chart-container";
 
 interface PieChartProps {
   data: Array<{ name: string; value: number; color: string }>;
@@ -17,7 +17,7 @@ interface PieChartProps {
   tooltipLabel?: (name: string, value: number) => string;
   /** موضع الليجند: على الموبايل horizontal + bottom أفضل */
   legendLayout?: "horizontal" | "vertical";
-  legendVerticalAlign?: "top" | "bottom";
+  legendVerticalAlign?: "top" | "middle" | "bottom";
   /** تنسيق الليجند (مثلاً fontSize: 11 للموبايل) */
   legendWrapperStyle?: CSSProperties;
   /** نصف القطر الداخلي (للـ Donut chart) */
@@ -36,19 +36,9 @@ export function PieChart({
   innerRadius = 0,
   outerRadius = 100,
 }: PieChartProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className="w-full h-full min-h-[160px] min-w-0" />;
-  }
-  // معالجة حالة البيانات القليلة أو الفارغة
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+      <div className="flex items-center justify-center h-full min-h-[200px] text-slate-400 text-sm">
         لا توجد بيانات للعرض
       </div>
     );
@@ -56,7 +46,7 @@ export function PieChart({
 
   if (data.length === 1) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-2">
+      <div className="flex flex-col items-center justify-center h-full min-h-[200px] gap-2">
         <div className="text-2xl font-semibold text-slate-700">{data[0].value}</div>
         <div className="text-sm text-slate-500">{data[0].name}</div>
       </div>
@@ -93,9 +83,8 @@ export function PieChart({
     : undefined;
 
   return (
-    <div className="w-full h-full min-h-[160px] min-w-0">
-      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={160}>
-        <RechartsPieChart>
+    <ChartContainer minHeight={160}>
+      <RechartsPieChart>
         <Pie
           data={data}
           cx="50%"
@@ -124,8 +113,7 @@ export function PieChart({
           iconType="circle"
           iconSize={10}
         />
-        </RechartsPieChart>
-      </ResponsiveContainer>
-    </div>
+      </RechartsPieChart>
+    </ChartContainer>
   );
 }

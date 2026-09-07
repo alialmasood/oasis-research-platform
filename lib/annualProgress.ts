@@ -11,10 +11,11 @@ export type AnnualProgressTarget = {
 export type AnnualProgressData = {
   year: string;
   progress: number;
+  /** كل فئات الخطة (بما فيها هدف = 0) لاستخدامها في التعديل والعرض */
   targets: AnnualProgressTarget[];
 };
 
-const GOAL_LABELS: Record<string, string> = {
+export const ANNUAL_GOAL_LABELS: Record<string, string> = {
   research: "البحوث",
   conferences: "المؤتمرات",
   seminars: "الندوات",
@@ -39,25 +40,21 @@ export async function getAnnualProgressData(
   const goals = await getGoals(userId, year);
   const aggregates = await getAggregatedCounts(userId, { year });
 
-  const targets = Object.entries(goals)
-    .filter(([, goal]) => (goal ?? 0) > 0)
-    .map(([key, goal]) => {
-      const current = (aggregates as Record<string, number>)[key] ?? 0;
-      return {
-        id: key,
-        label: GOAL_LABELS[key] ?? key,
-        current,
-        goal: goal ?? 0,
-      };
-    })
-    .sort((a, b) => b.goal - a.goal)
-    .slice(0, 4);
+  const targets = Object.entries(ANNUAL_GOAL_LABELS).map(([key, label]) => {
+    const goal = (goals as Record<string, number>)[key] ?? 0;
+    const current = (aggregates as Record<string, number>)[key] ?? 0;
+    return { id: key, label, current, goal };
+  });
 
+  const activeTargets = targets.filter((t) => t.goal > 0);
   const progress =
-    targets.length > 0
+    activeTargets.length > 0
       ? Math.round(
-          targets.reduce((sum, t) => sum + Math.min(1, t.current / (t.goal || 1)), 0) /
-            targets.length *
+          (activeTargets.reduce(
+            (sum, t) => sum + Math.min(1, t.current / (t.goal || 1)),
+            0
+          ) /
+            activeTargets.length) *
             100
         )
       : 0;

@@ -87,10 +87,10 @@ function getPeerIndicator(score: number): { label: string; className: string } {
 }
 
 function getExecutiveSummaryTone(score: number): string {
-  if (score >= 85) return "أعلى من المستوى المطلوب حاليًا مع أداء ثابت.";
-  if (score >= 70) return "ضمن المستوى المقبول حاليًا لكنه يحتاج رفع الوتيرة.";
-  if (score >= 55) return "أقل من المستوى المطلوب حاليًا ويحتاج تحسينًا واضحًا.";
-  return "دون المستوى المطلوب حاليًا ويتطلب خطة رفع عاجلة.";
+  if (score >= 85) return "أداء مرتفع";
+  if (score >= 70) return "ضمن المستوى المقبول";
+  if (score >= 55) return "يحتاج تحسينًا واضحًا";
+  return "يتطلب خطة رفع عاجلة";
 }
 
 /** لون شريط التقدم حسب النسبة */
@@ -307,14 +307,36 @@ export function EvaluationPageClient({
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg md:text-2xl font-semibold text-gray-900">التقييم والنقاط</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1">
-            تقييم إجمالي أو لفترة محددة، ومقارنة مع أهداف الخطة العلمية والمعايير الدولية.
+      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1 space-y-1">
+          <h1 className="text-lg md:text-xl font-semibold text-gray-900 leading-snug">
+            التقييم والنقاط
+            <span className="font-normal text-slate-500 text-sm md:text-base mr-2">
+              — إجمالي أو لفترة محددة · مقارنة بالخطة والمعايير
+            </span>
+          </h1>
+          <p className="text-sm text-slate-700 leading-snug">
+            <span className="font-semibold text-slate-900">{totalScore}</span>
+            <span className="text-slate-500"> / 100</span>
+            <span className="mx-1.5 text-slate-300">·</span>
+            <span className="font-medium text-slate-800">{performanceLevel.label}</span>
+            <span className="mx-1.5 text-slate-300">·</span>
+            <span className="text-slate-600">{executiveSummaryTone}</span>
+            {previousScore != null && scoreDelta != null && (
+              <>
+                <span className="mx-1.5 text-slate-300">·</span>
+                <span className="text-slate-600">
+                  السابق {previousScore}
+                  <span className={`mr-1 font-medium ${scoreDelta >= 0 ? "text-green-700" : "text-red-700"}`}>
+                    ({scoreDelta >= 0 ? "+" : ""}
+                    {scoreDelta})
+                  </span>
+                </span>
+              </>
+            )}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Select
             value={exportScope}
             onValueChange={(v) => setExportScope(v as "current" | "overall")}
@@ -344,24 +366,6 @@ export function EvaluationPageClient({
         </div>
       </div>
 
-      {/* ملخص تنفيذي */}
-      <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-3 text-sm text-slate-700">
-        <p className="font-medium text-slate-800 mb-1">ملخص تنفيذي</p>
-        <p>
-          التقييم الحالي <strong>{totalScore}</strong> من 100 (مستوى <strong>{performanceLevel.label}</strong>) —{" "}
-          <strong>{executiveSummaryTone}</strong>
-        </p>
-        {previousScore != null && scoreDelta != null && (
-          <p className="mt-2 pt-2 border-t border-slate-200 text-slate-700 font-medium">
-            مقارنة بالفترة السابقة: كان <strong>{previousScore}</strong>، التغيير{" "}
-            <span className={scoreDelta >= 0 ? "text-green-700" : "text-red-700"}>
-              {scoreDelta >= 0 ? "+" : ""}{scoreDelta}
-            </span>{" "}
-            نقطة.
-          </p>
-        )}
-      </div>
-
       {/* فلترة فترة التقييم */}
       <Card className="border-slate-100 bg-white shadow-lg">
         <CardHeader className="pb-3">
@@ -374,86 +378,77 @@ export function EvaluationPageClient({
               <Info className="h-3 w-3" />
             </span>
           </CardTitle>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 pt-1">
             عند تغيير الفلترة واضغط «تطبيق» يتم تحديث جميع الكروت والرسوم تلقائياً.
           </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex items-center gap-2">
-              <Button
-                variant={filterMode === "overall" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterMode("overall")}
-                className={filterMode === "overall" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : ""}
-              >
-                الإجمالي (كل البيانات)
-              </Button>
-              <Button
-                variant={filterMode === "period" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterMode("period")}
-                className={filterMode === "period" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : ""}
-              >
-                فترة محددة
-              </Button>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 pt-3">
+            <Button
+              variant={filterMode === "overall" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterMode("overall")}
+              className={filterMode === "overall" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : ""}
+            >
+              الإجمالي (كل البيانات)
+            </Button>
+            <Button
+              variant={filterMode === "period" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterMode("period")}
+              className={filterMode === "period" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : ""}
+            >
+              فترة محددة
+            </Button>
             {filterMode === "period" && (
               <>
-                <div className="min-w-[120px]">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">السنة</label>
-                  <Select
-                    value={selectedYear || "__none__"}
-                    onValueChange={(v) => setSelectedYear(v === "__none__" ? "" : v)}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="اختر السنة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">اختر السنة</SelectItem>
-                      {availableYears.length > 0
-                        ? availableYears.map((y) => (
-                            <SelectItem key={y} value={String(y)}>
-                              {y}
-                            </SelectItem>
-                          ))
-                        : [new Date().getFullYear(), new Date().getFullYear() - 1].map((y) => (
-                            <SelectItem key={y} value={String(y)}>
-                              {y}
-                            </SelectItem>
-                          ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="min-w-[140px]">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">الشهر</label>
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MONTHS.map((m) => (
-                        <SelectItem key={m.value} value={m.value}>
-                          {m.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select
+                  value={selectedYear || "__none__"}
+                  onValueChange={(v) => setSelectedYear(v === "__none__" ? "" : v)}
+                >
+                  <SelectTrigger className="h-8 w-[110px]">
+                    <SelectValue placeholder="السنة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">السنة</SelectItem>
+                    {availableYears.length > 0
+                      ? availableYears.map((y) => (
+                          <SelectItem key={y} value={String(y)}>
+                            {y}
+                          </SelectItem>
+                        ))
+                      : [new Date().getFullYear(), new Date().getFullYear() - 1].map((y) => (
+                          <SelectItem key={y} value={String(y)}>
+                            {y}
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="h-8 w-[130px]">
+                    <SelectValue placeholder="الشهر" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!selectedYear && (
+                  <span className="text-amber-700 text-xs font-medium">اختر السنة أولاً</span>
+                )}
               </>
-            )}
-            {filterMode === "period" && !selectedYear && (
-              <span className="text-amber-700 text-sm font-medium">اختر السنة أولاً</span>
             )}
             <Button
               onClick={handleApplyFilter}
               disabled={isPending || (filterMode === "period" && !selectedYear)}
-              className="bg-[#2563EB] hover:bg-[#1D4ED8] h-9"
+              size="sm"
+              className="bg-[#2563EB] hover:bg-[#1D4ED8]"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "تطبيق"}
             </Button>
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
       {/* إبراز أنواع التقييم */}
@@ -659,12 +654,12 @@ export function EvaluationPageClient({
           </CardContent>
         </Card>
         <Card className="border border-slate-100 border-r-4 border-r-amber-500 bg-white shadow-lg min-h-[92px]">
-          <CardContent className="p-4 h-full flex flex-col justify-between">
-            <div className="flex items-center justify-between gap-3 mb-2">
+          <CardContent className="p-4 h-full flex flex-col justify-between gap-2">
+            <div className="flex items-start justify-between gap-3">
               <div className="bg-amber-500/10 p-2 rounded-lg flex-shrink-0">
                 <Calendar className="h-4 w-4 text-amber-600" />
               </div>
-              <div className="text-sm font-bold text-gray-900 truncate max-w-[120px]">
+              <div className="text-sm font-bold text-gray-900 leading-snug break-words min-w-0 text-end">
                 {periodLabel}
               </div>
             </div>

@@ -24,10 +24,11 @@ const monthNames: Record<string, string> = {
 };
 
 export function FilterBadge({ year, month }: FilterBadgeProps) {
+  const yearLabel = !year || year === "all" ? "الكل" : year;
   const monthLabel = monthNames[month] || "الكل";
   return (
     <Badge className="h-8 px-3 text-xs font-medium bg-[#2563EB]/10 text-[#2563EB] border-[#2563EB]/20 inline-flex items-center">
-      مفلتر: {year} / {monthLabel}
+      مفلتر: {yearLabel} / {monthLabel}
     </Badge>
   );
 }

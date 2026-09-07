@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { FACULTY_BASE_WHERE } from "@/lib/admin/facultyRepo";
+import { resolvePublicUrl } from "@/lib/utils";
 
 /** حسابات تُستبعد من لوحات المقارنة والترتيب */
 const EXCLUDED_COMPARISON_EMAILS = ["admin@uobasrah.edu.iq"];
@@ -26,6 +27,7 @@ export type ComparisonFaculty = {
   collegeName: string;
   departmentName: string;
   academicTitle: string;
+  specificSpecialization?: string | null;
   avatarUrl?: string | null;
   totalPoints: number;
   metrics: ComparisonMetricsPoints;
@@ -83,6 +85,7 @@ export type MetricTabData = {
   id: string;
   label: string;
   myRank: number;
+  myValue: number;
   top10: MetricLeaderboardEntry[];
   chartData: Array<{ name: string; value: number; isUser?: boolean }>;
 };
@@ -476,7 +479,7 @@ export async function getComparisonData(
       generalSpecialization: true,
       specificSpecialization: true,
       departmentRelation: { select: { name: true } },
-      researcherProfile: { select: { avatarUrl: true } },
+      researcherProfile: { select: { avatarUrl: true, avatarMimeType: true } },
     },
   });
 
@@ -569,7 +572,10 @@ export async function getComparisonData(
       department: formatDepartment(user),
       college: formatCollege(user),
       academicTitle: user.academicTitle?.trim() || "غير محدد",
-      avatarUrl: user.researcherProfile?.avatarUrl ?? null,
+      specificSpecialization: user.specificSpecialization?.trim() || null,
+      avatarUrl: user.researcherProfile?.avatarMimeType
+        ? `/api/avatar/${user.id}`
+        : resolvePublicUrl(user.researcherProfile?.avatarUrl),
       score,
       counts,
       researchCount,
@@ -798,6 +804,7 @@ export async function getComparisonData(
       id: metric.id,
       label: metric.label,
       myRank,
+      myValue: currentEntry ? metric.getValue(currentEntry) : 0,
       top10,
       chartData: chartBase,
     };
@@ -810,6 +817,7 @@ export async function getComparisonData(
       collegeName: currentEntry?.college ?? "غير محدد",
       departmentName: currentEntry?.department ?? "غير محدد",
       academicTitle: currentEntry?.academicTitle ?? "غير محدد",
+      specificSpecialization: currentEntry?.specificSpecialization ?? null,
       avatarUrl: currentEntry?.avatarUrl ?? null,
       totalPoints: currentScore,
       metrics: currentEntry?.metricsPoints ?? {},
@@ -844,6 +852,7 @@ export async function getComparisonData(
         collegeName: entry.college,
         departmentName: entry.department,
         academicTitle: entry.academicTitle,
+      specificSpecialization: entry.specificSpecialization ?? null,
         avatarUrl: entry.avatarUrl ?? null,
         totalPoints: entry.score,
         metrics: entry.metricsPoints,
@@ -870,6 +879,7 @@ export async function getComparisonData(
         collegeName: entry.college,
         departmentName: entry.department,
         academicTitle: entry.academicTitle,
+      specificSpecialization: entry.specificSpecialization ?? null,
         avatarUrl: entry.avatarUrl ?? null,
         totalPoints: entry.score,
         metrics: entry.metricsPoints,
@@ -904,6 +914,7 @@ export async function getComparisonData(
       collegeName: entry.college,
       departmentName: entry.department,
       academicTitle: entry.academicTitle,
+      specificSpecialization: entry.specificSpecialization ?? null,
       avatarUrl: entry.avatarUrl ?? null,
       totalPoints: entry.score,
       metrics: entry.metricsPoints,
@@ -930,6 +941,7 @@ export async function getComparisonData(
       collegeName: entry.college,
       departmentName: entry.department,
       academicTitle: entry.academicTitle,
+      specificSpecialization: entry.specificSpecialization ?? null,
       avatarUrl: entry.avatarUrl ?? null,
       totalPoints: entry.score,
       metrics: entry.metricsPoints,
@@ -956,6 +968,7 @@ export async function getComparisonData(
       collegeName: entry.college,
       departmentName: entry.department,
       academicTitle: entry.academicTitle,
+      specificSpecialization: entry.specificSpecialization ?? null,
       avatarUrl: entry.avatarUrl ?? null,
       totalPoints: entry.score,
       metrics: entry.metricsPoints,
@@ -982,6 +995,7 @@ export async function getComparisonData(
       collegeName: entry.college,
       departmentName: entry.department,
       academicTitle: entry.academicTitle,
+      specificSpecialization: entry.specificSpecialization ?? null,
       avatarUrl: entry.avatarUrl ?? null,
       totalPoints: entry.score,
       metrics: entry.metricsPoints,

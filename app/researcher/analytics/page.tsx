@@ -21,6 +21,15 @@ function safeParseDate(value?: string) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function SectionLabel({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="space-y-1">
+      <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+      <p className="text-xs text-slate-500">{description}</p>
+    </div>
+  );
+}
+
 type AnalyticsSearchParams = {
   from?: string;
   to?: string;
@@ -67,18 +76,26 @@ export default async function ResearcherAnalyticsPage({
 
   return (
     <div className="space-y-6 overflow-x-hidden">
-      <div>
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">التحليلات الزمنية</h1>
-        <p className="text-sm text-slate-500 mt-1">لوحة تحليل احترافية لنشاطك الأكاديمي عبر الزمن.</p>
-      </div>
-
-      <div className="sticky top-4 z-20 rounded-2xl border border-slate-100 bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
-        <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-          <a href="#filters" className="rounded-full px-3 py-1 hover:bg-slate-100">الفلاتر</a>
-          <a href="#kpis" className="rounded-full px-3 py-1 hover:bg-slate-100">المؤشرات</a>
-          <a href="#charts" className="rounded-full px-3 py-1 hover:bg-slate-100">الرسوم</a>
-          <a href="#insights" className="rounded-full px-3 py-1 hover:bg-slate-100">الملخص</a>
-        </nav>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1 min-w-0">
+          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">التحليلات الزمنية</h1>
+          <p className="text-sm text-slate-500">
+            ملخص ذكي أولًا، ثم مؤشرات رقمية، ثم تفاصيل الرسوم حسب نوع النشاط.
+          </p>
+        </div>
+        <ExportReportButton
+          kpis={payload.kpis}
+          timeline={payload.timeline}
+          insights={payload.insights}
+          performance={payload.performance}
+          publications={payload.publications}
+          conferences={payload.conferences}
+          heatmap={payload.heatmap}
+          compare={payload.compare}
+          from={from.toISOString().slice(0, 10)}
+          to={to.toISOString().slice(0, 10)}
+          granularity={granularity}
+        />
       </div>
 
       <div id="filters">
@@ -92,33 +109,35 @@ export default async function ResearcherAnalyticsPage({
         />
       </div>
 
-      <div className="flex justify-end">
-        <ExportReportButton
-          kpis={payload.kpis}
-          timeline={payload.timeline}
-          insights={payload.insights}
-          from={from.toISOString().slice(0, 10)}
-          to={to.toISOString().slice(0, 10)}
-          granularity={granularity}
-        />
+      <div id="insights">
+        <InsightsPanel insights={payload.insights} />
       </div>
 
-      <div id="kpis">
+      <div id="kpis" className="space-y-3">
+        <SectionLabel title="المؤشرات الرئيسية" description="أرقام سريعة تلخّص نشاطك في الفترة المحددة." />
         <KpiCards kpis={payload.kpis} />
       </div>
 
-      <div id="charts" className="space-y-6">
+      <div id="charts" className="space-y-5">
+        <SectionLabel
+          title="الرسوم والتفاصيل"
+          description="ابدأ بالاتجاه العام، ثم وزّع النظر على أنواع النشاط والأداء الزمني."
+        />
+
         <ChartsOverview timeline={payload.timeline} />
-        <ChartsActivities timeline={payload.timeline} />
-        <ChartsPerformance data={payload.performance} />
-        <ChartsConferences data={payload.conferences} />
-        <ChartsPublications data={payload.publications} />
+
+        <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+          <ChartsActivities timeline={payload.timeline} />
+          <ChartsPerformance data={payload.performance} />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+          <ChartsConferences data={payload.conferences} />
+          <ChartsPublications data={payload.publications} />
+        </div>
+
         <HeatmapCalendar heatmap={payload.heatmap} />
         <ComparisonPanel compare={payload.compare} />
-      </div>
-
-      <div id="insights">
-        <InsightsPanel insights={payload.insights} />
       </div>
     </div>
   );

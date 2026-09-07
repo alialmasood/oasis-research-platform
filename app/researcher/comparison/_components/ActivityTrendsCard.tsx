@@ -3,13 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Bar,
@@ -33,7 +26,6 @@ const monthLabels = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "1
 export function ActivityTrendsCard({ trends }: ActivityTrendsCardProps) {
   const [mounted, setMounted] = useState(false);
   const [metricView, setMetricView] = useState<"total" | "research" | "conferences" | "courses">("total");
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -69,19 +61,7 @@ export function ActivityTrendsCard({ trends }: ActivityTrendsCardProps) {
     return <div className="rounded-2xl border border-slate-100 bg-white shadow-lg h-[340px]" />;
   }
 
-  const bestYearLabel = trends.bestYear ? `أفضل سنة نشاطًا: ${trends.bestYear}` : "أفضل سنة نشاطًا: —";
   const bestMonthLabel = trends.bestMonth ? `أعلى شهر نشاطًا: ${trends.bestMonth}` : "أعلى شهر نشاطًا: —";
-  const currentYearEntry = trends.yearly.find((entry) => entry.isCurrent);
-  const bestYearPoints = trends.yearly.find((entry) => entry.isBest)?.points ?? null;
-  const currentYearPoints = currentYearEntry?.points ?? null;
-  const deltaFromBest =
-    currentYearPoints != null && bestYearPoints != null ? bestYearPoints - currentYearPoints : null;
-  const smartInsight =
-    deltaFromBest != null
-      ? deltaFromBest > 0
-        ? `نشاطك الأكاديمي هذا العام أقل بـ ${deltaFromBest} نقطة من أعلى سنة لك، ويمكن تعويضه خلال الأشهر القادمة.`
-        : "نشاطك في تحسّن مقارنة بأفضل سنة لك 👍"
-      : "نشاطك في تحسّن مقارنة بالعام الماضي 👍";
   const yearlyMetricKey =
     metricView === "total"
       ? "النقاط"
@@ -90,23 +70,6 @@ export function ActivityTrendsCard({ trends }: ActivityTrendsCardProps) {
         : metricView === "conferences"
           ? "conferences"
           : "courses";
-  const sortedYears = [...trends.yearly].sort((a, b) => a.year - b.year);
-  const lastYear = sortedYears.at(-1);
-  const prevYear = sortedYears.at(-2);
-  let trendLabel = "لا تتوفر بيانات كافية لتحديد الاتجاه.";
-  let motivationLabel = "سجّل نشاطاتك باستمرار لرؤية تحسن واضح.";
-  if (lastYear && prevYear) {
-    if (lastYear.points > prevYear.points) {
-      trendLabel = "الاتجاه العام تصاعدي مقارنة بالعام السابق.";
-      motivationLabel = "استمر على هذا الإيقاع، وستحقق قفزة إضافية هذا العام.";
-    } else if (lastYear.points < prevYear.points) {
-      trendLabel = "الاتجاه العام متراجع مقارنة بالعام السابق.";
-      motivationLabel = "رفع نشاط بسيط في الأشهر القادمة يعكس الاتجاه للأعلى.";
-    } else {
-      trendLabel = "الاتجاه العام ثابت تقريبًا مقارنة بالعام السابق.";
-      motivationLabel = "تحسين محدود في معيار واحد يكسر حالة الثبات سريعًا.";
-    }
-  }
 
   return (
     <Card className="border-slate-100 bg-white shadow-lg">
@@ -174,9 +137,9 @@ export function ActivityTrendsCard({ trends }: ActivityTrendsCardProps) {
                     type="monotone"
                     dataKey={yearlyMetricKey}
                     stroke="#2563EB"
-                    strokeWidth={2}
-                    dot={(props) => {
-                      const isCurrent = (props.payload as { isCurrent?: boolean })?.isCurrent;
+                    strokeWidth={3}
+                    dot={(props: any) => {
+                      const isCurrent = props.payload?.isCurrent;
                       return (
                         <g>
                           <circle
@@ -204,9 +167,6 @@ export function ActivityTrendsCard({ trends }: ActivityTrendsCardProps) {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-xs text-slate-500">{bestYearLabel}</p>
-            <p className="text-xs text-slate-600">{trendLabel}</p>
-            <p className="text-xs text-slate-500">{motivationLabel}</p>
           </TabsContent>
 
           <TabsContent value="monthly" className="space-y-3">
@@ -244,33 +204,7 @@ export function ActivityTrendsCard({ trends }: ActivityTrendsCardProps) {
             </p>
           </TabsContent>
         </Tabs>
-
-        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          🔍 تحليل ذكي: {smartInsight}
-        </div>
-        <div className="mt-3">
-          <Button variant="outline" size="sm" onClick={() => setIsHelpOpen(true)}>
-            كيف أرفع نقاطي؟
-          </Button>
-        </div>
       </CardContent>
-
-      <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>كيف أرفع نقاطي؟</DialogTitle>
-            <DialogDescription>
-              أكثر الأنشطة تأثيرًا بسرعة حسب نظام النقاط الحالي.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 text-sm text-slate-700">
-            <p>• بحث منشور = +5 نقاط</p>
-            <p>• مشاركة مؤتمر = +2 نقاط</p>
-            <p>• إشراف على طالب = +4 نقاط</p>
-            <p>• دورة تدريبية = +2 نقاط</p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }

@@ -27,6 +27,7 @@ import {
   Handshake,
   MessageCircle,
   TrendingUp,
+  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -261,6 +262,12 @@ export function Sidebar({ user, onActivitiesToggle, isActivitiesOpen = false }: 
             label="روابط الباحث"
             icon={LinkIcon}
             isActive={pathname === "/researcher/links"}
+          />
+          <NavItem
+            href="/researcher/research-data"
+            label="البيانات البحثية"
+            icon={Database}
+            isActive={pathname === "/researcher/research-data"}
           />
           <NavItem
             href="/researcher/collaboration"

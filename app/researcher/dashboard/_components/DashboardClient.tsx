@@ -29,6 +29,8 @@ import { EmptyChartState } from "./EmptyChartState";
 import { getAcademicYearLabel } from "@/lib/academicYear";
 
 type DashboardClientProps = {
+  welcomeName: string;
+  welcomeAcademicTitle?: string | null;
   initialYear: string;
   initialMonth: string;
   initialType: string;
@@ -60,6 +62,8 @@ type DashboardClientProps = {
 };
 
 export function DashboardClient({
+  welcomeName,
+  welcomeAcademicTitle,
   initialYear,
   initialMonth,
   initialType,
@@ -104,14 +108,48 @@ export function DashboardClient({
   const [ranks, setRanks] = useState(initialRanks);
   const [kpiData, setKpiData] = useState(initialKpiData);
   const [isMobile, setIsMobile] = useState(false);
+  const [externalMetrics, setExternalMetrics] = useState<{
+    hIndex: number | null;
+    citations: number | null;
+    publications: number | null;
+  }>({ hIndex: null, citations: null, publications: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/researcher/external-metrics", { credentials: "include" });
+        if (!res.ok) return;
+        const json = await res.json();
+        const metrics = json?.metrics;
+        if (cancelled || !metrics?.ok) return;
+        setExternalMetrics({
+          hIndex: typeof metrics.hIndex === "number" ? metrics.hIndex : null,
+          citations: typeof metrics.citedByCount === "number" ? metrics.citedByCount : null,
+          publications: typeof metrics.publications === "number" ? metrics.publications : null,
+        });
+      } catch {
+        // تجاهل فشل الاستخراج في لوحة التحكم
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleExportReport = () => {
-    const year = selectedYear || new Date().getFullYear().toString();
+    const year =
+      selectedYear && selectedYear !== "all"
+        ? selectedYear
+        : availableYears[0] || new Date().getFullYear().toString();
     window.open(`/researcher/evaluation/print?year=${year}`, "_blank", "noopener,noreferrer");
   };
 
   const handlePrint = () => {
-    const year = selectedYear || new Date().getFullYear().toString();
+    const year =
+      selectedYear && selectedYear !== "all"
+        ? selectedYear
+        : availableYears[0] || new Date().getFullYear().toString();
     const month = selectedMonth && selectedMonth !== "all" ? `&month=${selectedMonth}` : "";
     window.open(`/researcher/evaluation/print?year=${year}${month}`, "_blank", "noopener,noreferrer");
   };
@@ -126,7 +164,10 @@ export function DashboardClient({
   };
 
   const refreshAvailableMonths = async (signal?: AbortSignal) => {
-    if (!selectedYear) return;
+    if (!selectedYear || selectedYear === "all") {
+      setAvailableMonths([]);
+      return;
+    }
     const response = await fetch(
       `/api/researcher/dashboard/available-periods?year=${selectedYear}`,
       { signal }
@@ -152,20 +193,32 @@ export function DashboardClient({
 
   useEffect(() => {
     if (availableYears.length === 0) {
-      if (selectedYear !== "") setSelectedYear("");
+      if (selectedYear !== "all" && selectedYear !== "") setSelectedYear("all");
       return;
     }
+    // Allow "all" (كل السنوات). Only reset when a specific year is invalid.
+    if (selectedYear === "all" || selectedYear === "") return;
     if (!availableYears.includes(selectedYear)) {
-      setSelectedYear(availableYears[0]);
+      setSelectedYear("all");
     }
   }, [availableYears, selectedYear]);
 
   useEffect(() => {
+    // Month filter requires a specific year
+    if (selectedYear === "all" || selectedYear === "") {
+      if (selectedMonth !== "all") setSelectedMonth("all");
+      return;
+    }
     if (selectedMonth === "all") return;
     if (!availableMonths.includes(selectedMonth)) {
       setSelectedMonth("all");
     }
-  }, [availableMonths, selectedMonth]);
+  }, [availableMonths, selectedMonth, selectedYear]);
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year);
+    if (year === "all") setSelectedMonth("all");
+  };
 
   const refreshFilteredResearch = async (signal?: AbortSignal) => {
     const query = new URLSearchParams({
@@ -229,7 +282,10 @@ export function DashboardClient({
   };
 
   const refreshAnnualProgress = async (signal?: AbortSignal) => {
-    const year = selectedYear || new Date().getFullYear().toString();
+    const year =
+      selectedYear && selectedYear !== "all"
+        ? selectedYear
+        : availableYears[0] || new Date().getFullYear().toString();
     const response = await fetch(`/api/researcher/dashboard/annual-progress?year=${year}`, { signal });
     if (!response.ok) return;
     const data = (await response.json()) as { progress?: AnnualProgressData };
@@ -339,15 +395,40 @@ export function DashboardClient({
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-2">
         <div>
           <h1 className="text-lg md:text-2xl font-semibold text-gray-900">
-            مرحبًا بك <span className="font-medium text-slate-800">د. علي حسين مزهر</span>
+            مرحبًا بك <span className="font-medium text-slate-800">{welcomeName}</span>
           </h1>
           <p className="text-sm md:text-base text-muted-foreground mt-0.5">
-            العام الدراسي {getAcademicYearLabel()}
+            {[welcomeAcademicTitle, `العام الدراسي ${getAcademicYearLabel()}`]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-sm text-slate-600">نقاطك هي</span>
-          <span className="text-lg font-bold text-[#2563EB]">{pointsScore}</span>
+        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">نقاطك هي</span>
+            <span className="text-lg font-bold tabular-nums text-[#2563EB]">{pointsScore}</span>
+          </div>
+          <span className="h-4 w-px bg-slate-300 shrink-0" aria-hidden />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">H-Index</span>
+            <span className="text-lg font-bold tabular-nums text-slate-900">
+              {externalMetrics.hIndex ?? "—"}
+            </span>
+          </div>
+          <span className="h-4 w-px bg-slate-300 shrink-0" aria-hidden />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">Citations</span>
+            <span className="text-lg font-bold tabular-nums text-slate-900">
+              {externalMetrics.citations ?? "—"}
+            </span>
+          </div>
+          <span className="h-4 w-px bg-slate-300 shrink-0" aria-hidden />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">Publications</span>
+            <span className="text-lg font-bold tabular-nums text-slate-900">
+              {externalMetrics.publications ?? "—"}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -505,7 +586,7 @@ export function DashboardClient({
               availableYears={availableYears}
               availableMonths={availableMonths}
               selectedType={selectedType}
-              onYearChange={setSelectedYear}
+              onYearChange={handleYearChange}
               onMonthChange={setSelectedMonth}
               onTypeChange={setSelectedType}
             />
@@ -526,6 +607,7 @@ export function DashboardClient({
                 activities={filteredActivitiesKpis}
                 year={selectedYear}
                 month={selectedMonth}
+                type={selectedType}
               />
             )}
           </CardContent>
@@ -549,17 +631,18 @@ export function DashboardClient({
           progress={annualProgress.progress}
           targets={annualProgress.targets}
           onTargetsUpdate={(nextTargets) => {
+            const active = nextTargets.filter((t) => t.goal > 0);
             setAnnualProgress((prev) => ({
               ...prev,
               targets: nextTargets,
               progress:
-                nextTargets.length > 0
+                active.length > 0
                   ? Math.round(
-                      (nextTargets.reduce(
-                        (sum, t) => sum + Math.min(1, t.current / (t.goal || 1)),
+                      (active.reduce(
+                        (sum, t) => sum + Math.min(1, t.current / t.goal),
                         0
                       ) /
-                        nextTargets.length) *
+                        active.length) *
                         100
                     )
                   : 0,

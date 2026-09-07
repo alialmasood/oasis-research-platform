@@ -303,13 +303,21 @@ export function CvClient({ initialProfileCv }: CvClientProps) {
       <div className="space-y-6">
         {/* Personal Information & Languages Section */}
         <div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">المعلومات الشخصية</h2>
-            <h2 className="text-lg font-semibold text-gray-900">اللغات التي يتقنها الباحث ومستوى الإتقان</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 lg:col-span-7">
+              المعلومات الشخصية
+            </h2>
+            <h2 className="text-lg font-semibold text-gray-900 lg:col-span-5">
+              اللغات ومستوى الإتقان
+            </h2>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PersonalInfoCard profileCv={profileCv} age={age} />
-            <LanguagesDisplayCard languages={profileCv.languages} />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="lg:col-span-7">
+              <PersonalInfoCard profileCv={profileCv} age={age} />
+            </div>
+            <div className="lg:col-span-5">
+              <LanguagesDisplayCard languages={profileCv.languages} />
+            </div>
           </div>
         </div>
 

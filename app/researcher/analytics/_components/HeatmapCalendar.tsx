@@ -35,11 +35,17 @@ export function HeatmapCalendar({ heatmap }: HeatmapCalendarProps) {
       ) : (
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
-              أكثر أشهر النشاط: {mostActive && mostActive.value > 0 ? `${mostActive.label} (${mostActive.value})` : "—"}
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-3.5 py-3">
+              <p className="text-xs text-slate-500">أكثر الأشهر نشاطًا</p>
+              <p className="text-sm font-semibold text-slate-900 mt-1">
+                {mostActive && mostActive.value > 0 ? `${mostActive.label} (${mostActive.value})` : "—"}
+              </p>
             </div>
-            <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
-              أشهر الركود: {leastActive ? `${leastActive.label} (${leastActive.value})` : "—"}
+            <div className="rounded-xl border border-rose-200 bg-rose-50/50 px-3.5 py-3">
+              <p className="text-xs text-slate-500">أشهر الركود</p>
+              <p className="text-sm font-semibold text-slate-900 mt-1">
+                {leastActive ? `${leastActive.label} (${leastActive.value})` : "—"}
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">

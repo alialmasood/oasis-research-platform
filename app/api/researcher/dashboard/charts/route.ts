@@ -14,7 +14,8 @@ export async function GET(request: Request) {
   const typeParam = (searchParams.get("type") ?? "all") as "all" | "research" | "activities";
 
   const year = yearParam && yearParam !== "all" ? Number(yearParam) : undefined;
-  const month = monthParam && monthParam !== "all" ? Number(monthParam) : undefined;
+  const month =
+    year != null && monthParam && monthParam !== "all" ? Number(monthParam) : undefined;
 
   const charts = await getDashboardChartsData({
     userId: user.id,

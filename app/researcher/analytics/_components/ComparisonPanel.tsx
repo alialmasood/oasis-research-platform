@@ -70,21 +70,29 @@ export function ComparisonPanel({ compare }: ComparisonPanelProps) {
   return (
     <SectionCard title="مقارنة الفترات" description="الفرق بين الفترة الحالية والسابقة">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
-          إجمالي النشاط: {compare.delta.total}%
-        </div>
-        <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
-          البحوث: {compare.delta.research}%
-        </div>
-        <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
-          المؤتمرات: {compare.delta.conference}%
-        </div>
-        <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
-          الورش: {compare.delta.workshop}%
-        </div>
-        <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
-          اللجان: {compare.delta.committee}%
-        </div>
+        {[
+          { label: "إجمالي النشاط", value: compare.delta.total },
+          { label: "البحوث", value: compare.delta.research },
+          { label: "المؤتمرات", value: compare.delta.conference },
+          { label: "الورش", value: compare.delta.workshop },
+          { label: "اللجان", value: compare.delta.committee },
+        ].map((item) => {
+          const tone =
+            item.value > 0
+              ? "border-emerald-200 bg-emerald-50/60 text-emerald-700"
+              : item.value < 0
+                ? "border-rose-200 bg-rose-50/50 text-rose-700"
+                : "border-slate-200 bg-slate-50 text-slate-600";
+          return (
+            <div key={item.label} className={`rounded-xl border px-3 py-2.5 ${tone}`}>
+              <p className="text-[11px] text-slate-500">{item.label}</p>
+              <p className="text-sm font-bold tabular-nums mt-1">
+                {item.value > 0 ? "+" : ""}
+                {item.value}%
+              </p>
+            </div>
+          );
+        })}
       </div>
       <div className="grid gap-4 mt-4 lg:grid-cols-[2fr_1fr]">
         <div className="h-[240px]">

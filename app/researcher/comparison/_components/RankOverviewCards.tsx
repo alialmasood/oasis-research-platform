@@ -28,28 +28,28 @@ export function RankOverviewCards({
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Card className="border-slate-100 bg-white shadow-lg">
+      <Card className="border border-amber-200 bg-white shadow-sm border-r-4 border-r-amber-500">
         <CardContent className="pt-5">
           <p className="text-sm text-slate-500">ترتيب الجامعة</p>
           <p className="text-2xl font-semibold text-slate-900 mt-2">{universityRank}</p>
           <p className="text-xs text-slate-500 mt-1">من أصل {totalResearchers} باحث</p>
         </CardContent>
       </Card>
-      <Card className="border-slate-100 bg-white shadow-lg">
+      <Card className="border border-blue-200 bg-white shadow-sm border-r-4 border-r-blue-600">
         <CardContent className="pt-5">
           <p className="text-sm text-slate-500">ترتيب الكلية</p>
           <p className="text-2xl font-semibold text-slate-900 mt-2">{collegeRank}</p>
           <p className="text-xs text-slate-500 mt-1">ضمن الكلية الحالية</p>
         </CardContent>
       </Card>
-      <Card className="border-slate-100 bg-white shadow-lg">
+      <Card className="border border-violet-200 bg-white shadow-sm border-r-4 border-r-violet-500">
         <CardContent className="pt-5">
           <p className="text-sm text-slate-500">ترتيب القسم</p>
           <p className="text-2xl font-semibold text-slate-900 mt-2">{departmentRank}</p>
           <p className="text-xs text-slate-500 mt-1">ضمن القسم الحالي</p>
         </CardContent>
       </Card>
-      <Card className="border-slate-100 bg-white shadow-lg">
+      <Card className="border border-emerald-200 bg-white shadow-sm border-r-4 border-r-emerald-500">
         <CardContent className="pt-5">
           <p className="text-sm text-slate-500">إجمالي النقاط</p>
           <p className="text-2xl font-semibold text-slate-900 mt-2">{totalPoints}</p>

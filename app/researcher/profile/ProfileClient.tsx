@@ -217,8 +217,26 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
   const academicDepts = DEPARTMENTS_BY_ENTITY[academicForm.entity] ?? [];
   const academicHasNoDepts = academicDepts.length === 0;
 
+  const isProfileComplete = completionPercent === 100;
+  const statusBadge = isProfileComplete
+    ? {
+        label: "مكتمل",
+        className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      }
+    : {
+        label: `قيد الإكمال · ${completionPercent}%`,
+        className: "bg-amber-50 text-amber-800 border-amber-200",
+      };
+
+  const labelClass = "text-xs font-medium text-slate-500";
+  const readonlyInputClass = "h-10 bg-slate-50 border-slate-200 text-slate-800";
+  const editInputClass = "h-10";
+  const cardClass = "border-slate-200/80 bg-white shadow-sm rounded-xl";
+  const sectionHeaderClass =
+    "flex flex-row items-center justify-between gap-3 space-y-0 border-b border-slate-100 pb-3";
+
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl space-y-5">
       <input
         ref={fileInputRef}
         type="file"
@@ -227,31 +245,32 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
         onChange={handleFileChange}
       />
 
-      <Card className="border-slate-100 bg-white shadow-sm">
-        <CardContent className="pt-6">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex items-start gap-4 flex-1 min-w-0">
+      {/* هوية الباحث */}
+      <Card className={cardClass}>
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="relative flex-shrink-0 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                    className="relative flex-shrink-0 rounded-full overflow-hidden ring-2 ring-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
                     aria-label="الصورة الشخصية - رفع أو تغيير أو إزالة"
                   >
                     {avatarUrl ? (
-                      <div className="h-14 w-14 rounded-full overflow-hidden">
+                      <div className="h-16 w-16 sm:h-[72px] sm:w-[72px] rounded-full overflow-hidden">
                         <Image
                           src={avatarUrl}
                           alt={displayName}
-                          width={56}
-                          height={56}
-                          className="object-cover"
+                          width={72}
+                          height={72}
+                          className="h-full w-full object-cover"
                           unoptimized={avatarUrl.startsWith("/avatars/") || avatarUrl.startsWith("/api/avatar/")}
                         />
                       </div>
                     ) : (
-                      <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center">
-                        <span className="text-lg font-semibold text-blue-700">{initials}</span>
+                      <div className="h-16 w-16 sm:h-[72px] sm:w-[72px] rounded-full bg-blue-50 flex items-center justify-center">
+                        <span className="text-xl font-semibold text-blue-700">{initials}</span>
                       </div>
                     )}
                     {uploading && (
@@ -279,109 +298,110 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+              <div className="flex-1 min-w-0 space-y-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight truncate">
                   {displayName}
                 </h1>
-                <p className="text-base text-slate-600 mb-1">
+                <p className="text-sm font-medium text-slate-600">
                   {profile.user.academicTitle || "—"}
                 </p>
-                <p className="text-sm text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-0">
-                  {profile.user.department && (
-                    <span>{profile.user.department}</span>
-                  )}
+                <p className="text-xs sm:text-sm text-slate-500 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                  {profile.user.department && <span>{profile.user.department}</span>}
                   {profile.user.department && profile.user.entity && (
-                    <span>•</span>
+                    <span className="text-slate-300">|</span>
                   )}
-                  {profile.user.entity && (
-                    <span>{profile.user.entity}</span>
-                  )}
+                  {profile.user.entity && <span>{profile.user.entity}</span>}
                   {(profile.user.department || profile.user.entity) && (
-                    <span>•</span>
+                    <span className="text-slate-300">|</span>
                   )}
                   <span>جامعة البصرة</span>
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Badge className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1.5">
+
+            <Badge
+              className={`h-8 px-3 text-xs font-medium border flex items-center gap-1.5 ${statusBadge.className}`}
+            >
+              {isProfileComplete ? (
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                مكتمل
-              </Badge>
-            </div>
+              ) : (
+                <AlertCircle className="h-3.5 w-3.5" />
+              )}
+              {statusBadge.label}
+            </Badge>
           </div>
           {avatarError && (
-            <p className="text-sm text-red-600 mt-2">{avatarError}</p>
+            <p className="text-sm text-red-600 mt-3">{avatarError}</p>
           )}
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border-slate-100 bg-white shadow-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  المعلومات الأساسية
-                </CardTitle>
-                {!isEditingBasicInfo ? (
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* المحتوى الرئيسي */}
+        <div className="lg:col-span-8 space-y-5">
+          {/* المعلومات الأساسية */}
+          <Card className={cardClass}>
+            <CardHeader className={`px-4 sm:px-5 pt-4 sm:pt-5 ${sectionHeaderClass}`}>
+              <CardTitle className="text-base font-semibold text-slate-900">
+                المعلومات الأساسية
+              </CardTitle>
+              {!isEditingBasicInfo ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 shrink-0 border-slate-200 text-slate-700"
+                  onClick={startEditingBasicInfo}
+                >
+                  <Edit className="h-3.5 w-3.5 ml-1.5" />
+                  تعديل البيانات
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    className="h-8"
+                    onClick={saveBasicInfo}
+                    disabled={basicInfoSaving}
+                  >
+                    <Save className="h-3.5 w-3.5 ml-1.5" />
+                    {basicInfoSaving ? "جاري الحفظ..." : "حفظ"}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 px-3 text-sm"
-                    onClick={startEditingBasicInfo}
+                    className="h-8"
+                    onClick={cancelEditingBasicInfo}
+                    disabled={basicInfoSaving}
                   >
-                    <Edit className="h-4 w-4 ml-2" />
-                    تعديل البيانات
+                    <X className="h-3.5 w-3.5 ml-1.5" />
+                    إلغاء
                   </Button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      className="h-8 px-3 text-sm"
-                      onClick={saveBasicInfo}
-                      disabled={basicInfoSaving}
-                    >
-                      <Save className="h-4 w-4 ml-2" />
-                      {basicInfoSaving ? "جاري الحفظ..." : "حفظ"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-3 text-sm"
-                      onClick={cancelEditingBasicInfo}
-                      disabled={basicInfoSaving}
-                    >
-                      <X className="h-4 w-4 ml-2" />
-                      إلغاء
-                    </Button>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="px-4 sm:px-5 py-4 space-y-5">
               {basicInfoError && (
                 <p className="text-sm text-red-600">{basicInfoError}</p>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">الاسم الثلاثي (عربي)</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5">
+                <div className="space-y-1.5">
+                  <Label className={labelClass}>الاسم الثلاثي (عربي)</Label>
                   <Input
                     value={profile.user.fullNameAr ?? displayName}
                     readOnly
-                    className="bg-slate-50 border-slate-200"
+                    className={readonlyInputClass}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">الاسم الثلاثي (إنجليزي)</Label>
+                <div className="space-y-1.5">
+                  <Label className={labelClass}>الاسم الثلاثي (إنجليزي)</Label>
                   <Input
                     value={profile.user.fullNameEn ?? ""}
                     readOnly
-                    className="bg-slate-50 border-slate-200"
+                    className={readonlyInputClass}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">اللقب العلمي</Label>
+                <div className="space-y-1.5">
+                  <Label className={labelClass}>اللقب العلمي</Label>
                   {isEditingBasicInfo ? (
                     <Select
                       value={basicInfoForm.academicTitle || ""}
@@ -389,7 +409,7 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                         setBasicInfoForm((f) => ({ ...f, academicTitle: value }))
                       }
                     >
-                      <SelectTrigger className="h-10">
+                      <SelectTrigger className={editInputClass}>
                         <SelectValue placeholder="اختر اللقب العلمي" />
                       </SelectTrigger>
                       <SelectContent>
@@ -404,141 +424,154 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                     <Input
                       value={profile.user.academicTitle ?? ""}
                       readOnly
-                      className="bg-slate-50 border-slate-200"
+                      className={readonlyInputClass}
                     />
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">البريد الجامعي</Label>
+                <div className="space-y-1.5">
+                  <Label className={labelClass}>البريد الجامعي</Label>
                   <Input
                     value={profile.user.email}
                     readOnly
-                    className="bg-slate-50 border-slate-200"
+                    className={readonlyInputClass}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">رقم الهاتف</Label>
-                  <Input
-                    value={isEditingBasicInfo ? basicInfoForm.phone : (profile.user.phone ?? "")}
-                    readOnly={!isEditingBasicInfo}
-                    onChange={(e) =>
-                      isEditingBasicInfo &&
-                      setBasicInfoForm((f) => ({ ...f, phone: e.target.value }))
-                    }
-                    className={isEditingBasicInfo ? "" : "bg-slate-50 border-slate-200"}
-                  />
+                <div className="space-y-1.5 sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3.5">
+                  <div className="space-y-1.5">
+                    <Label className={labelClass}>رقم الهاتف</Label>
+                    <Input
+                      value={isEditingBasicInfo ? basicInfoForm.phone : (profile.user.phone ?? "")}
+                      readOnly={!isEditingBasicInfo}
+                      onChange={(e) =>
+                        isEditingBasicInfo &&
+                        setBasicInfoForm((f) => ({ ...f, phone: e.target.value }))
+                      }
+                      className={isEditingBasicInfo ? editInputClass : readonlyInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className={labelClass}>الجنس</Label>
+                    <Input
+                      value={profile.cvPersonal.gender ?? ""}
+                      readOnly
+                      className={readonlyInputClass}
+                      placeholder="من السيرة الذاتية"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className={labelClass}>تاريخ الميلاد</Label>
+                    <Input
+                      value={
+                        profile.cvPersonal.dateOfBirth
+                          ? new Date(profile.cvPersonal.dateOfBirth).toISOString().slice(0, 10)
+                          : ""
+                      }
+                      readOnly
+                      className={readonlyInputClass}
+                      placeholder="من السيرة الذاتية"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">الجنس</Label>
-                  <Input
-                    value={profile.cvPersonal.gender ?? ""}
-                    readOnly
-                    className="bg-slate-50 border-slate-200"
-                    placeholder="من صفحة السيرة الذاتية — المعلومات الشخصية"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">تاريخ الميلاد</Label>
-                  <Input
-                    value={
-                      profile.cvPersonal.dateOfBirth
-                        ? new Date(profile.cvPersonal.dateOfBirth).toISOString().slice(0, 10)
-                        : ""
-                    }
-                    readOnly
-                    className="bg-slate-50 border-slate-200"
-                    placeholder="من صفحة السيرة الذاتية — المعلومات الشخصية"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">الرقم الوظيفي</Label>
-                  <Input
-                    value={isEditingBasicInfo ? basicInfoForm.employeeNumber : (profile.user.employeeNumber ?? "")}
-                    readOnly={!isEditingBasicInfo}
-                    onChange={(e) =>
-                      isEditingBasicInfo &&
-                      setBasicInfoForm((f) => ({ ...f, employeeNumber: e.target.value }))
-                    }
-                    className={isEditingBasicInfo ? "" : "bg-slate-50 border-slate-200"}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">سنة التعيين</Label>
-                  <Input
-                    value={isEditingBasicInfo ? basicInfoForm.appointmentYear : (profile.user.appointmentYear?.toString() ?? "")}
-                    readOnly={!isEditingBasicInfo}
-                    onChange={(e) =>
-                      isEditingBasicInfo &&
-                      setBasicInfoForm((f) => ({ ...f, appointmentYear: e.target.value }))
-                    }
-                    placeholder="مثال: 2020"
-                    className={isEditingBasicInfo ? "" : "bg-slate-50 border-slate-200"}
-                  />
+              </div>
+
+              <div className="border-t border-slate-100 pt-4 space-y-3">
+                <p className="text-xs font-semibold text-slate-500 tracking-wide">
+                  المعلومات الإدارية
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5">
+                  <div className="space-y-1.5">
+                    <Label className={labelClass}>الرقم الوظيفي</Label>
+                    <Input
+                      value={
+                        isEditingBasicInfo
+                          ? basicInfoForm.employeeNumber
+                          : (profile.user.employeeNumber ?? "")
+                      }
+                      readOnly={!isEditingBasicInfo}
+                      onChange={(e) =>
+                        isEditingBasicInfo &&
+                        setBasicInfoForm((f) => ({ ...f, employeeNumber: e.target.value }))
+                      }
+                      className={isEditingBasicInfo ? editInputClass : readonlyInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className={labelClass}>سنة التعيين</Label>
+                    <Input
+                      value={
+                        isEditingBasicInfo
+                          ? basicInfoForm.appointmentYear
+                          : (profile.user.appointmentYear?.toString() ?? "")
+                      }
+                      readOnly={!isEditingBasicInfo}
+                      onChange={(e) =>
+                        isEditingBasicInfo &&
+                        setBasicInfoForm((f) => ({ ...f, appointmentYear: e.target.value }))
+                      }
+                      placeholder="مثال: 2020"
+                      className={isEditingBasicInfo ? editInputClass : readonlyInputClass}
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100 bg-white shadow-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  الانتماء الأكاديمي
-                </CardTitle>
-                {!isEditingAcademic ? (
+          {/* الانتماء الأكاديمي */}
+          <Card className={cardClass}>
+            <CardHeader className={`px-4 sm:px-5 pt-4 sm:pt-5 ${sectionHeaderClass}`}>
+              <CardTitle className="text-base font-semibold text-slate-900">
+                الانتماء الأكاديمي
+              </CardTitle>
+              {!isEditingAcademic ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 shrink-0 border-slate-200 text-slate-700"
+                  onClick={startEditingAcademic}
+                >
+                  <Edit className="h-3.5 w-3.5 ml-1.5" />
+                  {isAcademicComplete ? "تحديث البيانات" : "إكمال البيانات"}
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    className="h-8"
+                    onClick={saveAcademic}
+                    disabled={academicSaving}
+                  >
+                    <Save className="h-3.5 w-3.5 ml-1.5" />
+                    {academicSaving ? "جاري الحفظ..." : "حفظ"}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 px-3 text-sm"
-                    onClick={startEditingAcademic}
+                    className="h-8"
+                    onClick={cancelEditingAcademic}
+                    disabled={academicSaving}
                   >
-                    <Edit className="h-4 w-4 ml-2" />
-                    {isAcademicComplete ? "تحديث البيانات" : "اكمال البيانات"}
+                    <X className="h-3.5 w-3.5 ml-1.5" />
+                    إلغاء
                   </Button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      className="h-8 px-3 text-sm"
-                      onClick={saveAcademic}
-                      disabled={academicSaving}
-                    >
-                      <Save className="h-4 w-4 ml-2" />
-                      {academicSaving ? "جاري الحفظ..." : "حفظ"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-3 text-sm"
-                      onClick={cancelEditingAcademic}
-                      disabled={academicSaving}
-                    >
-                      <X className="h-4 w-4 ml-2" />
-                      إلغاء
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {academicError && (
-                <p className="text-sm text-red-600">{academicError}</p>
+                </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600 flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-slate-400" />
+            </CardHeader>
+            <CardContent className="px-4 sm:px-5 py-4">
+              {academicError && (
+                <p className="text-sm text-red-600 mb-3">{academicError}</p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5">
+                <div className="space-y-1.5">
+                  <Label className={`${labelClass} flex items-center gap-1.5`}>
+                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
                     الجامعة
                   </Label>
-                  <Input
-                    value="جامعة البصرة"
-                    readOnly
-                    className="bg-slate-50 border-slate-200"
-                  />
+                  <Input value="جامعة البصرة" readOnly className={readonlyInputClass} />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600 flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-slate-400" />
+                <div className="space-y-1.5">
+                  <Label className={`${labelClass} flex items-center gap-1.5`}>
+                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
                     الكلية / التشكيل
                   </Label>
                   {isEditingAcademic ? (
@@ -554,7 +587,7 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                         }));
                       }}
                     >
-                      <SelectTrigger className="h-10">
+                      <SelectTrigger className={editInputClass}>
                         <SelectValue placeholder="اختر الكلية/التشكيل" />
                       </SelectTrigger>
                       <SelectContent>
@@ -569,13 +602,13 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                     <Input
                       value={profile.user.entity || ""}
                       readOnly
-                      className="bg-slate-50 border-slate-200"
+                      className={readonlyInputClass}
                     />
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600 flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-slate-400" />
+                <div className="space-y-1.5">
+                  <Label className={`${labelClass} flex items-center gap-1.5`}>
+                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
                     القسم
                   </Label>
                   {isEditingAcademic ? (
@@ -583,7 +616,7 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                       <Input
                         value="لا توجد أقسام"
                         readOnly
-                        className="bg-slate-50 border-slate-200"
+                        className={readonlyInputClass}
                       />
                     ) : (
                       <Select
@@ -592,7 +625,7 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                           setAcademicForm((f) => ({ ...f, department: value }))
                         }
                       >
-                        <SelectTrigger className="h-10">
+                        <SelectTrigger className={editInputClass}>
                           <SelectValue placeholder="اختر القسم" />
                         </SelectTrigger>
                         <SelectContent>
@@ -608,12 +641,12 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                     <Input
                       value={profile.user.department || ""}
                       readOnly
-                      className="bg-slate-50 border-slate-200"
+                      className={readonlyInputClass}
                     />
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">التخصص العام</Label>
+                <div className="space-y-1.5">
+                  <Label className={labelClass}>التخصص العام</Label>
                   <Input
                     value={
                       isEditingAcademic
@@ -629,11 +662,11 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                       }))
                     }
                     placeholder="يتم ملؤه من التدريسي"
-                    className={isEditingAcademic ? "" : "bg-slate-50 border-slate-200"}
+                    className={isEditingAcademic ? editInputClass : readonlyInputClass}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-600">التخصص الدقيق</Label>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label className={labelClass}>التخصص الدقيق</Label>
                   <Input
                     value={
                       isEditingAcademic
@@ -649,7 +682,7 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                       }))
                     }
                     placeholder="يتم ملؤه من التدريسي"
-                    className={isEditingAcademic ? "" : "bg-slate-50 border-slate-200"}
+                    className={isEditingAcademic ? editInputClass : readonlyInputClass}
                   />
                 </div>
               </div>
@@ -657,40 +690,64 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card className="border-slate-100 bg-white shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold text-gray-900">
+        {/* اكتمال الملف */}
+        <aside className="lg:col-span-4 lg:sticky lg:top-20">
+          <Card className={cardClass}>
+            <CardHeader className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-slate-100 space-y-0">
+              <CardTitle className="text-base font-semibold text-slate-900">
                 اكتمال الملف الشخصي
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-slate-600">النسبة الإجمالية</span>
-                  <span className="text-lg font-bold text-[#2563EB]">
+            <CardContent className="px-4 sm:px-5 py-4 space-y-4">
+              <div className="rounded-lg bg-slate-50 border border-slate-100 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-500">النسبة الإجمالية</span>
+                  <span className="text-xl font-bold tabular-nums text-blue-600">
                     {completionPercent}%
                   </span>
                 </div>
-                <Progress value={completionPercent} className="h-2" />
+                <Progress value={completionPercent} className="h-2.5" />
               </div>
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                {completionItems.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
-                    {item.completed ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                    )}
-                    <span className={item.completed ? "text-slate-700" : "text-slate-500"}>
-                      {item.label}
+
+              <ul className="space-y-2">
+                {completionItems.map((item) => (
+                  <li
+                    key={item.label}
+                    className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm ${
+                      item.completed
+                        ? "border-emerald-100 bg-emerald-50/50"
+                        : "border-amber-100 bg-amber-50/40"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
+                      {item.completed ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                      )}
+                      <span
+                        className={
+                          item.completed
+                            ? "text-slate-800 font-medium"
+                            : "text-slate-600"
+                        }
+                      >
+                        {item.label}
+                      </span>
                     </span>
-                  </div>
+                    <span
+                      className={`text-[11px] font-medium shrink-0 ${
+                        item.completed ? "text-emerald-700" : "text-amber-700"
+                      }`}
+                    >
+                      {item.completed ? "مكتمل" : "ناقص"}
+                    </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </CardContent>
           </Card>
-        </div>
+        </aside>
       </div>
     </div>
   );

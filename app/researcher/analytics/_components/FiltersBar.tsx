@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Clock3, Filter } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type FiltersBarProps = {
   initialFrom: string;
@@ -85,106 +85,102 @@ export function FiltersBar({
 
   return (
     <Card className="border-slate-100 bg-white shadow-lg">
-      <CardContent className="pt-5">
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">من</label>
-              <Input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">إلى</label>
-              <Input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700"
-              />
-            </div>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-slate-900">فلاتر الفترة</CardTitle>
+        <p className="text-xs text-slate-500">حدد المدى الزمني وطريقة التجميع قبل قراءة التحليل.</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">من</label>
+            <Input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700"
+            />
           </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">التجميع</label>
-              <select
-                value={granularity}
-                onChange={(e) => setGranularity(e.target.value as "month" | "year")}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
-              >
-                <option value="month">شهري</option>
-                <option value="year">سنوي</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">مقارنة فترة</label>
-              <div className="flex h-10 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3">
-                <input
-                  id="compare-toggle"
-                  type="checkbox"
-                  checked={compare}
-                  onChange={(e) => setCompare(e.target.checked)}
-                  className="h-4 w-4"
-                />
-                <label htmlFor="compare-toggle" className="text-sm text-slate-700">
-                  تفعيل المقارنة
-                </label>
-              </div>
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">إلى</label>
+            <Input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700"
+            />
           </div>
-
-          <div className="flex flex-col gap-2">
-            <div>
-              <span className="block text-xs font-medium text-transparent mb-1 select-none">.</span>
-              <Button onClick={applyFilters} className="h-10 w-full bg-[#2563EB] hover:bg-[#1D4ED8]" disabled={isPending}>
-                <span className="inline-flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  {isPending ? "جاري التحديث..." : "تطبيق"}
-                </span>
-              </Button>
-            </div>
-            <div>
-              <span className="block text-xs font-medium text-transparent mb-1 select-none">.</span>
-              <Button variant="outline" onClick={resetToDefaults} className="h-10 w-full text-slate-600" disabled={isPending}>
-                إعادة تعيين الفلاتر
-              </Button>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">التجميع</label>
+            <select
+              value={granularity}
+              onChange={(e) => setGranularity(e.target.value as "month" | "year")}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
+            >
+              <option value="month">شهري</option>
+              <option value="year">سنوي</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">مقارنة فترة</label>
+            <div className="flex h-10 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3">
+              <input
+                id="compare-toggle"
+                type="checkbox"
+                checked={compare}
+                onChange={(e) => setCompare(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <label htmlFor="compare-toggle" className="text-sm text-slate-700">
+                تفعيل المقارنة
+              </label>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">من (مقارنة)</label>
-            <Input
-              type="date"
-              value={compareFrom}
-              onChange={(e) => setCompareFrom(e.target.value)}
-              disabled={compareDisabled}
-              className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:bg-slate-50"
-            />
+        {compare ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">من (مقارنة)</label>
+              <Input
+                type="date"
+                value={compareFrom}
+                onChange={(e) => setCompareFrom(e.target.value)}
+                disabled={compareDisabled}
+                className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:bg-slate-50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">إلى (مقارنة)</label>
+              <Input
+                type="date"
+                value={compareTo}
+                onChange={(e) => setCompareTo(e.target.value)}
+                disabled={compareDisabled}
+                className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:bg-slate-50"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">إلى (مقارنة)</label>
-            <Input
-              type="date"
-              value={compareTo}
-              onChange={(e) => setCompareTo(e.target.value)}
-              disabled={compareDisabled}
-              className="h-10 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-700 disabled:bg-slate-50"
-            />
-          </div>
-        </div>
+        ) : null}
 
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-          <Clock3 className="h-4 w-4 text-slate-500" />
-          <span>
-            البيانات المعروضة من {formatDateLabel(from)} إلى {formatDateLabel(to)} — عرض{" "}
-            {granularity === "year" ? "سنوي" : "شهري"}
-          </span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <Clock3 className="h-4 w-4 text-slate-500 shrink-0" />
+            <span>
+              من {formatDateLabel(from)} إلى {formatDateLabel(to)} — عرض{" "}
+              {granularity === "year" ? "سنوي" : "شهري"}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={resetToDefaults} className="h-10 rounded-xl text-slate-600" disabled={isPending}>
+              إعادة تعيين
+            </Button>
+            <Button onClick={applyFilters} className="h-10 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8]" disabled={isPending}>
+              <span className="inline-flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                {isPending ? "جاري التحديث..." : "تطبيق الفلاتر"}
+              </span>
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -9,8 +9,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
 } from "recharts";
+import { ChartContainer } from "./chart-container";
 
 interface BarChartProps {
   data: Array<Record<string, any>>;
@@ -39,10 +39,12 @@ const defaultColors = [
   "#f97316",
 ];
 
-// قالب YAxis الصحيح لمنع 0..1 — كل القيم أعداد صحيحة
 const yAxisProps = {
   allowDecimals: false,
-  domain: [0, (max: number) => Math.max(1, Math.ceil(max) + 1)] as [number, string | ((max: number) => number)],
+  domain: [0, (max: number) => Math.max(1, Math.ceil(max) + 1)] as [
+    number,
+    string | ((max: number) => number),
+  ],
   tickMargin: 8,
 };
 
@@ -57,15 +59,6 @@ export function BarChart({
   tickFontSize = 12,
   legendWrapperStyle,
 }: BarChartProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className="w-full h-full min-h-[160px] min-w-0" />;
-  }
   const chartMargin = {
     top: legendVerticalAlign === "top" ? 24 : 8,
     right: 20,
@@ -85,7 +78,7 @@ export function BarChart({
         if (!active || !payload?.length || label == null) return null;
         const value = payload[0]?.value ?? 0;
         const dataKey = payload[0]?.dataKey ?? dataKeys[0];
-        const text = tooltipLabel(String(label), value, dataKey);
+        const text = tooltipLabel(String(label), value, String(dataKey));
         return (
           <div
             style={{
@@ -103,9 +96,8 @@ export function BarChart({
     : undefined;
 
   return (
-    <div className="w-full h-full min-h-[160px] min-w-0">
-      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={160}>
-        <RechartsBarChart data={data} margin={chartMargin}>
+    <ChartContainer minHeight={160}>
+      <RechartsBarChart data={data} margin={chartMargin}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.1} />
         <XAxis
           dataKey="name"
@@ -152,8 +144,7 @@ export function BarChart({
             radius={[4, 4, 0, 0]}
           />
         ))}
-        </RechartsBarChart>
-      </ResponsiveContainer>
-    </div>
+      </RechartsBarChart>
+    </ChartContainer>
   );
 }

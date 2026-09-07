@@ -17,7 +17,8 @@ export async function GET(request: Request) {
   const type = searchParams.get("type") ?? "all";
 
   const year = yearParam && yearParam !== "all" ? Number(yearParam) : undefined;
-  const month = monthParam && monthParam !== "all" ? Number(monthParam) : undefined;
+  const month =
+    year != null && monthParam && monthParam !== "all" ? Number(monthParam) : undefined;
 
   const filtered =
     type === "activities"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Toast } from "@/components/ui/toast";
 import {
@@ -26,6 +27,7 @@ import {
   Briefcase,
   Database,
   Stethoscope,
+  X,
 } from "lucide-react";
 
 export type ResearcherLinksData = {
@@ -41,21 +43,86 @@ export type ResearcherLinksData = {
   otherLinks?: Array<{ label: string; url: string }> | null;
 };
 
-const LINK_FIELDS: Array<{
-  key: keyof Omit<ResearcherLinksData, "otherLinks">;
+type LinkFieldKey = keyof Omit<ResearcherLinksData, "otherLinks">;
+
+type LinkFieldDef = {
+  key: LinkFieldKey;
   label: string;
+  displayLabel: string;
   placeholder: string;
   icon: React.ElementType;
-}> = [
-  { key: "googleScholar", label: "رابط Google Scholar", placeholder: "https://scholar.google.com/...", icon: GraduationCap },
-  { key: "researchGate", label: "رابط Research Gate", placeholder: "https://www.researchgate.net/...", icon: BookOpen },
-  { key: "webOfScience", label: "رابط Web of Science", placeholder: "https://www.webofscience.com/...", icon: Globe },
-  { key: "scopus", label: "رابط Scopus", placeholder: "https://www.scopus.com/...", icon: FileText },
-  { key: "orcid", label: "رابط ORCID", placeholder: "https://orcid.org/...", icon: User },
-  { key: "linkedIn", label: "رابط LinkedIn", placeholder: "https://www.linkedin.com/in/...", icon: Briefcase },
-  { key: "pubmed", label: "رابط PubMed", placeholder: "https://pubmed.ncbi.nlm.nih.gov/...", icon: Stethoscope },
-  { key: "personalWebsite", label: "الموقع الشخصي", placeholder: "https://...", icon: Globe },
+  group: "academic" | "additional";
+};
+
+const LINK_FIELDS: LinkFieldDef[] = [
+  {
+    key: "googleScholar",
+    label: "رابط Google Scholar",
+    displayLabel: "Google Scholar",
+    placeholder: "https://scholar.google.com/...",
+    icon: GraduationCap,
+    group: "academic",
+  },
+  {
+    key: "researchGate",
+    label: "رابط ResearchGate",
+    displayLabel: "ResearchGate",
+    placeholder: "https://www.researchgate.net/profile/...",
+    icon: BookOpen,
+    group: "academic",
+  },
+  {
+    key: "webOfScience",
+    label: "رابط Web of Science",
+    displayLabel: "Web of Science",
+    placeholder: "https://www.webofscience.com/...",
+    icon: Globe,
+    group: "academic",
+  },
+  {
+    key: "scopus",
+    label: "رابط Scopus",
+    displayLabel: "Scopus",
+    placeholder: "https://www.scopus.com/...",
+    icon: FileText,
+    group: "academic",
+  },
+  {
+    key: "orcid",
+    label: "رابط ORCID",
+    displayLabel: "ORCID",
+    placeholder: "https://orcid.org/0000-0000-0000-0000",
+    icon: User,
+    group: "academic",
+  },
+  {
+    key: "linkedIn",
+    label: "رابط LinkedIn",
+    displayLabel: "LinkedIn",
+    placeholder: "https://www.linkedin.com/in/...",
+    icon: Briefcase,
+    group: "additional",
+  },
+  {
+    key: "pubmed",
+    label: "رابط PubMed",
+    displayLabel: "PubMed",
+    placeholder: "https://pubmed.ncbi.nlm.nih.gov/...",
+    icon: Stethoscope,
+    group: "additional",
+  },
+  {
+    key: "personalWebsite",
+    label: "الموقع الشخصي",
+    displayLabel: "الموقع الشخصي",
+    placeholder: "https://...",
+    icon: Globe,
+    group: "additional",
+  },
 ];
+
+const ACADEMIC_FIELDS = LINK_FIELDS.filter((f) => f.group === "academic");
+const ADDITIONAL_FIELDS = LINK_FIELDS.filter((f) => f.group === "additional");
 
 const emptyLinks = (): ResearcherLinksData => ({
   googleScholar: null,
@@ -70,6 +137,13 @@ const emptyLinks = (): ResearcherLinksData => ({
   otherLinks: null,
 });
 
+const cardShell = "rounded-xl border border-slate-200/70 bg-white shadow-sm";
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200";
+const inputClass = `h-10 rounded-lg border-slate-200 text-sm text-left placeholder:text-slate-400/80 ${focusRing}`;
+const thinScroll =
+  "[scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.35)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/40";
+
 function LinkCard({
   title,
   url,
@@ -79,26 +153,64 @@ function LinkCard({
   url: string;
   icon: React.ElementType;
 }) {
+  const href = url.startsWith("http") ? url : `https://${url}`;
+
   return (
-    <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <Card className={`${cardShell} overflow-hidden gap-0 py-0 hover:border-slate-300/80 transition-colors`}>
       <CardContent className="p-0">
         <a
-          href={url.startsWith("http") ? url : `https://${url}`}
+          href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-4 p-4 text-right hover:bg-slate-50 transition-colors"
+          title={url}
+          aria-label={`فتح رابط ${title}`}
+          className={`flex items-center gap-3 px-3.5 py-3 text-right hover:bg-slate-50/80 transition-colors ${focusRing}`}
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-            <Icon className="h-6 w-6" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <Icon className="h-[18px] w-[18px]" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-slate-800">{title}</p>
-            <p className="text-xs text-slate-500 truncate">{url}</p>
+            <p className="text-sm font-semibold text-slate-900 leading-snug truncate">{title}</p>
+            <p className="mt-0.5 text-xs text-slate-500 truncate leading-snug" dir="ltr" title={url}>
+              {url}
+            </p>
           </div>
-          <ExternalLink className="h-4 w-4 shrink-0 text-slate-400" />
+          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
         </a>
       </CardContent>
     </Card>
+  );
+}
+
+function FieldBlock({
+  field,
+  value,
+  onChange,
+}: {
+  field: LinkFieldDef;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const Icon = field.icon;
+  return (
+    <div className="space-y-1.5">
+      <Label
+        htmlFor={field.key}
+        className="text-sm font-medium text-slate-700 flex items-center gap-2"
+      >
+        <Icon className="h-4 w-4 text-slate-400 shrink-0" aria-hidden />
+        {field.label}
+      </Label>
+      <Input
+        id={field.key}
+        type="url"
+        placeholder={field.placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        dir="ltr"
+        className={inputClass}
+      />
+    </div>
   );
 }
 
@@ -200,53 +312,60 @@ export function LinksPageClient() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[280px]">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      <div className="flex items-center justify-center min-h-[200px] text-slate-500 gap-2 text-sm">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        جاري تحميل الروابط...
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">روابط الباحث</h1>
-          <p className="text-sm text-slate-500 mt-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-xl md:text-2xl font-semibold text-slate-900 tracking-tight">
+            روابط الباحث
+          </h1>
+          <p className="text-[13px] text-slate-500 leading-relaxed max-w-2xl">
             أدخل وعرض الروابط الرسمية لحساباتك البحثية والأكاديمية
           </p>
         </div>
-        <Button onClick={openManage} className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
-          <Plus className="h-4 w-4 ml-2" />
+        <Button
+          onClick={openManage}
+          className={`h-9 rounded-lg px-3.5 text-sm bg-blue-600 hover:bg-blue-700 text-white shrink-0 ${focusRing}`}
+        >
+          <Plus className="h-3.5 w-3.5 ml-2" />
           إدارة روابط الباحث
         </Button>
       </div>
 
       {!hasAnyLink ? (
-        <Card className="border border-slate-200 bg-slate-50/50">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="rounded-full bg-blue-50 p-4 mb-4">
-              <LinkIcon className="h-8 w-8 text-blue-600" />
+        <Card className={`${cardShell} gap-0 py-0`}>
+          <CardContent className="flex flex-col items-center justify-center px-6 py-10 text-center">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+              <LinkIcon className="h-6 w-6 text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">لا توجد روابط مسجّلة</h3>
-            <p className="text-sm text-slate-500 mb-6 max-w-md">
-              أضف روابط حساباتك على Google Scholar و Research Gate و Scopus وغيرها لعرضها هنا.
+            <h3 className="text-[17px] font-semibold text-slate-800">لا توجد روابط مسجّلة</h3>
+            <p className="mt-1.5 text-[13px] text-slate-500 max-w-md leading-relaxed">
+              أضف روابط حساباتك على Google Scholar و ResearchGate و Scopus وغيرها لعرضها هنا.
             </p>
-            <Button onClick={openManage} className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="h-4 w-4 ml-2" />
+            <Button
+              onClick={openManage}
+              className={`mt-5 h-9 rounded-lg px-3.5 text-sm bg-blue-600 hover:bg-blue-700 text-white ${focusRing}`}
+            >
+              <Plus className="h-3.5 w-3.5 ml-2" />
               إضافة روابط
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {LINK_FIELDS.map(({ key, label, icon: Icon }) => {
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {LINK_FIELDS.map(({ key, displayLabel, icon: Icon }) => {
             const url = links?.[key];
             if (!url?.trim()) return null;
-            return (
-              <LinkCard key={key} title={label} url={url} icon={Icon} />
-            );
+            return <LinkCard key={key} title={displayLabel} url={url} icon={Icon} />;
           })}
           {Array.isArray(links?.otherLinks) &&
             links.otherLinks
@@ -263,76 +382,144 @@ export function LinksPageClient() {
       )}
 
       <Dialog open={manageOpen} onOpenChange={(open) => !open && closeManage()}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
-          <DialogHeader>
-            <DialogTitle>إدارة روابط الباحث</DialogTitle>
-            <DialogDescription>
-              أدخل الروابط الرسمية لحساباتك البحثية. يمكنك ترك الحقول الفارغة.
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-[calc(100%-1.5rem)] sm:max-w-2xl p-0 gap-0 overflow-hidden flex flex-col max-h-[85vh] rounded-xl border-slate-200/70 shadow-lg"
+          dir="rtl"
+        >
+          <button
+            type="button"
+            onClick={closeManage}
+            aria-label="إغلاق"
+            className={`absolute top-3.5 start-3.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 ${focusRing}`}
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <DialogHeader className="shrink-0 px-5 pt-4 pb-3 border-b border-slate-100 text-right space-y-1 gap-1 ps-14">
+            <DialogTitle className="text-[17px] font-semibold text-slate-900">
+              إدارة روابط الباحث
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 leading-relaxed">
+              أدخل الروابط الرسمية للحسابات البحثية، ويمكنك ترك الحقول الفارغة.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-5">
-            {LINK_FIELDS.map(({ key, label, placeholder, icon: Icon }) => (
-              <div key={key} className="space-y-2">
-                <Label htmlFor={key} className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                  <Icon className="h-4 w-4 text-slate-500" />
-                  {label}
-                </Label>
-                <Input
-                  id={key}
-                  type="url"
-                  placeholder={placeholder}
-                  value={(form[key] as string) ?? ""}
-                  onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value || null }))}
-                  className="border-slate-200"
-                />
-              </div>
-            ))}
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium text-slate-700">روابط إضافية</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addOtherRow}>
-                  <Plus className="h-4 w-4 ml-1" />
-                  إضافة
-                </Button>
-              </div>
-              {otherRows.map((row, i) => (
-                <div key={i} className="flex gap-2 items-end">
-                  <Input
-                    placeholder="اسم الرابط"
-                    value={row.label}
-                    onChange={(e) => updateOtherRow(i, "label", e.target.value)}
-                    className="flex-1 border-slate-200"
-                  />
-                  <Input
-                    placeholder="الرابط"
-                    type="url"
-                    value={row.url}
-                    onChange={(e) => updateOtherRow(i, "url", e.target.value)}
-                    className="flex-1 border-slate-200"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeOtherRow(i)}
-                    className="shrink-0 text-slate-500 hover:text-red-600"
-                  >
-                    ×
-                  </Button>
+          <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
+            <div className={`flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4 ${thinScroll}`}>
+              <section className="space-y-3">
+                <div className="space-y-0.5">
+                  <h3 className="text-sm font-semibold text-slate-800">الروابط الأكاديمية</h3>
+                  <p className="text-[11px] text-slate-400">
+                    الحسابات الأساسية المستخدمة في الفهرسة والاستشهادات.
+                  </p>
                 </div>
-              ))}
+                <div className="space-y-3">
+                  {ACADEMIC_FIELDS.map((field) => (
+                    <FieldBlock
+                      key={field.key}
+                      field={field}
+                      value={(form[field.key] as string) ?? ""}
+                      onChange={(value) =>
+                        setForm((prev) => ({ ...prev, [field.key]: value || null }))
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <div className="border-t border-slate-100 pt-4 space-y-3">
+                <div className="space-y-0.5">
+                  <h3 className="text-sm font-semibold text-slate-800">الروابط الإضافية</h3>
+                  <p className="text-[11px] text-slate-400">
+                    روابط مهنية أو شخصية اختيارية.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {ADDITIONAL_FIELDS.map((field) => (
+                    <FieldBlock
+                      key={field.key}
+                      field={field}
+                      value={(form[field.key] as string) ?? ""}
+                      onChange={(value) =>
+                        setForm((prev) => ({ ...prev, [field.key]: value || null }))
+                      }
+                    />
+                  ))}
+                </div>
+
+                <div className="space-y-2.5 pt-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-slate-700">روابط إضافية</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addOtherRow}
+                      className={`h-8 rounded-lg px-2.5 text-xs border-slate-200 ${focusRing}`}
+                    >
+                      <Plus className="h-3.5 w-3.5 ml-1" />
+                      إضافة
+                    </Button>
+                  </div>
+                  <div className="space-y-2.5">
+                    {otherRows.map((row, i) => (
+                      <div
+                        key={i}
+                        className="flex flex-col sm:flex-row gap-2 sm:items-center rounded-xl border border-slate-200/60 bg-slate-50/40 p-2.5"
+                      >
+                        <Input
+                          placeholder="اسم الرابط"
+                          value={row.label}
+                          onChange={(e) => updateOtherRow(i, "label", e.target.value)}
+                          className={`h-10 rounded-lg border-slate-200 text-sm placeholder:text-slate-400/80 sm:w-[38%] ${focusRing}`}
+                          aria-label={`اسم الرابط الإضافي ${i + 1}`}
+                        />
+                        <Input
+                          placeholder="https://..."
+                          type="url"
+                          value={row.url}
+                          onChange={(e) => updateOtherRow(i, "url", e.target.value)}
+                          dir="ltr"
+                          className={`h-10 rounded-lg border-slate-200 text-sm text-left placeholder:text-slate-400/80 flex-1 ${focusRing}`}
+                          aria-label={`رابط إضافي ${i + 1}`}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeOtherRow(i)}
+                          className={`h-9 w-9 shrink-0 text-slate-400 hover:text-rose-600 ${focusRing}`}
+                          aria-label={`حذف الرابط الإضافي ${i + 1}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-2 justify-end pt-2">
-              <Button type="button" variant="outline" onClick={closeManage}>
+            <DialogFooter className="shrink-0 !flex-row !flex-nowrap justify-start gap-2 border-t border-slate-100 px-5 py-3 bg-white sm:justify-start">
+              <Button
+                type="submit"
+                disabled={saving}
+                className={`h-9 rounded-lg px-3.5 text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-70 ${focusRing}`}
+              >
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin ml-2" /> : null}
+                حفظ التغييرات
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeManage}
+                disabled={saving}
+                className={`h-9 rounded-lg px-3.5 text-sm border-slate-200 ${focusRing}`}
+              >
                 إلغاء
               </Button>
-              <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
-                حفظ
-              </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

@@ -4,6 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Calendar } from "lucide-react";
 import { EmptyState } from "./EmptyState";
 
+const typeLabels: Record<string, string> = {
+  all: "الكل",
+  research: "بحوث",
+  activities: "نشاطات",
+};
+
 interface FilteredAcademicActivitiesProps {
   activities: Array<{
     label: string;
@@ -13,6 +19,7 @@ interface FilteredAcademicActivitiesProps {
   }>;
   year: string;
   month: string;
+  type?: string;
 }
 
 const monthNames: Record<string, string> = {
@@ -35,8 +42,11 @@ export function FilteredAcademicActivities({
   activities,
   year,
   month,
+  type = "all",
 }: FilteredAcademicActivitiesProps) {
+  const yearLabel = !year || year === "all" ? "الكل" : year;
   const monthLabel = monthNames[month] || "الكل";
+  const typeLabel = typeLabels[type] || "الكل";
 
   return (
     <div className="bg-gradient-to-l from-blue-50/60 via-white to-indigo-50/60 border border-blue-100/60 shadow-sm rounded-3xl p-3 md:p-6">
@@ -50,7 +60,7 @@ export function FilteredAcademicActivities({
             </h3>
           </div>
           <Badge className="bg-blue-100 text-blue-700 border-blue-200 px-2 py-0.5 text-[10px] md:text-xs font-medium h-6">
-            سنة {year} • شهر: {monthLabel} • النوع: الكل
+            سنة {yearLabel} • شهر: {monthLabel} • النوع: {typeLabel}
           </Badge>
         </div>
         <p className="text-[11px] md:text-xs text-slate-500">

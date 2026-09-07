@@ -38,6 +38,19 @@ export async function getDashboardChartsData(params: {
   const showResearch = type === "all" || type === "research";
   const showActivities = type === "all" || type === "activities";
 
+  const activityRange =
+    year != null
+      ? month != null
+        ? {
+            gte: new Date(year, month - 1, 1, 0, 0, 0, 0),
+            lte: new Date(year, month, 0, 23, 59, 59, 999),
+          }
+        : {
+            gte: new Date(year, 0, 1, 0, 0, 0, 0),
+            lte: new Date(year, 11, 31, 23, 59, 59, 999),
+          }
+      : null;
+
   const researchWhere: Prisma.ResearchWhereInput = {
     researcherId: userId,
   };
@@ -125,112 +138,112 @@ export async function getDashboardChartsData(params: {
   ] = await Promise.all([
     showActivities
       ? prisma.researcherConference.findMany({
-          where: year
-            ? { researcherId: userId, date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, date: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { date: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.seminar.findMany({
-          where: year
-            ? { researcherId: userId, date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, date: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { date: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.course.findMany({
-          where: year
-            ? { researcherId: userId, date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, date: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { date: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.workshop.findMany({
-          where: year
-            ? { researcherId: userId, date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, date: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { date: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.assignment.findMany({
-          where: year
-            ? { researcherId: userId, assignmentDate: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, assignmentDate: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { assignmentDate: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.thankYouLetter.findMany({
-          where: year
-            ? { researcherId: userId, date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, date: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { date: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.committee.findMany({
-          where: year
-            ? { researcherId: userId, assignmentDate: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, assignmentDate: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { assignmentDate: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.certificate.findMany({
-          where: year
-            ? { researcherId: userId, date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, date: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { date: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.journal.findMany({
-          where: year
-            ? { researcherId: userId, startDate: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, startDate: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { startDate: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.supervision.findMany({
-          where: year
-            ? { researcherId: userId, startDate: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, startDate: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { startDate: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.reviewing.findMany({
-          where: year
-            ? { researcherId: userId, date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, date: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { date: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.position.findMany({
-          where: year
-            ? { researcherId: userId, positionDate: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, positionDate: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { positionDate: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.volunteering.findMany({
-          where: year
-            ? { researcherId: userId, startDate: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, startDate: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { startDate: true },
         })
       : Promise.resolve([]),
     showActivities
       ? prisma.fieldVisit.findMany({
-          where: year
-            ? { researcherId: userId, activityDate: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59, 999) } }
+          where: activityRange
+            ? { researcherId: userId, activityDate: { gte: activityRange.gte, lte: activityRange.lte } }
             : { researcherId: userId },
           select: { activityDate: true },
         })
@@ -280,16 +293,23 @@ export async function getDashboardChartsData(params: {
     { name: "أخرى", value: sumOtherActivities, color: "#8b5cf6" },
   ];
 
-  // النشاط الشهري (حسب السنة المختارة، أو السنة الحالية إن لم تُحدد)
+  // النشاط الشهري:
+  // - مع سنة محددة: توزيع أشهر تلك السنة
+  // - مع «الكل»: تجميع الأشهر عبر كل السنوات (وليس سنة التقويم الحالية فقط)
   const monthlyData = emptyMonthlyData();
-  const targetYear = year ?? new Date().getFullYear();
   const incMonth = (m: number, delta: number) => {
     if (m >= 1 && m <= 12) monthlyData[m - 1].نشاطات += delta;
   };
+  const matchesYear = (d: Date) => (year == null ? true : d.getFullYear() === year);
+  const matchesMonth = (d: Date) => (month == null ? true : d.getMonth() + 1 === month);
 
   if (showResearch) {
     const researchForMonthly = await prisma.research.findMany({
-      where: { researcherId: userId, year: targetYear, publishMonth: { not: null } },
+      where: {
+        researcherId: userId,
+        ...(year != null ? { year } : {}),
+        ...(month != null ? { publishMonth: month } : { publishMonth: { not: null } }),
+      },
       select: { publishMonth: true },
     });
     researchForMonthly.forEach((r) => {
@@ -298,49 +318,24 @@ export async function getDashboardChartsData(params: {
   }
 
   if (showActivities) {
-    const addMonthFromDate = (d: Date) => incMonth(d.getMonth() + 1, 1);
-    conferences
-      .filter((c) => new Date(c.date).getFullYear() === targetYear)
-      .forEach((c) => addMonthFromDate(c.date));
-    seminars
-      .filter((s) => new Date(s.date).getFullYear() === targetYear)
-      .forEach((s) => addMonthFromDate(s.date));
-    courses
-      .filter((c) => new Date(c.date).getFullYear() === targetYear)
-      .forEach((c) => addMonthFromDate(c.date));
-    workshops
-      .filter((w) => new Date(w.date).getFullYear() === targetYear)
-      .forEach((w) => addMonthFromDate(w.date));
-    assignments
-      .filter((a) => new Date(a.assignmentDate).getFullYear() === targetYear)
-      .forEach((a) => addMonthFromDate(a.assignmentDate));
-    thankYouLetters
-      .filter((t) => new Date(t.date).getFullYear() === targetYear)
-      .forEach((t) => addMonthFromDate(t.date));
-    committees
-      .filter((c) => new Date(c.assignmentDate).getFullYear() === targetYear)
-      .forEach((c) => addMonthFromDate(c.assignmentDate));
-    certificates
-      .filter((c) => new Date(c.date).getFullYear() === targetYear)
-      .forEach((c) => addMonthFromDate(c.date));
-    journals
-      .filter((j) => new Date(j.startDate).getFullYear() === targetYear)
-      .forEach((j) => addMonthFromDate(j.startDate));
-    supervision
-      .filter((s) => new Date(s.startDate).getFullYear() === targetYear)
-      .forEach((s) => addMonthFromDate(s.startDate));
-    reviewing
-      .filter((r) => new Date(r.date).getFullYear() === targetYear)
-      .forEach((r) => addMonthFromDate(r.date));
-    positions
-      .filter((p) => new Date(p.positionDate).getFullYear() === targetYear)
-      .forEach((p) => addMonthFromDate(p.positionDate));
-    volunteering
-      .filter((v) => new Date(v.startDate).getFullYear() === targetYear)
-      .forEach((v) => addMonthFromDate(v.startDate));
-    fieldVisits
-      .filter((f) => new Date(f.activityDate).getFullYear() === targetYear)
-      .forEach((f) => addMonthFromDate(f.activityDate));
+    const addFromDate = (d: Date) => {
+      if (!matchesYear(d) || !matchesMonth(d)) return;
+      incMonth(d.getMonth() + 1, 1);
+    };
+    conferences.forEach((c) => addFromDate(new Date(c.date)));
+    seminars.forEach((s) => addFromDate(new Date(s.date)));
+    courses.forEach((c) => addFromDate(new Date(c.date)));
+    workshops.forEach((w) => addFromDate(new Date(w.date)));
+    assignments.forEach((a) => addFromDate(new Date(a.assignmentDate)));
+    thankYouLetters.forEach((t) => addFromDate(new Date(t.date)));
+    committees.forEach((c) => addFromDate(new Date(c.assignmentDate)));
+    certificates.forEach((c) => addFromDate(new Date(c.date)));
+    journals.forEach((j) => addFromDate(new Date(j.startDate)));
+    supervision.forEach((s) => addFromDate(new Date(s.startDate)));
+    reviewing.forEach((r) => addFromDate(new Date(r.date)));
+    positions.forEach((p) => addFromDate(new Date(p.positionDate)));
+    volunteering.forEach((v) => addFromDate(new Date(v.startDate)));
+    fieldVisits.forEach((f) => addFromDate(new Date(f.activityDate)));
   }
 
   return {

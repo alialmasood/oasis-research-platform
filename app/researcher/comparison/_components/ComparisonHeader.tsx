@@ -20,11 +20,10 @@ type ComparisonHeaderProps = {
   };
 };
 
+const selectClass =
+  "h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 max-w-[130px]";
+
 export function ComparisonHeader({
-  name,
-  academicTitle,
-  department,
-  college,
   rank,
   total,
   totalPoints,
@@ -48,37 +47,17 @@ export function ComparisonHeader({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-gray-900">المقارنات</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1">
-            اكتشف التدريسيين المشابهين لك وأفضل الأداء في كليتك
-          </p>
-          <p className="text-sm md:text-base text-slate-600 mt-1.5 font-medium">
-            {academicTitle} {name} — {department} — {college}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="rounded-full bg-[#2563EB] text-white px-3 h-9 text-base font-semibold flex items-center">
-            <Trophy className="h-4 w-4 ml-2" />
-            النقاط: {totalPoints}
-          </Badge>
-          <Button
-            variant="outline"
-            className="border-[#2563EB]/60 text-[#2563EB] hover:bg-[#2563EB]/10 h-9 px-3"
-          >
-            <GitCompare className="h-4 w-4 ml-2" />
-            المركز {rank} من {total}
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col gap-1.5">
+      <h1 className="text-xl md:text-2xl font-semibold text-gray-900">المقارنات</h1>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">السنة</label>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 justify-between">
+        <p className="text-sm text-slate-500 leading-snug min-w-0">
+          اكتشف التدريسيين المشابهين لك وأفضل الأداء في كليتك
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
           <select
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
+            aria-label="السنة"
+            className={selectClass}
             value={filters.year}
             onChange={(e) => updateParam("year", e.target.value)}
           >
@@ -90,27 +69,23 @@ export function ComparisonHeader({
               </option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">الفترة</label>
           <select
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
+            aria-label="الفترة"
+            className={selectClass}
             value={filters.period}
             onChange={(e) => updateParam("period", e.target.value)}
           >
-            <option value="all">الكل</option>
+            <option value="all">الفترة: الكل</option>
             <option value="first">النصف الأول</option>
             <option value="second">النصف الثاني</option>
           </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">المعيار</label>
           <select
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
+            aria-label="المعيار"
+            className={`${selectClass} max-w-[150px]`}
             value={filters.metric}
             onChange={(e) => updateParam("metric", e.target.value)}
           >
-            <option value="all">الكل</option>
+            <option value="all">المعيار: الكل</option>
             <option value="total">الإجمالي</option>
             <option value="research">البحث</option>
             <option value="conferences">المؤتمرات</option>
@@ -123,6 +98,18 @@ export function ComparisonHeader({
             <option value="volunteering">الأعمال الطوعية</option>
             <option value="fieldVisits">الزيارات الميدانية</option>
           </select>
+          <Badge className="rounded-full bg-[#2563EB] text-white px-2.5 h-8 text-xs font-semibold flex items-center shrink-0">
+            <Trophy className="h-3.5 w-3.5 ml-1" />
+            النقاط: {totalPoints}
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-[#2563EB]/60 text-[#2563EB] hover:bg-[#2563EB]/10 h-8 px-2.5 text-xs shrink-0"
+          >
+            <GitCompare className="h-3.5 w-3.5 ml-1" />
+            المركز {rank} من {total}
+          </Button>
         </div>
       </div>
     </div>

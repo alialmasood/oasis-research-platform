@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/middleware";
+import { prisma } from "@/lib/db";
 import { getResearchSummaryStats } from "@/lib/research/researchDashboardStats";
 import { getAcademicActivityStats } from "@/lib/researcherAcademicStats";
-import { getAvailableMonthsForYear, getAvailableYears } from "@/lib/dashboardAvailablePeriods";
+import { getAvailableYears } from "@/lib/dashboardAvailablePeriods";
 import { getDashboardChartsData } from "@/lib/dashboardCharts";
 import { getAnnualProgressData } from "@/lib/annualProgress";
 import { getRecentActivities } from "@/lib/recentActivities";
 import { getAggregatedCounts } from "@/lib/evaluationAggregate";
-import { getGoals } from "@/lib/researcherGoalsRepo";
 import { computeOverallScore } from "@/app/researcher/evaluation/types";
 import { buildEvaluationSuggestions } from "@/lib/evaluationSuggestions";
 import { getWeeklyPlan } from "@/lib/weeklyPlan";
@@ -22,25 +22,29 @@ export default async function ResearcherDashboardPage() {
     redirect("/login");
   }
 
+  const researcher = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { fullNameAr: true, fullNameEn: true, academicTitle: true },
+  });
+  const welcomeName =
+    researcher?.fullNameAr?.trim() ||
+    researcher?.fullNameEn?.trim() ||
+    user.fullName;
+  const welcomeAcademicTitle = researcher?.academicTitle?.trim() || null;
+
   const availableYears = await getAvailableYears(user.id);
-  const initialYear = availableYears[0] != null ? String(availableYears[0]) : "";
+  const initialYear = "all";
   const initialMonth = "all";
   const initialType = "all";
 
   const lifetime = await getResearchSummaryStats(user.id);
-  const filtered = initialYear
-    ? await getResearchSummaryStats(user.id, { year: Number(initialYear) })
-    : await getResearchSummaryStats(user.id);
+  const filtered = await getResearchSummaryStats(user.id);
   const lifetimeAcademic = await getAcademicActivityStats(user.id);
-  const filteredAcademic = initialYear
-    ? await getAcademicActivityStats(user.id, { year: Number(initialYear) })
-    : await getAcademicActivityStats(user.id);
-  const availableMonths = initialYear
-    ? await getAvailableMonthsForYear(user.id, Number(initialYear))
-    : [];
+  const filteredAcademic = await getAcademicActivityStats(user.id);
+  const availableMonths: number[] = [];
   const charts = await getDashboardChartsData({
     userId: user.id,
-    year: initialYear ? Number(initialYear) : undefined,
+    year: undefined,
     month: undefined,
     type: "all",
   });
@@ -50,27 +54,24 @@ export default async function ResearcherDashboardPage() {
   });
   const annualProgress = await getAnnualProgressData(
     user.id,
-    initialYear ? Number(initialYear) : new Date().getFullYear()
+    availableYears[0] ?? new Date().getFullYear()
   );
   const recentActivities = await getRecentActivities(user.id);
-  const evaluationAggregates = await getAggregatedCounts(
-    user.id,
-    initialYear ? { year: Number(initialYear) } : undefined
-  );
-  const evaluationGoals = initialYear ? await getGoals(user.id, Number(initialYear)) : null;
+  const evaluationAggregates = await getAggregatedCounts(user.id);
+  const evaluationGoals = null;
   const evaluationScore = computeOverallScore(evaluationAggregates);
   const evaluationSuggestions = buildEvaluationSuggestions({
     aggregates: evaluationAggregates,
     goals: evaluationGoals,
     totalScore: evaluationScore,
   });
-  const weeklyPlan = await getWeeklyPlan(user.id, initialYear ? Number(initialYear) : undefined);
+  const weeklyPlan = await getWeeklyPlan(user.id);
 
   const comparisonData = await getComparisonData(user.id);
   const ranks = comparisonData.ranks;
   const topActivityLabel = comparisonData.topActivityLabel;
 
-  const baseYear = initialYear ? Number(initialYear) : new Date().getFullYear();
+  const baseYear = availableYears[0] ?? new Date().getFullYear();
   const prevYearAggregates = await getAggregatedCounts(user.id, { year: baseYear - 1 });
   const previousScore = computeOverallScore(prevYearAggregates);
 
@@ -82,6 +83,8 @@ export default async function ResearcherDashboardPage() {
 
   return (
     <DashboardClient
+      welcomeName={welcomeName}
+      welcomeAcademicTitle={welcomeAcademicTitle}
       initialYear={initialYear}
       initialMonth={initialMonth}
       initialType={initialType}
