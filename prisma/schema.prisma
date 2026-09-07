@@ -37,6 +37,7 @@ model User {
   
   departmentId   String?   @map("department_id")
   isActive       Boolean   @default(true) @map("is_active")
+  sessionVersion Int       @default(0) @map("session_version")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
@@ -1131,4 +1132,26 @@ model Experience {
   profileCv ProfileCV @relation(fields: [profileCvId], references: [id], onDelete: Cascade)
 
   @@map("experiences")
+}
+
+// ============================================
+// Super Admin Audit
+// ============================================
+
+model SuperAdminAuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  targetType  String   @map("target_type")
+  targetId    String?  @map("target_id")
+  targetEmail String?  @map("target_email")
+  metadata    Json?
+  actorEmail  String   @map("actor_email")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([targetType])
+  @@index([targetId])
+  @@index([targetEmail])
+  @@map("super_admin_audit_logs")
 }

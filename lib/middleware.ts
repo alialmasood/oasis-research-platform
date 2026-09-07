@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifySession } from "./auth";
+import { resolveAuthenticatedSession } from "./auth";
 
 export async function getSessionUser(): Promise<{
   id: string;
@@ -17,7 +17,7 @@ export async function getSessionUser(): Promise<{
     return null;
   }
 
-  return await verifySession(token);
+  return await resolveAuthenticatedSession(token);
 }
 
 export function requireAuth(

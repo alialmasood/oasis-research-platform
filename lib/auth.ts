@@ -7,7 +7,7 @@ const secret = new TextEncoder().encode(
 );
 
 // Lazy load pg to avoid Turbopack issues
-let pool: any = null;
+let pool: import("pg").Pool | null = null;
 async function getPool() {
   if (!pool) {
     const { Pool } = await import("pg");
@@ -127,7 +127,10 @@ export async function getUserPermissions(userId: string): Promise<string[]> {
   return Array.from(permissions);
 }
 
-export async function createSession(user: SessionUser): Promise<string> {
+export async function createSession(
+  user: SessionUser,
+  sessionVersion: number
+): Promise<string> {
   const token = await new SignJWT({
     id: user.id,
     email: user.email,
@@ -135,6 +138,7 @@ export async function createSession(user: SessionUser): Promise<string> {
     fullName: user.fullName,
     roles: user.roles,
     permissions: user.permissions,
+    sessionVersion,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -144,15 +148,28 @@ export async function createSession(user: SessionUser): Promise<string> {
   return token;
 }
 
-export async function verifySession(token: string): Promise<SessionUser | null> {
+export type VerifiedSessionToken = SessionUser & { sessionVersion: number };
+
+export async function verifySession(token: string): Promise<VerifiedSessionToken | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
     const isString = (value: unknown): value is string => typeof value === "string";
-    if (!isString(payload.id) || !isString(payload.email) || !isString(payload.username) || !isString(payload.fullName)) {
+    if (
+      !isString(payload.id) ||
+      !isString(payload.email) ||
+      !isString(payload.username) ||
+      !isString(payload.fullName)
+    ) {
+      return null;
+    }
+    // JWTs issued before Phase 4 (no sessionVersion) are intentionally invalid.
+    if (typeof payload.sessionVersion !== "number" || !Number.isInteger(payload.sessionVersion)) {
       return null;
     }
     const roles = Array.isArray(payload.roles) ? payload.roles.filter(isString) : [];
-    const permissions = Array.isArray(payload.permissions) ? payload.permissions.filter(isString) : [];
+    const permissions = Array.isArray(payload.permissions)
+      ? payload.permissions.filter(isString)
+      : [];
     return {
       id: payload.id,
       email: payload.email,
@@ -160,8 +177,81 @@ export async function verifySession(token: string): Promise<SessionUser | null> 
       fullName: payload.fullName,
       roles,
       permissions,
+      sessionVersion: payload.sessionVersion,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Cryptographic JWT check + live DB enforcement.
+ * - User must still exist
+ * - User.isActive must be true
+ * - roles/permissions come from current UserRole relations (not stale JWT claims)
+ * - token.sessionVersion must match User.sessionVersion
+ */
+export async function resolveAuthenticatedSession(
+  token: string
+): Promise<SessionUser | null> {
+  const verified = await verifySession(token);
+  if (!verified) return null;
+
+  try {
+    const row = await prisma.user.findUnique({
+      where: { id: verified.id },
+      select: {
+        id: true,
+        email: true,
+        fullNameAr: true,
+        fullNameEn: true,
+        isActive: true,
+        sessionVersion: true,
+        userRoles: {
+          select: {
+            role: {
+              select: {
+                name: true,
+                rolePermissions: {
+                  select: {
+                    permission: {
+                      select: { name: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!row || !row.isActive) {
+      return null;
+    }
+
+    if (row.sessionVersion !== verified.sessionVersion) {
+      return null;
+    }
+
+    const roles = row.userRoles.map((ur) => ur.role.name);
+    const permissions = new Set<string>();
+    for (const ur of row.userRoles) {
+      for (const rp of ur.role.rolePermissions) {
+        permissions.add(rp.permission.name);
+      }
+    }
+
+    return {
+      id: row.id,
+      email: row.email,
+      username: row.email,
+      fullName: row.fullNameAr || row.fullNameEn || row.email,
+      roles,
+      permissions: Array.from(permissions),
     };
   } catch (error) {
+    console.error("Error in resolveAuthenticatedSession:", error);
     return null;
   }
 }
@@ -181,6 +271,7 @@ export async function loginUser(
         fullNameAr: true,
         fullNameEn: true,
         isActive: true,
+        sessionVersion: true,
       },
     });
 
@@ -207,7 +298,7 @@ export async function loginUser(
       permissions,
     };
 
-    const token = await createSession(sessionUser);
+    const token = await createSession(sessionUser, user.sessionVersion);
     return { user: sessionUser, token };
   } catch (error) {
     console.error("Error in loginUser:", error);

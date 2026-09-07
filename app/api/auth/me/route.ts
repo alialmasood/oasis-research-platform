@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifySession } from "@/lib/auth";
+import { resolveAuthenticatedSession } from "@/lib/auth";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ user: null }, { status: 401 });
   }
 
-  const user = await verifySession(token);
+  const user = await resolveAuthenticatedSession(token);
   if (!user) {
     return NextResponse.json({ user: null }, { status: 401 });
   }
