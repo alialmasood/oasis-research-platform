@@ -202,7 +202,7 @@ function buildListWhere(filters: FacultyListFilters): Prisma.UserWhereInput {
   return conditions.length === 1 ? conditions[0] : { AND: conditions };
 }
 
-async function getFacultyStats(): Promise<FacultyStats> {
+export async function getFacultyStats(): Promise<FacultyStats> {
   const [totalFaculty, totalDegrees, phdHolders, mastersOrPhd, entitiesRows, departmentsRows, completionRows] =
     await Promise.all([
       prisma.user.count({ where: BASE_WHERE }),

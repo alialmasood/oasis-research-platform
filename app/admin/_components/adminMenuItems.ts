@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Building2,
   GraduationCap,
   BookOpen,
   Presentation,
@@ -47,6 +48,7 @@ export const adminMainMenuItems: AdminMenuItem[] = [
 ];
 
 export const adminDataMenuItems: AdminDataNavEntry[] = [
+  { href: "/admin/entities", label: "التشكيلات", icon: Building2 },
   { href: "/admin/faculty", label: "التدريسيون", icon: GraduationCap },
   {
     href: "/admin/research",
@@ -64,6 +66,7 @@ export const adminMobileMenuItems: (AdminMenuItem | AdminMenuGroup)[] = [
 
 export const adminPageTitles: Record<string, string> = {
   "/admin/dashboard": "لوحة التحكم",
+  "/admin/entities": "التشكيلات",
   "/admin/faculty": "التدريسيون",
   "/admin/research": "البحوث — رؤية شاملة",
   "/admin/research/indicators": "البحوث — مؤشرات الباحثين",

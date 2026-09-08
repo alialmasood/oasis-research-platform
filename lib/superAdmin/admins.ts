@@ -142,10 +142,15 @@ export async function createAdmin(
 
   try {
     const created = await prisma.$transaction(async (tx) => {
-      const adminRole = await tx.role.findUnique({ where: { name: "ADMIN" } });
-      if (!adminRole) {
-        throw new AdminServiceError("ADMIN_ROLE_MISSING");
-      }
+      // Production DBs may have schema without seed; ensure ADMIN role exists.
+      const adminRole = await tx.role.upsert({
+        where: { name: "ADMIN" },
+        update: {},
+        create: {
+          name: "ADMIN",
+          description: "مدير النظام",
+        },
+      });
 
       const user = await tx.user.create({
         data: {

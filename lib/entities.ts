@@ -90,7 +90,7 @@ export const DEPARTMENTS_BY_ENTITY: Record<string, string[]> = {
   "كلية التمريض": [
     "فرع اساسيات التمريض",
     "فرع العلوم الطبية الاساسية",
-    "تمريض صحة المجتمع",
+    "فرع تمريض صحة المجتمع",
   ],
   "كلية الزراعة": [
     "علوم الاغذية",
@@ -222,3 +222,79 @@ export const DEPARTMENTS_BY_ENTITY: Record<string, string[]> = {
   "مركز التطوير والتعليم المستمر": [],
   "مركز تكنولوجيا المعلومات والاتصالات": [],
 };
+
+/** كلية: أي تشكيل يبدأ بـ «كلية» */
+export function isCollegeEntity(name: string): boolean {
+  return name.trim().startsWith("كلية");
+}
+
+/** مركز: أي تشكيل يبدأ بـ «مركز» */
+export function isCenterEntity(name: string): boolean {
+  return name.trim().startsWith("مركز");
+}
+
+/**
+ * كليات تعتمد نظام الفروع فقط (لا أقسام علمية).
+ * كل الوحدات التابعة لها تُصنَّف فروعًا بغض النظر عن صياغة الاسم.
+ */
+export const BRANCH_ONLY_ENTITIES = [
+  "كلية التمريض",
+  "كلية الطب",
+  "كلية طب الزهراء",
+  "كلية الصيدلة",
+] as const;
+
+const BRANCH_ONLY_ENTITY_SET = new Set<string>(BRANCH_ONLY_ENTITIES);
+
+export function isBranchOnlyEntity(entity: string): boolean {
+  return BRANCH_ONLY_ENTITY_SET.has(entity.trim());
+}
+
+/**
+ * هل الوحدة فرع؟
+ * - تحت كليات الفروع فقط → دائمًا فرع
+ * - وإلا: الاسم يبدأ بـ «فرع» أو «الفرع»
+ */
+export function isBranchUnit(name: string, entity?: string): boolean {
+  if (entity && isBranchOnlyEntity(entity)) return true;
+  const trimmed = name.trim();
+  return trimmed.startsWith("فرع") || trimmed.startsWith("الفرع");
+}
+
+export type UniversityStructureCounts = {
+  colleges: number;
+  centers: number;
+  departments: number;
+  branches: number;
+};
+
+/**
+ * عدّ الكليات والمراكز والأقسام والفروع من هيكل الجامعة المعرّف
+ * (نفس مصدر التسجيل والملف الشخصي).
+ * الأقسام والفروع تُحسب فقط تحت كليات أو مراكز.
+ */
+export function getUniversityStructureCounts(): UniversityStructureCounts {
+  const colleges = ENTITIES.filter(isCollegeEntity).length;
+  const centers = ENTITIES.filter(isCenterEntity).length;
+
+  const departmentKeys = new Set<string>();
+  const branchKeys = new Set<string>();
+
+  for (const entity of ENTITIES) {
+    if (!isCollegeEntity(entity) && !isCenterEntity(entity)) continue;
+    for (const unit of DEPARTMENTS_BY_ENTITY[entity] ?? []) {
+      const name = unit.trim();
+      if (!name) continue;
+      const key = `${entity}::${name}`;
+      if (isBranchUnit(name, entity)) branchKeys.add(key);
+      else departmentKeys.add(key);
+    }
+  }
+
+  return {
+    colleges,
+    centers,
+    departments: departmentKeys.size,
+    branches: branchKeys.size,
+  };
+}
