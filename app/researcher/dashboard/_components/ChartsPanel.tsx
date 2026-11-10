@@ -36,41 +36,49 @@ export function ChartsPanel({
   yearlyActivitiesData = [],
   selectedType = "all",
 }: ChartsPanelProps) {
-  const hasYearlyData = yearlyData.length > 0 && yearlyData.some((item) => 
-    (item.مخطط || 0) + (item.منجز || 0) + (item.منشور || 0) + (item["غير منجز"] || 0) > 0
-  );
+  const hasYearlyData =
+    yearlyData.length > 0 &&
+    yearlyData.some(
+      (item) =>
+        (item.مخطط || 0) + (item.منجز || 0) + (item.منشور || 0) + (item["غير منجز"] || 0) > 0
+    );
   const hasIndexingData = indexingData.length > 0 && indexingData.some((item) => item.value > 0);
   const hasMonthlyData = monthlyData.length > 0 && monthlyData.some((item) => (item.نشاطات || 0) > 0);
-  const hasActivitiesDistribution = activitiesDistributionData.length > 0 && activitiesDistributionData.some((item) => item.value > 0);
-  const hasYearlyActivities = yearlyActivitiesData.length > 0 && yearlyActivitiesData.some((item) => 
-    (item.مؤتمرات || 0) + (item.ندوات || 0) + (item.دورات || 0) + (item.ورش || 0) > 0
-  );
+  const hasActivitiesDistribution =
+    activitiesDistributionData.length > 0 &&
+    activitiesDistributionData.some((item) => item.value > 0);
+  const hasYearlyActivities =
+    yearlyActivitiesData.length > 0 &&
+    yearlyActivitiesData.some(
+      (item) =>
+        (item.مؤتمرات || 0) + (item.ندوات || 0) + (item.دورات || 0) + (item.ورش || 0) > 0
+    );
 
   const showResearchCharts = selectedType === "all" || selectedType === "research";
   const showActivitiesCharts = selectedType === "all" || selectedType === "activities";
   const isMobile = useIsMobile();
 
-  /** موبايل فقط: ارتفاع أقل + tick 10 + legend 11. الديسكتوب: لا تغيير (ارتفاع 320، خط عادي) */
-  const chartHeightClass = "h-[180px] sm:h-[220px] md:h-[320px]";
-  const lineChartHeightClass = "h-[180px] sm:h-[220px] md:h-[320px]";
+  const chartHeightClass = "h-[200px] sm:h-[220px] md:h-[320px]";
+  const pieHeightClass = "h-[220px] sm:h-[220px] md:h-[320px]";
+  const lineChartHeightClass = "h-[200px] sm:h-[220px] md:h-[320px]";
   const tickFontSize = isMobile ? 10 : 12;
-  const legendWrapperStyle = isMobile ? { fontSize: 11 } : undefined;
-  /** الديسكتوب: Pie مع ليجند عمودي على اليمين. الموبايل: ليجند أفقي تحت */
-  const pieLegendLayout = isMobile ? "horizontal" : "vertical";
-  const pieLegendVerticalAlign = isMobile ? "bottom" : "middle";
+  const legendWrapperStyle = isMobile ? { fontSize: 10 } : undefined;
+  const pieOuter = isMobile ? 54 : 80;
+  const pieInner = isMobile ? 18 : 28;
+  // موبايل: بطاقة بعرض الشاشة كاملاً بدون زوايا/حواف جانبية. حاسوب: كما هي
+  const cardClass =
+    "w-full gap-2 md:gap-6 border-x-0 border-t-0 border-b border-slate-200/80 md:border md:border-slate-100 bg-white shadow-none md:shadow-lg rounded-none md:rounded-2xl p-3 md:p-6 overflow-hidden";
+  const titleClass = "text-sm md:text-base font-semibold text-gray-900 leading-snug";
 
   return (
     <>
-      {/* رسوم البحوث - عمود واحد بالموبايل */}
       {showResearchCharts && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 col-span-12">
-          <Card className="border-slate-100 bg-white shadow-lg rounded-2xl p-3 md:p-6">
-            <CardHeader className="pb-2 pt-0 px-0 md:pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">
-                حالة البحوث حسب السنوات
-              </CardTitle>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-4 col-span-12">
+          <Card className={cardClass}>
+            <CardHeader className="pb-1.5 pt-0 px-3 md:px-0 md:pb-3">
+              <CardTitle className={titleClass}>حالة البحوث حسب السنوات</CardTitle>
             </CardHeader>
-            <CardContent className="px-0 pb-0 pt-0">
+            <CardContent className="px-1 pb-0 pt-0 md:px-0">
               <div className={chartHeightClass}>
                 {hasYearlyData ? (
                   <BarChart
@@ -90,22 +98,20 @@ export function ChartsPanel({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100 bg-white shadow-lg rounded-2xl p-3 md:p-6">
-            <CardHeader className="pb-2 pt-0 px-0 md:pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">
-                توزيع الفهرسة
-              </CardTitle>
+          <Card className={cardClass}>
+            <CardHeader className="pb-1.5 pt-0 px-3 md:px-0 md:pb-3">
+              <CardTitle className={titleClass}>توزيع الفهرسة</CardTitle>
             </CardHeader>
-            <CardContent className="px-0 pb-0 pt-0">
-              <div className={chartHeightClass}>
+            <CardContent className="px-1 pb-0 pt-0 md:px-0">
+              <div className={pieHeightClass}>
                 {hasIndexingData ? (
                   <PieChart
                     data={indexingData}
                     legendLayout="horizontal"
                     legendVerticalAlign="bottom"
                     legendWrapperStyle={legendWrapperStyle}
-                    outerRadius={80}
-                    innerRadius={28}
+                    outerRadius={pieOuter}
+                    innerRadius={pieInner}
                     tooltipLabel={(name, value) => `${name}: ${value}`}
                   />
                 ) : (
@@ -117,16 +123,13 @@ export function ChartsPanel({
         </div>
       )}
 
-      {/* رسوم النشاطات الأكاديمية */}
       {showActivitiesCharts && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 col-span-12">
-          <Card className="border-slate-100 bg-white shadow-lg rounded-2xl p-3 md:p-6">
-            <CardHeader className="pb-2 pt-0 px-0 md:pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">
-                النشاطات الأكاديمية حسب السنوات
-              </CardTitle>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-4 col-span-12">
+          <Card className={cardClass}>
+            <CardHeader className="pb-1.5 pt-0 px-3 md:px-0 md:pb-3">
+              <CardTitle className={titleClass}>النشاطات الأكاديمية حسب السنوات</CardTitle>
             </CardHeader>
-            <CardContent className="px-0 pb-0 pt-0">
+            <CardContent className="px-1 pb-0 pt-0 md:px-0">
               <div className={chartHeightClass}>
                 {hasYearlyActivities ? (
                   <BarChart
@@ -146,22 +149,20 @@ export function ChartsPanel({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100 bg-white shadow-lg rounded-2xl p-3 md:p-6">
-            <CardHeader className="pb-2 pt-0 px-0 md:pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">
-                توزيع النشاطات الأكاديمية
-              </CardTitle>
+          <Card className={cardClass}>
+            <CardHeader className="pb-1.5 pt-0 px-3 md:px-0 md:pb-3">
+              <CardTitle className={titleClass}>توزيع النشاطات الأكاديمية</CardTitle>
             </CardHeader>
-            <CardContent className="px-0 pb-0 pt-0">
-              <div className={chartHeightClass}>
+            <CardContent className="px-1 pb-0 pt-0 md:px-0">
+              <div className={pieHeightClass}>
                 {hasActivitiesDistribution ? (
                   <PieChart
                     data={activitiesDistributionData}
                     legendLayout="horizontal"
                     legendVerticalAlign="bottom"
                     legendWrapperStyle={legendWrapperStyle}
-                    outerRadius={80}
-                    innerRadius={28}
+                    outerRadius={pieOuter}
+                    innerRadius={pieInner}
                     tooltipLabel={(name, value) => `${name}: ${value}`}
                   />
                 ) : (
@@ -173,21 +174,18 @@ export function ChartsPanel({
         </div>
       )}
 
-      {/* النشاط الشهري (عام) */}
       <div className="col-span-12">
-        <Card className="border-slate-100 bg-white shadow-lg rounded-2xl p-3 md:p-6">
-          <CardHeader className="pb-2 pt-0 px-0 md:pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">
-              النشاط الشهري
-            </CardTitle>
+        <Card className={cardClass}>
+          <CardHeader className="pb-1.5 pt-0 px-3 md:px-0 md:pb-3">
+            <CardTitle className={titleClass}>النشاط الشهري</CardTitle>
           </CardHeader>
-          <CardContent className="px-0 pb-0 pt-0">
+          <CardContent className="px-1 pb-0 pt-0 md:px-0">
             <div className={lineChartHeightClass}>
               {hasMonthlyData ? (
                 <LineChart
                   data={monthlyData}
                   dataKeys={[{ key: "نشاطات", stroke: "#2563EB" }]}
-                  showDots={true}
+                  showDots={!isMobile}
                   gridOpacity={0.08}
                   tickFontSize={tickFontSize}
                 />

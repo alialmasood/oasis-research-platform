@@ -243,15 +243,6 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
     "عدد كتب الشكر": item.value,
   }));
 
-  const organizationsPieData = stats.topOrganizations.map((item, index) => {
-    const colors = ["#2563EB", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
-    return {
-      name: item.name,
-      value: item.value,
-      color: colors[index % colors.length],
-    };
-  });
-
   // استخراج الجهات والسنوات الفريدة للفلاتر
   const uniqueOrganizations = Array.from(new Set(thankYouLetters.map((l) => l.issuingOrganization))).sort();
   const uniqueYears = Array.from(
@@ -367,32 +358,172 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
 
+  const letterActionsMenu = (l: ThankYouLetter) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => handleView(l)}>
+          <Eye className="h-4 w-4 ml-2" />
+          عرض التفاصيل
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenAdd(l)}>
+          <Pencil className="h-4 w-4 ml-2" />
+          تعديل
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-red-600"
+          onClick={() => {
+            if (confirm("هل أنت متأكد من حذف هذا كتاب الشكر؟")) {
+              startTransition(async () => {
+                const res = await deleteThankYouLetter(l.id);
+                if (res.error) showToast(res.error, "error");
+                else {
+                  showToast("✅ تم حذف كتاب الشكر بنجاح");
+                  loadThankYouLetters();
+                  notifyDashboardUpdate("activities");
+                }
+              });
+            }
+          }}
+        >
+          <Trash2 className="h-4 w-4 ml-2" />
+          حذف
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 min-w-0">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg md:text-2xl font-semibold text-gray-900">كتب الشكر والتقدير</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1">سجّل كتب الشكر والتقدير التي حصلت عليها</p>
-          <p className="text-sm md:text-base text-slate-600 mt-1.5 font-medium" aria-live="polite">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base md:text-2xl font-semibold text-gray-900 truncate">كتب الشكر والتقدير</h1>
+          <p className="hidden md:block text-sm text-slate-500 mt-1">سجّل كتب الشكر والتقدير التي حصلت عليها</p>
+          <p
+            className="text-[11px] md:text-sm text-slate-500 md:text-slate-600 mt-0.5 md:mt-1.5 md:font-medium line-clamp-2 md:line-clamp-none"
+            aria-live="polite"
+          >
             {getContextSummary(filteredForDisplay, stats)}
           </p>
         </div>
         <Button
           onClick={() => handleOpenAdd()}
-          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex-shrink-0 w-full md:w-auto"
+          size="sm"
+          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
         >
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة كتاب شكر
+          <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+          <span className="md:hidden">إضافة</span>
+          <span className="hidden md:inline">إضافة كتاب شكر</span>
         </Button>
       </div>
 
       <ThanksKPICards stats={stats} />
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">الرسوم البيانية</h3>
-        <div className="grid grid-cols-12 gap-4">
+        <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-2.5 md:mb-4">الرسوم البيانية</h3>
+
+        {/* موبايل: تخطيط متناسق */}
+        <div className="md:hidden space-y-2">
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">حسب السنة</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {byYearData.length > 0 ? (
+                  <BarChart
+                    data={byYearData}
+                    dataKeys={["عدد كتب الشكر"]}
+                    colors={["#2563EB"]}
+                    tooltipLabel={(year, count) => `عدد كتب الشكر في ${year}: ${count}`}
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  نوع المشاركة
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {stats.participationPieData.length > 0 ? (
+                    <PieChart
+                      data={stats.participationPieData}
+                      outerRadius={40}
+                      innerRadius={14}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      legendWrapperStyle={{ fontSize: 10, paddingTop: 0 }}
+                      tooltipLabel={(name, value) => `عدد كتب الشكر كمشارك ${name}: ${value}`}
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  الجهات المانحة
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {topOrganizationsBarData.length > 0 ? (
+                    <BarChart
+                      data={topOrganizationsBarData}
+                      dataKeys={["عدد كتب الشكر"]}
+                      colors={["#10b981"]}
+                      tooltipLabel={(name, count) => `عدد كتب الشكر من ${name}: ${count}`}
+                      tickFontSize={9}
+                    />
+                  ) : (
+                    <EmptyChartState type="bar" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">المشاركة عبر الزمن</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {stats.participationByYear.length > 0 ? (
+                  <BarChart
+                    data={stats.participationByYear}
+                    dataKeys={["محاضر", "مشترك"]}
+                    colors={["#8b5cf6", "#f59e0b"]}
+                    stackId="participation"
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* حاسوب: التخطيط السابق */}
+        <div className="hidden md:grid grid-cols-12 gap-4">
           {/* نوع المشاركة (Pie) - col-span-12 lg:col-span-4 */}
           <Card className="border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-4">
             <CardHeader className="pb-3">
@@ -520,39 +651,35 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
 
       {/* آخر كتاب شكر مضافة */}
       {thankYouLetters.length > 0 && (
-        <Card className="border-slate-100 bg-white shadow-lg border-l-4 border-l-blue-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between gap-4">
+        <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg border-l-4 border-l-blue-500 gap-0 overflow-hidden rounded-xl">
+          <CardContent className="p-2.5 md:p-4">
+            <div className="flex items-center justify-between gap-2 md:gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span className="text-xs font-medium text-slate-500">آخر كتاب شكر مضافة</span>
+                <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+                  <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-[10px] md:text-xs font-medium text-slate-500">آخر كتاب شكر مضافة</span>
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 mb-1 line-clamp-1" dir="rtl">
+                <h3 className="text-xs md:text-base font-semibold text-slate-900 mb-0.5 md:mb-1 line-clamp-1" dir="rtl">
                   {thankYouLetters[0].issuingOrganization}
                 </h3>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {formatDate(thankYouLetters[0].date)}
-                  </span>
-                  {thankYouLetters[0].participationType && (
-                    <Badge
-                      variant={thankYouLetters[0].participationType === "PRESENTER" ? "default" : "secondary"}
-                      className={thankYouLetters[0].participationType === "PRESENTER" ? "bg-purple-100 text-purple-800" : ""}
-                    >
-                      {participationLabels[thankYouLetters[0].participationType]}
-                    </Badge>
-                  )}
-                </div>
+                <p className="text-[10px] md:text-sm text-slate-600 truncate">
+                  {[
+                    formatDate(thankYouLetters[0].date),
+                    thankYouLetters[0].participationType
+                      ? participationLabels[thankYouLetters[0].participationType]
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleView(thankYouLetters[0])}
-                className="flex-shrink-0"
+                className="flex-shrink-0 h-8 px-2.5 text-[11px] md:text-sm"
               >
-                <Eye className="h-4 w-4 ml-2" />
+                <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
                 عرض
               </Button>
             </div>
@@ -560,131 +687,214 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
         </Card>
       )}
 
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="text-base font-semibold text-slate-800">جدول كتب الشكر والتقدير</div>
-            <div className="flex items-center gap-2">
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl">
+        <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
+          <div className="flex items-center justify-between gap-2 mb-3 md:mb-4">
+            <div className="text-sm md:text-base font-semibold text-slate-800 truncate">جدول كتب الشكر والتقدير</div>
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportExcel}
                 disabled={isExporting}
               >
-                تصدير Excel
+                <span className="md:hidden">Excel</span>
+                <span className="hidden md:inline">تصدير Excel</span>
               </Button>
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportPDF}
                 disabled={isExporting}
               >
-                تصدير PDF
+                <span className="md:hidden">PDF</span>
+                <span className="hidden md:inline">تصدير PDF</span>
               </Button>
             </div>
           </div>
-          <h3 className="text-base font-semibold text-slate-800 mb-4">بحث في كتب الشكر</h3>
-          <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" dir="rtl">
-              {/* البحث */}
-              <div className="sm:col-span-2 lg:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                  <Input
-                    placeholder="الجهة المانحة، توجيه الشكر..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                  />
-                  <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
-                    بحث
-                  </Button>
-                </div>
-              </div>
-              {/* الجهة المانحة */}
+
+          {/* فلاتر موبايل */}
+          <form onSubmit={handleSearchSubmit} className="md:hidden rounded-xl bg-slate-50 p-2 space-y-1.5 mb-3">
+            <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-0.5">
+              <Input
+                placeholder="بحث..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-8 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0 text-[11px] px-2"
+              />
+              <Button type="submit" variant="secondary" size="sm" className="h-7 rounded-md px-2.5 text-[11px] shrink-0">
+                بحث
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
               {uniqueOrganizations.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">الجهة المانحة</label>
-                  <Select
-                    value={organizationFilter}
-                    onValueChange={(v) => {
-                      setOrganizationFilter(v);
-                      loadThankYouLetters({ issuingOrganization: v });
-                    }}
-                  >
-                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                      <SelectValue placeholder="الكل" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">الكل</SelectItem>
-                      {uniqueOrganizations.map((org) => (
-                        <SelectItem key={org} value={org}>
-                          {org}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {/* نوع المشاركة */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">نوع المشاركة</label>
                 <Select
-                  value={participationFilter}
+                  value={organizationFilter}
                   onValueChange={(v) => {
-                    setParticipationFilter(v);
-                    loadThankYouLetters({ participationType: v });
+                    setOrganizationFilter(v);
+                    loadThankYouLetters({ issuingOrganization: v });
                   }}
                 >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
+                  <SelectTrigger className="h-8 rounded-lg bg-white text-[11px] px-2" aria-label="الجهة">
+                    <SelectValue placeholder="الجهة" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    <SelectItem value="PRESENTER">محاضر</SelectItem>
-                    <SelectItem value="PARTICIPANT">مشترك</SelectItem>
+                    <SelectItem value="__all__">كل الجهات</SelectItem>
+                    {uniqueOrganizations.map((org) => (
+                      <SelectItem key={org} value={org}>
+                        {org}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </div>
-              {/* السنة */}
+              )}
+              <Select
+                value={participationFilter}
+                onValueChange={(v) => {
+                  setParticipationFilter(v);
+                  loadThankYouLetters({ participationType: v });
+                }}
+              >
+                <SelectTrigger className="h-8 rounded-lg bg-white text-[11px] px-2" aria-label="المشاركة">
+                  <SelectValue placeholder="المشاركة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">الكل</SelectItem>
+                  <SelectItem value="PRESENTER">محاضر</SelectItem>
+                  <SelectItem value="PARTICIPANT">مشترك</SelectItem>
+                </SelectContent>
+              </Select>
               {uniqueYears.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
-                  <Select
-                    value={yearFilter}
-                    onValueChange={(v) => {
-                      setYearFilter(v);
-                      loadThankYouLetters({ year: v });
-                    }}
-                  >
-                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                      <SelectValue placeholder="الكل" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">الكل</SelectItem>
-                      {uniqueYears.map((year) => (
-                        <SelectItem key={year} value={String(year)}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select
+                  value={yearFilter}
+                  onValueChange={(v) => {
+                    setYearFilter(v);
+                    loadThankYouLetters({ year: v });
+                  }}
+                >
+                  <SelectTrigger className="h-8 rounded-lg bg-white text-[11px] px-2" aria-label="السنة">
+                    <SelectValue placeholder="السنة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">كل السنوات</SelectItem>
+                    {uniqueYears.map((year) => (
+                      <SelectItem key={year} value={String(year)}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
           </form>
 
-          {filteredForDisplay.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-              <div className="rounded-full bg-white border border-slate-200 p-6 mb-5 shadow-sm">
-                <Heart className="h-14 w-14 text-slate-400" />
+          {/* فلاتر حاسوب */}
+          <div className="hidden md:block">
+            <h3 className="text-base font-semibold text-slate-800 mb-4">بحث في كتب الشكر</h3>
+            <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" dir="rtl">
+                {/* البحث */}
+                <div className="sm:col-span-2 lg:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    <Input
+                      placeholder="الجهة المانحة، توجيه الشكر..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
+                    />
+                    <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
+                      بحث
+                    </Button>
+                  </div>
+                </div>
+                {/* الجهة المانحة */}
+                {uniqueOrganizations.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">الجهة المانحة</label>
+                    <Select
+                      value={organizationFilter}
+                      onValueChange={(v) => {
+                        setOrganizationFilter(v);
+                        loadThankYouLetters({ issuingOrganization: v });
+                      }}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                        <SelectValue placeholder="الكل" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">الكل</SelectItem>
+                        {uniqueOrganizations.map((org) => (
+                          <SelectItem key={org} value={org}>
+                            {org}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {/* نوع المشاركة */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">نوع المشاركة</label>
+                  <Select
+                    value={participationFilter}
+                    onValueChange={(v) => {
+                      setParticipationFilter(v);
+                      loadThankYouLetters({ participationType: v });
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                      <SelectValue placeholder="الكل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">الكل</SelectItem>
+                      <SelectItem value="PRESENTER">محاضر</SelectItem>
+                      <SelectItem value="PARTICIPANT">مشترك</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* السنة */}
+                {uniqueYears.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+                    <Select
+                      value={yearFilter}
+                      onValueChange={(v) => {
+                        setYearFilter(v);
+                        loadThankYouLetters({ year: v });
+                      }}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                        <SelectValue placeholder="الكل" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">الكل</SelectItem>
+                        {uniqueYears.map((year) => (
+                          <SelectItem key={year} value={String(year)}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            </form>
+          </div>
+
+          {filteredForDisplay.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 md:py-20 px-4 md:px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+              <div className="rounded-full bg-white border border-slate-200 p-4 md:p-6 mb-3 md:mb-5 shadow-sm">
+                <Heart className="h-8 w-8 md:h-14 md:w-14 text-slate-400" />
+              </div>
+              <h3 className="text-sm md:text-xl font-semibold text-slate-800 mb-1 md:mb-2 text-center">
                 {search || organizationFilter !== "__all__" || participationFilter !== "__all__" || yearFilter !== "__all__"
                   ? "لا توجد نتائج"
                   : "لم يتم تسجيل أي كتاب شكر بعد"}
               </h3>
-              <p className="text-sm text-slate-600 text-center max-w-md mb-6">
+              <p className="text-xs md:text-sm text-slate-600 text-center max-w-md mb-4 md:mb-6">
                 {search || organizationFilter !== "__all__" || participationFilter !== "__all__" || yearFilter !== "__all__"
                   ? "لا توجد كتب شكر تطابق الفلاتر. جرّب تغيير البحث أو الفلاتر."
                   : "ابدأ بإضافة أول كتاب شكر لك."}
@@ -692,10 +902,10 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
               {!search && organizationFilter === "__all__" && participationFilter === "__all__" && yearFilter === "__all__" && (
                 <Button
                   onClick={() => handleOpenAdd()}
-                  size="lg"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm"
+                  size="sm"
+                  className="md:h-11 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm"
                 >
-                  <Plus className="h-5 w-5 ml-2" />
+                  <Plus className="h-4 w-4 md:h-5 md:w-5 ml-1 md:ml-2" />
                   إضافة أول كتاب شكر
                 </Button>
               )}
@@ -729,42 +939,7 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
                       {filteredForDisplay.map((l) => (
                         <TableRow key={l.id} className="hover:bg-slate-50/50">
                           <TableCell className="align-middle whitespace-nowrap">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => handleView(l)}>
-                                  <Eye className="h-4 w-4 ml-2" />
-                                  عرض التفاصيل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenAdd(l)}>
-                                  <Pencil className="h-4 w-4 ml-2" />
-                                  تعديل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => {
-                                    if (confirm("هل أنت متأكد من حذف هذا كتاب الشكر؟")) {
-                                      startTransition(async () => {
-                                        const res = await deleteThankYouLetter(l.id);
-                                        if (res.error) showToast(res.error, "error");
-                                        else {
-                                          showToast("✅ تم حذف كتاب الشكر بنجاح");
-                                          loadThankYouLetters();
-                                          notifyDashboardUpdate("activities");
-                                        }
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 ml-2" />
-                                  حذف
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            {letterActionsMenu(l)}
                           </TableCell>
                           <TableCell className="align-middle">
                             <span className="font-medium text-slate-900 block" dir="rtl">
@@ -829,92 +1004,59 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
               </div>
 
               {/* Mobile Cards List */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-2">
                 {filteredForDisplay.map((l) => (
-                  <Card key={l.id} className="border-slate-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-slate-900 text-base mb-1" dir="rtl">
-                            {l.issuingOrganization}
-                          </h3>
-                          <p className="text-sm text-slate-600 mt-1 line-clamp-2" dir="rtl">
-                            {l.reason}
-                          </p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handleView(l)}>
-                              <Eye className="h-4 w-4 ml-2" />
-                              عرض التفاصيل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenAdd(l)}>
-                              <Pencil className="h-4 w-4 ml-2" />
-                              تعديل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => {
-                                if (confirm("هل أنت متأكد من حذف هذا كتاب الشكر؟")) {
-                                  startTransition(async () => {
-                                    const res = await deleteThankYouLetter(l.id);
-                                    if (res.error) showToast(res.error, "error");
-                                    else {
-                                      showToast("✅ تم حذف كتاب الشكر بنجاح");
-                                      loadThankYouLetters();
-                                      notifyDashboardUpdate("activities");
-                                    }
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 ml-2" />
-                              حذف
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  <div
+                    key={l.id}
+                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm min-h-[96px]"
+                  >
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleView(l)}
+                        className="min-w-0 flex-1 text-right space-y-0.5"
+                      >
+                        <p className="text-[12px] font-semibold text-slate-900 line-clamp-1 leading-snug">
+                          {l.issuingOrganization}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {[
+                            formatDate(l.date),
+                            l.participationType ? participationLabels[l.participationType] : null,
+                            l.reason,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </button>
+                      {letterActionsMenu(l)}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">توجيه الشكر</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate" dir="rtl">
+                          {l.reason || "—"}
+                        </p>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-                        <div>
-                          <span className="text-slate-500">التاريخ:</span>
-                          <span className="text-slate-900 font-medium mr-2">
-                            {formatDate(l.date)}
-                          </span>
-                        </div>
-                        {l.participationType && (
-                          <div>
-                            <span className="text-slate-500">نوع المشاركة:</span>
-                            <Badge
-                              variant={l.participationType === "PRESENTER" ? "default" : "secondary"}
-                              className={l.participationType === "PRESENTER" ? "bg-purple-100 text-purple-800 mr-2" : "mr-2"}
-                            >
-                              {participationLabels[l.participationType]}
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                      {l.description && (
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">الوصف</p>
+                        {l.description ? (
+                          <button
+                            type="button"
+                            className="text-[11px] font-medium text-blue-600 truncate block w-full text-right"
                             onClick={() => {
                               setViewingLetter(l);
                               setIsDetailsOpen(true);
                             }}
                           >
-                            عرض الوصف
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                            عرض التفاصيل
+                          </button>
+                        ) : (
+                          <p className="text-[11px] text-slate-400">—</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </>
@@ -924,18 +1066,20 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddOpen} onOpenChange={(open) => !open && handleCloseAdd()}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle>{editingLetter ? "تعديل كتاب الشكر" : "إضافة كتاب شكر"}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-base md:text-lg">
+              {editingLetter ? "تعديل كتاب الشكر" : "إضافة كتاب شكر"}
+            </DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
               {editingLetter
                 ? "تعديل بيانات كتاب الشكر."
                 : "أدخل بيانات كتاب الشكر. التاريخ لا يقبل أي تاريخ في المستقبل."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddSubmit} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-3 md:space-y-4">
             <div>
-              <Label htmlFor="issuingOrganization">الجهة المانحة للشكر *</Label>
+              <Label htmlFor="issuingOrganization" className="text-xs md:text-sm">الجهة المانحة للشكر *</Label>
               <Input
                 id="issuingOrganization"
                 value={formData.issuingOrganization}
@@ -943,11 +1087,11 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
                 placeholder="الجهة المانحة للشكر"
                 required
                 minLength={2}
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
             <div>
-              <Label htmlFor="reason">توجيه الشكر *</Label>
+              <Label htmlFor="reason" className="text-xs md:text-sm">توجيه الشكر *</Label>
               <textarea
                 id="reason"
                 value={formData.reason}
@@ -956,11 +1100,11 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
                 rows={3}
                 required
                 minLength={2}
-                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-1 flex min-h-[72px] md:min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div>
-              <Label htmlFor="date">التاريخ *</Label>
+              <Label htmlFor="date" className="text-xs md:text-sm">التاريخ *</Label>
               <Input
                 id="date"
                 type="date"
@@ -976,26 +1120,26 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
                   setFormData((p) => ({ ...p, date: selectedDate }));
                 }}
                 required
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
-              <p className="text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
+              <p className="text-[10px] md:text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
             </div>
             <div>
-              <Label htmlFor="description">الوصف (اختياري)</Label>
+              <Label htmlFor="description" className="text-xs md:text-sm">الوصف (اختياري)</Label>
               <textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                 placeholder="وصف إضافي عن كتاب الشكر..."
                 rows={3}
-                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-1 flex min-h-[72px] md:min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleCloseAdd}>
+              <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleCloseAdd}>
                 إلغاء
               </Button>
-              <Button type="submit" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+              <Button type="submit" size="sm" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8] h-9">
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : editingLetter ? (
@@ -1014,73 +1158,127 @@ export function ThanksPageClient({ initialThankYouLetters }: ThanksPageClientPro
         open={isDetailsOpen}
         onOpenChange={(open) => !open && (setIsDetailsOpen(false), setViewingLetter(null))}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-right" dir="rtl">
+            <DialogTitle className="text-right text-base md:text-lg" dir="rtl">
               تفاصيل كتاب الشكر
             </DialogTitle>
             <DialogDescription className="sr-only">عرض تفاصيل كتاب الشكر المحدد</DialogDescription>
           </DialogHeader>
           {viewingLetter && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-sm md:text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
                 {viewingLetter.issuingOrganization}
               </h3>
-              {viewingLetter.participationType && (
-                <div className="flex flex-wrap gap-2">
-                  <Badge
-                    variant={viewingLetter.participationType === "PRESENTER" ? "default" : "secondary"}
-                    className={viewingLetter.participationType === "PRESENTER" ? "bg-purple-100 text-purple-800" : ""}
-                  >
-                    {participationLabels[viewingLetter.participationType]}
-                  </Badge>
+              <p className="text-[11px] md:text-xs text-slate-500">
+                {[
+                  viewingLetter.participationType
+                    ? participationLabels[viewingLetter.participationType]
+                    : null,
+                  formatDate(viewingLetter.date),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 md:hidden">
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">التاريخ</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {formatDate(viewingLetter.date)}
+                  </p>
                 </div>
-              )}
-              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                <span className="text-slate-500">توجيه الشكر</span>
-                <span className="font-medium text-slate-900" dir="rtl">{viewingLetter.reason}</span>
-                <span className="text-slate-500">التاريخ</span>
-                <span className="font-medium text-slate-900">{formatDate(viewingLetter.date)}</span>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">نوع المشاركة</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {viewingLetter.participationType
+                      ? participationLabels[viewingLetter.participationType]
+                      : "—"}
+                  </p>
+                </div>
+                <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">توجيه الشكر</p>
+                  <p className="text-xs font-medium text-slate-900 whitespace-pre-wrap" dir="rtl">
+                    {viewingLetter.reason}
+                  </p>
+                </div>
                 {viewingLetter.description && (
-                  <>
-                    <span className="text-slate-500">الوصف</span>
-                    <span className="font-medium text-slate-900" dir="rtl">
+                  <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">الوصف</p>
+                    <p className="text-xs font-medium text-slate-900 whitespace-pre-wrap" dir="rtl">
                       {viewingLetter.description}
-                    </span>
-                  </>
+                    </p>
+                  </div>
                 )}
               </div>
-              <div className="flex flex-wrap justify-end gap-2 pt-4">
+              <div className="hidden md:block space-y-4">
+                {viewingLetter.participationType && (
+                  <div className="flex flex-wrap gap-2">
+                    <Badge
+                      variant={viewingLetter.participationType === "PRESENTER" ? "default" : "secondary"}
+                      className={viewingLetter.participationType === "PRESENTER" ? "bg-purple-100 text-purple-800" : ""}
+                    >
+                      {participationLabels[viewingLetter.participationType]}
+                    </Badge>
+                  </div>
+                )}
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                  <span className="text-slate-500">توجيه الشكر</span>
+                  <span className="font-medium text-slate-900" dir="rtl">{viewingLetter.reason}</span>
+                  <span className="text-slate-500">التاريخ</span>
+                  <span className="font-medium text-slate-900">{formatDate(viewingLetter.date)}</span>
+                  {viewingLetter.description && (
+                    <>
+                      <span className="text-slate-500">الوصف</span>
+                      <span className="font-medium text-slate-900" dir="rtl">
+                        {viewingLetter.description}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row md:flex-wrap md:justify-end gap-2 pt-2 md:pt-4">
                 <Button
                   variant="outline"
-                  className="text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800"
+                  size="sm"
+                  className="h-9 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 justify-center"
                   onClick={() => shareThankYouLetterViaWhatsApp(viewingLetter)}
                 >
                   <MessageCircle className="h-4 w-4 ml-2" />
-                  إرسال عبر واتساب
+                  <span className="md:hidden">واتساب</span>
+                  <span className="hidden md:inline">إرسال عبر واتساب</span>
                 </Button>
-                <Button variant="outline" onClick={() => (setIsDetailsOpen(false), setViewingLetter(null))}>
-                  إغلاق
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDetailsOpen(false);
-                    handleOpenAdd(viewingLetter);
-                    setViewingLetter(null);
-                  }}
-                >
-                  <Pencil className="h-4 w-4 ml-2" />
-                  تعديل
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(viewingLetter.id)}
-                  disabled={isPending}
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
-                </Button>
+                <div className="grid grid-cols-3 gap-2 md:contents">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => (setIsDetailsOpen(false), setViewingLetter(null))}
+                  >
+                    إغلاق
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => {
+                      setIsDetailsOpen(false);
+                      handleOpenAdd(viewingLetter);
+                      setViewingLetter(null);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 ml-1 md:ml-2" />
+                    تعديل
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-red-600 hover:bg-red-50"
+                    onClick={() => handleDelete(viewingLetter.id)}
+                    disabled={isPending}
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

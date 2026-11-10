@@ -301,21 +301,65 @@ export function EvaluationPageClient({
     };
   });
 
+  const yearOptions =
+    availableYears.length > 0
+      ? availableYears
+      : [new Date().getFullYear(), new Date().getFullYear() - 1];
+
+  const kpiMobileItems = [
+    {
+      key: "score",
+      label: "النقاط / 100",
+      value: String(totalScore),
+      icon: Award,
+      softBg: "bg-blue-50",
+      softText: "text-blue-600",
+    },
+    {
+      key: "achievement",
+      label: "نسبة الإنجاز",
+      value: achievementPercent != null ? `${achievementPercent}%` : "—",
+      icon: Target,
+      softBg: "bg-emerald-50",
+      softText: "text-emerald-600",
+    },
+    {
+      key: "categories",
+      label: "الفئات المحققة",
+      value: goals != null ? `${categoriesMet}/${categories.length}` : "—",
+      icon: CheckCircle2,
+      softBg: "bg-purple-50",
+      softText: "text-purple-600",
+    },
+    {
+      key: "period",
+      label: "الفترة",
+      value: periodLabel,
+      icon: Calendar,
+      softBg: "bg-amber-50",
+      softText: "text-amber-600",
+    },
+  ];
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto" dir="rtl">
+    <div className="space-y-3 md:space-y-6 max-w-6xl mx-auto min-w-0" dir="rtl">
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="min-w-0 flex-1 space-y-1">
-          <h1 className="text-lg md:text-xl font-semibold text-gray-900 leading-snug">
+      {/* رأس الصفحة */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base md:text-xl font-semibold text-gray-900 leading-snug truncate">
             التقييم والنقاط
-            <span className="font-normal text-slate-500 text-sm md:text-base mr-2">
+            <span className="hidden md:inline font-normal text-slate-500 text-sm md:text-base mr-2">
               — إجمالي أو لفترة محددة · مقارنة بالخطة والمعايير
             </span>
           </h1>
-          <p className="text-sm text-slate-700 leading-snug">
+          <p
+            className="text-[11px] md:text-sm text-slate-600 md:text-slate-700 leading-snug mt-0.5 md:mt-1 line-clamp-2 md:line-clamp-none"
+            aria-live="polite"
+          >
             <span className="font-semibold text-slate-900">{totalScore}</span>
             <span className="text-slate-500"> / 100</span>
             <span className="mx-1.5 text-slate-300">·</span>
@@ -336,12 +380,12 @@ export function EvaluationPageClient({
             )}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
           <Select
             value={exportScope}
             onValueChange={(v) => setExportScope(v as "current" | "overall")}
           >
-            <SelectTrigger className="h-9 w-[180px] border-slate-200 text-slate-700">
+            <SelectTrigger className="h-8 md:h-9 w-[112px] md:w-[180px] border-slate-200 text-slate-700 text-[10px] md:text-sm px-1.5 md:px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -352,7 +396,7 @@ export function EvaluationPageClient({
           <Button
             variant="outline"
             size="sm"
-            className="border-slate-200 text-slate-700 hover:bg-slate-50"
+            className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 md:h-9 px-2.5 md:px-3 text-[11px] md:text-sm"
             onClick={() => {
               const url = `/researcher/evaluation/print?year=${printYear}${
                 printMonth ? `&month=${printMonth}` : ""
@@ -360,14 +404,81 @@ export function EvaluationPageClient({
               window.open(url, "_blank", "noopener,noreferrer");
             }}
           >
-            <FileDown className="h-4 w-4 ml-2" />
-            تصدير PDF
+            <FileDown className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+            <span className="md:hidden">PDF</span>
+            <span className="hidden md:inline">تصدير PDF</span>
           </Button>
         </div>
       </div>
 
-      {/* فلترة فترة التقييم */}
-      <Card className="border-slate-100 bg-white shadow-lg">
+      {/* فلترة موبايل: سطر واحد */}
+      <div className="md:hidden rounded-xl bg-slate-50 p-1.5">
+        <div className="flex items-center gap-1 flex-nowrap min-w-0">
+          <Button
+            variant={filterMode === "overall" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterMode("overall")}
+            className={`h-8 px-1.5 text-[10px] shrink-0 ${
+              filterMode === "overall" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : "bg-white"
+            }`}
+          >
+            الإجمالي
+          </Button>
+          <Button
+            variant={filterMode === "period" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterMode("period")}
+            className={`h-8 px-1.5 text-[10px] shrink-0 ${
+              filterMode === "period" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : "bg-white"
+            }`}
+          >
+            فترة
+          </Button>
+          {filterMode === "period" && (
+            <>
+              <Select
+                value={selectedYear || "__none__"}
+                onValueChange={(v) => setSelectedYear(v === "__none__" ? "" : v)}
+              >
+                <SelectTrigger className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1">
+                  <SelectValue placeholder="السنة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">السنة</SelectItem>
+                  {yearOptions.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1">
+                  <SelectValue placeholder="الشهر" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+          <Button
+            onClick={handleApplyFilter}
+            disabled={isPending || (filterMode === "period" && !selectedYear)}
+            size="sm"
+            className="h-8 px-2 text-[10px] shrink-0 bg-[#2563EB] hover:bg-[#1D4ED8]"
+          >
+            {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "تطبيق"}
+          </Button>
+        </div>
+      </div>
+
+      {/* فلترة سطح المكتب (بدون تغيير) */}
+      <Card className="hidden md:block border-slate-100 bg-white shadow-lg">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             فلترة فترة التقييم
@@ -409,17 +520,11 @@ export function EvaluationPageClient({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">السنة</SelectItem>
-                    {availableYears.length > 0
-                      ? availableYears.map((y) => (
-                          <SelectItem key={y} value={String(y)}>
-                            {y}
-                          </SelectItem>
-                        ))
-                      : [new Date().getFullYear(), new Date().getFullYear() - 1].map((y) => (
-                          <SelectItem key={y} value={String(y)}>
-                            {y}
-                          </SelectItem>
-                        ))}
+                    {yearOptions.map((y) => (
+                      <SelectItem key={y} value={String(y)}>
+                        {y}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -451,8 +556,30 @@ export function EvaluationPageClient({
         </CardHeader>
       </Card>
 
-      {/* إبراز أنواع التقييم */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* أنواع التقييم — موبايل مضغوط */}
+      <div className="md:hidden grid grid-cols-3 gap-1.5">
+        <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl border border-slate-100 bg-white shadow-sm min-h-[72px] text-center">
+          <div className="bg-blue-50 p-1.5 rounded-lg">
+            <Award className="h-3.5 w-3.5 text-blue-600" />
+          </div>
+          <p className="text-[10px] font-medium text-slate-800 leading-tight">التقييم الشامل</p>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl border border-slate-100 bg-white shadow-sm min-h-[72px] text-center">
+          <div className="bg-emerald-50 p-1.5 rounded-lg">
+            <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+          </div>
+          <p className="text-[10px] font-medium text-slate-800 leading-tight">المعايير الدولية</p>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl border border-slate-100 bg-white shadow-sm min-h-[72px] text-center">
+          <div className="bg-amber-50 p-1.5 rounded-lg">
+            <Target className="h-3.5 w-3.5 text-amber-600" />
+          </div>
+          <p className="text-[10px] font-medium text-slate-800 leading-tight">أهداف الخطة</p>
+        </div>
+      </div>
+
+      {/* أنواع التقييم — سطح المكتب */}
+      <div className="hidden md:grid md:grid-cols-3 gap-3">
         <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-white shadow-sm">
           <div className="bg-blue-500/10 p-2 rounded-lg">
             <Award className="h-4 w-4 text-blue-600" />
@@ -482,8 +609,72 @@ export function EvaluationPageClient({
         </div>
       </div>
 
-      {/* Hero Card */}
-      <Card className="border-slate-100 bg-white shadow-lg border-r-4 border-r-blue-500">
+      {/* Hero — موبايل مضغوط */}
+      <Card className="md:hidden border-slate-100 bg-white shadow-sm border-r-4 border-r-blue-500 gap-0 overflow-hidden rounded-xl">
+        <CardContent className="p-2.5">
+          <div className="flex items-center gap-2.5">
+            <div
+              className={`rounded-full px-3 py-2 shrink-0 text-center ${
+                totalScore >= 80
+                  ? "bg-green-50"
+                  : totalScore >= 60
+                    ? "bg-blue-50"
+                    : "bg-amber-50"
+              }`}
+            >
+              <span
+                className={`text-2xl font-black tabular-nums leading-none ${
+                  totalScore >= 80
+                    ? "text-green-600"
+                    : totalScore >= 60
+                      ? "text-blue-600"
+                      : "text-amber-600"
+                }`}
+              >
+                {totalScore}
+              </span>
+              <p className="text-[10px] text-slate-500 mt-0.5">/ 100 · {gradeLetter}</p>
+            </div>
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-[10px] text-slate-500">التقييم الكلي</p>
+              <Badge className={`${performanceLevel.className} text-[10px]`} variant="outline">
+                {performanceLevel.label}
+              </Badge>
+              {scoreDelta != null && (
+                <div className="flex items-center gap-1 text-[10px]">
+                  {scoreDelta >= 0 ? (
+                    <TrendingUp className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-600" />
+                  )}
+                  <span className={scoreDelta >= 0 ? "text-green-700" : "text-red-700"}>
+                    {scoreDelta >= 0 ? "+" : ""}
+                    {scoreDelta} عن السابق
+                  </span>
+                </div>
+              )}
+              <p className={`text-[10px] font-medium ${peerIndicator.className}`}>
+                {peerIndicator.label}
+              </p>
+            </div>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 min-h-[56px] flex flex-col justify-center">
+              <p className="text-[10px] text-slate-500 mb-0.5">الخطة العلمية</p>
+              <p className="text-sm font-bold text-slate-900 tabular-nums">
+                {achievementPercent != null ? `${achievementPercent}%` : "—"}
+              </p>
+            </div>
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 min-h-[56px] flex flex-col justify-center">
+              <p className="text-[10px] text-slate-500 mb-0.5">المعايير الدولية</p>
+              <p className="text-sm font-bold text-slate-900 tabular-nums">{internationalPercent}%</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hero — سطح المكتب */}
+      <Card className="hidden md:block border-slate-100 bg-white shadow-lg border-r-4 border-r-blue-500">
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex items-center gap-4">
@@ -578,8 +769,30 @@ export function EvaluationPageClient({
         </CardContent>
       </Card>
 
-      {/* نسبة الإنجاز من أهداف الخطة */}
-      <Card className="border-slate-100 bg-white shadow-lg">
+      {/* نسبة الإنجاز — موبايل مضغوط */}
+      <Card className="md:hidden border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+        <CardContent className="p-2.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="bg-emerald-50 p-1.5 rounded-lg shrink-0">
+              <Target className="h-3.5 w-3.5 text-emerald-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold text-slate-800">نسبة الإنجاز من أهداف الخطة</p>
+              <p className="text-[10px] text-slate-500 truncate">
+                {achievementPercent != null
+                  ? "متوسط التقدم مقابل الأهداف"
+                  : "لا توجد أهداف محددة"}
+              </p>
+            </div>
+          </div>
+          <div className="text-xl font-black tabular-nums text-slate-900 shrink-0">
+            {achievementPercent != null ? `${achievementPercent}%` : "--"}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* نسبة الإنجاز — سطح المكتب */}
+      <Card className="hidden md:block border-slate-100 bg-white shadow-lg">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Target className="h-4 w-4 text-emerald-600" />
@@ -600,8 +813,30 @@ export function EvaluationPageClient({
         </CardContent>
       </Card>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {/* KPI موبايل 2×2 */}
+      <div className="grid grid-cols-2 gap-2 md:hidden">
+        {kpiMobileItems.map(({ key, label, value, icon: Icon, softBg, softText }) => (
+          <div
+            key={key}
+            className="h-[64px] rounded-xl border border-slate-100 bg-white px-2.5 py-2 min-w-0 shadow-sm flex items-center"
+          >
+            <div className="flex items-center gap-2 min-w-0 w-full">
+              <div className={`h-8 w-8 rounded-lg ${softBg} flex items-center justify-center shrink-0`}>
+                <Icon className={`h-3.5 w-3.5 ${softText}`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold tabular-nums text-gray-900 leading-none truncate">
+                  {value}
+                </div>
+                <p className="mt-1 text-[10px] text-slate-500 leading-tight truncate">{label}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* KPI سطح المكتب */}
+      <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="border border-slate-100 border-r-4 border-r-blue-500 bg-white shadow-lg min-h-[92px]">
           <CardContent className="p-4 h-full flex flex-col justify-between">
             <div className="flex items-center justify-between gap-3 mb-2">
@@ -668,43 +903,70 @@ export function EvaluationPageClient({
         </Card>
       </div>
 
-      {/* 1) توزيع النشاط (Pie) */}
+      {/* الرسوم */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">توزيع النشاط</h3>
-        <div className="grid grid-cols-12 gap-4">
-          <Card className="border border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-4">
-            <CardContent className="pt-4 pb-4 px-4">
-              <h4 className="text-base font-semibold text-gray-900 mb-3">توزيع النشاط (دائري)</h4>
-              <div className="h-[300px]">
-                {chartData.length > 0 ? (
-                  <PieChart
-                    data={chartData}
-                    tooltipLabel={(name, value) => `${name}: ${value}`}
-                    legendLayout="horizontal"
-                    legendVerticalAlign="bottom"
-                    outerRadius={80}
-                    innerRadius={28}
-                    legendWrapperStyle={{ fontSize: "11px" }}
-                  />
-                ) : (
-                  <EmptyChartState type="pie" />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-8">
-            <CardContent className="pt-4 pb-4 px-4">
-              <h4 className="text-base font-semibold text-gray-900 mb-3">توزيع النشاط حسب الفئة</h4>
-              <div className="h-[300px]">
+        <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-2.5 md:mb-4">توزيع النشاط</h3>
+
+        {/* موبايل */}
+        <div className="md:hidden space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  توزيع النشاط
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {chartData.length > 0 ? (
+                    <PieChart
+                      data={chartData}
+                      outerRadius={40}
+                      innerRadius={14}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      legendWrapperStyle={{ fontSize: 10, paddingTop: 0 }}
+                      tooltipLabel={(name, value) => `${name}: ${value}`}
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  ملخص التقييم
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1 flex items-center justify-center h-[130px]">
+                <div className="text-center">
+                  <div className="text-2xl font-black tabular-nums text-gray-900 leading-none">
+                    {totalScore}
+                  </div>
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    {performanceLevel.label}
+                    {achievementPercent != null ? ` · ${achievementPercent}%` : ""}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">حسب الفئة</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
                 {barChartData.some((d) => d["عدد النشاطات"] > 0) ? (
                   <BarChart
                     data={barChartData}
                     dataKeys={["عدد النشاطات"]}
                     colors={["#2563EB"]}
                     tooltipLabel={(name, count) => `${name}: ${count}`}
-                    legendLayout="horizontal"
-                    legendVerticalAlign="bottom"
-                    tickFontSize={11}
+                    tickFontSize={10}
                   />
                 ) : (
                   <EmptyChartState type="bar" />
@@ -712,39 +974,172 @@ export function EvaluationPageClient({
               </div>
             </CardContent>
           </Card>
+
+          {goalVsAchievedData.length > 0 && (
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+              <CardHeader className="px-2.5 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900">
+                  الإنجاز مقابل الهدف
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2.5 pt-1">
+                <div className="h-[132px]">
+                  <BarChart
+                    data={goalVsAchievedData}
+                    dataKeys={["المنجز", "الهدف"]}
+                    colors={["#10b981", "#f59e0b"]}
+                    tooltipLabel={(name, value) => `${name}: ${value}`}
+                    tickFontSize={10}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
-        {goalVsAchievedData.length > 0 && (
-          <Card className="border border-slate-100 bg-white shadow-lg mt-4">
-            <CardContent className="pt-4 pb-4 px-4">
-              <h4 className="text-base font-semibold text-gray-900 mb-3">الإنجاز مقابل الهدف</h4>
-              <div className="h-[280px]">
-                <BarChart
-                  data={goalVsAchievedData}
-                  dataKeys={["المنجز", "الهدف"]}
-                  colors={["#10b981", "#f59e0b"]}
-                  tooltipLabel={(name, value) => `${name}: ${value}`}
-                  legendLayout="horizontal"
-                  legendVerticalAlign="bottom"
-                  tickFontSize={11}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
+        {/* سطح المكتب */}
+        <div className="hidden md:block">
+          <div className="grid grid-cols-12 gap-4">
+            <Card className="border border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-4">
+              <CardContent className="pt-4 pb-4 px-4">
+                <h4 className="text-base font-semibold text-gray-900 mb-3">توزيع النشاط (دائري)</h4>
+                <div className="h-[300px]">
+                  {chartData.length > 0 ? (
+                    <PieChart
+                      data={chartData}
+                      tooltipLabel={(name, value) => `${name}: ${value}`}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      outerRadius={80}
+                      innerRadius={28}
+                      legendWrapperStyle={{ fontSize: "11px" }}
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-8">
+              <CardContent className="pt-4 pb-4 px-4">
+                <h4 className="text-base font-semibold text-gray-900 mb-3">توزيع النشاط حسب الفئة</h4>
+                <div className="h-[300px]">
+                  {barChartData.some((d) => d["عدد النشاطات"] > 0) ? (
+                    <BarChart
+                      data={barChartData}
+                      dataKeys={["عدد النشاطات"]}
+                      colors={["#2563EB"]}
+                      tooltipLabel={(name, count) => `${name}: ${count}`}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      tickFontSize={11}
+                    />
+                  ) : (
+                    <EmptyChartState type="bar" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          {goalVsAchievedData.length > 0 && (
+            <Card className="border border-slate-100 bg-white shadow-lg mt-4">
+              <CardContent className="pt-4 pb-4 px-4">
+                <h4 className="text-base font-semibold text-gray-900 mb-3">الإنجاز مقابل الهدف</h4>
+                <div className="h-[280px]">
+                  <BarChart
+                    data={goalVsAchievedData}
+                    dataKeys={["المنجز", "الهدف"]}
+                    colors={["#10b981", "#f59e0b"]}
+                    tooltipLabel={(name, value) => `${name}: ${value}`}
+                    legendLayout="horizontal"
+                    legendVerticalAlign="bottom"
+                    tickFontSize={11}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
-      {/* جدول تفصيل الإنجاز/الوزن */}
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">تفصيل الفئات (المنجز، الهدف، نسبة الإنجاز، تأثير الوزن)</CardTitle>
+      {/* تفصيل الفئات */}
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl">
+        <CardHeader className="px-3 pt-3 pb-2 md:px-6 md:pt-6 md:pb-3">
+          <CardTitle className="text-sm md:text-base">
+            <span className="md:hidden">تفصيل الفئات</span>
+            <span className="hidden md:inline">
+              تفصيل الفئات (المنجز، الهدف، نسبة الإنجاز، تأثير الوزن)
+            </span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
           {tableRows.every((r) => r.pct == null) && (
-            <p className="text-sm text-slate-600 mb-3">
+            <p className="text-[11px] md:text-sm text-slate-600 mb-2 md:mb-3">
               حدّث أهداف الخطة العلمية لرؤية نسبة الإنجاز وشريط التقدم لكل فئة.
             </p>
           )}
-          <div className="overflow-x-auto rounded-xl border border-slate-100">
+
+          {/* موبايل: بطاقات */}
+          <div className="md:hidden space-y-2">
+            {tableRows.map((row) => (
+              <div
+                key={row.key}
+                className={`rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm min-h-[96px] ${
+                  row.below70 ? "bg-amber-50/40" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {CATEGORY_LABELS[row.key]}
+                  </p>
+                  <span className="text-[10px] text-slate-500 shrink-0">
+                    وزن {row.weight} · تأثير {row.weightImpact}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div>
+                    <p className="text-[10px] text-slate-400">المنجز</p>
+                    <p className="text-xs font-medium text-slate-800 tabular-nums">{row.achieved}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400">الهدف</p>
+                    <p className="text-xs font-medium text-slate-800 tabular-nums">
+                      {row.goal != null ? row.goal : "—"}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <p className="text-[10px] text-slate-400 mb-1">نسبة الإنجاز</p>
+                  {row.pct != null ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${progressBarColor(row.pct)}`}
+                          style={{ width: `${Math.min(100, row.pct)}%` }}
+                        />
+                      </div>
+                      <span
+                        className={`text-[10px] font-medium shrink-0 ${
+                          row.pct < 50
+                            ? "text-red-700"
+                            : row.pct < 80
+                              ? "text-amber-700"
+                              : "text-green-700"
+                        }`}
+                      >
+                        {row.pct}%
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-slate-500">غير محدد بالخطة</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* سطح المكتب: جدول */}
+          <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-100">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
@@ -812,35 +1207,35 @@ export function EvaluationPageClient({
         </CardContent>
       </Card>
 
-      {/* مقارنة المعايير الدولية */}
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#2563EB]" />
+      {/* المعايير الدولية */}
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl">
+        <CardHeader className="px-3 pt-3 pb-2 md:px-6 md:pt-6 md:pb-3">
+          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+            <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-[#2563EB]" />
             مقارنة مع المعايير الدولية
             {internationalPercent === 100 && (
-              <Badge className="bg-green-100 text-green-800 border-green-200" variant="outline">
+              <Badge className="bg-green-100 text-green-800 border-green-200 text-[10px] md:text-xs" variant="outline">
                 مستوفٍ
               </Badge>
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 md:gap-4">
             {standardsCheck.map((s) => (
               <div
                 key={s.label}
-                className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50"
+                className="flex items-center justify-between p-2 md:p-3 rounded-lg border border-slate-100 bg-slate-50/50 min-h-[48px] md:min-h-0"
               >
-                <span className="text-sm text-slate-700" dir="rtl">
+                <span className="text-[10px] md:text-sm text-slate-700 leading-tight pl-2" dir="rtl">
                   {s.label}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{s.value}</span>
+                <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+                  <span className="text-xs md:text-sm font-medium tabular-nums">{s.value}</span>
                   {s.met ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-amber-600" />
+                    <XCircle className="h-4 w-4 md:h-5 md:w-5 text-amber-600" />
                   )}
                 </div>
               </div>

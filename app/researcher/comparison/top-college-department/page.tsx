@@ -42,29 +42,41 @@ export default async function ComparisonTopCollegeDepartmentPage({
   const data = await getComparisonData(user.id, filters);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg md:text-2xl font-semibold text-gray-900">أفضل التدريسيين في الكلية والقسم</h1>
-          <p className="text-sm text-slate-500 mt-1">
+    <div className="space-y-3 md:space-y-6 min-w-0">
+      <div className="flex items-center justify-between gap-2 md:gap-3">
+        <div className="min-w-0">
+          <h1 className="text-base md:text-2xl font-semibold text-gray-900 leading-snug">
+            <span className="md:hidden">الأفضل في الكلية والقسم</span>
+            <span className="hidden md:inline">أفضل التدريسيين في الكلية والقسم</span>
+          </h1>
+          <p className="hidden md:block text-sm text-slate-500 mt-1">
             عرض موسع حسب الفلاتر الحالية.
           </p>
         </div>
-        <Button asChild variant="outline" className="h-9 rounded-lg">
+        <Button
+          asChild
+          variant="outline"
+          className="h-8 md:h-9 rounded-lg text-[10px] md:text-sm px-2 md:px-3 shrink-0"
+        >
           <Link href={{ pathname: "/researcher/comparison", query: linkQuery }}>
-            عودة للمقارنات
+            <span className="md:hidden">عودة</span>
+            <span className="hidden md:inline">عودة للمقارنات</span>
           </Link>
         </Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-slate-100 bg-white shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-slate-900">أفضل في الكلية</CardTitle>
+      <div className="grid gap-2.5 md:gap-4 lg:grid-cols-2">
+        <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl md:rounded-2xl">
+          <CardHeader className="pb-2 md:pb-3 px-3 md:px-6 pt-3 md:pt-6">
+            <CardTitle className="text-sm md:text-base font-semibold text-slate-900">
+              أفضل في الكلية
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2 md:space-y-3 px-3 md:px-6 pb-3 md:pb-6">
             {data.top5College.length === 0 ? (
-              <div className="text-sm text-slate-500">لا توجد بيانات كافية للكلية الحالية.</div>
+              <div className="text-[10px] md:text-sm text-slate-500">
+                لا توجد بيانات كافية للكلية الحالية.
+              </div>
             ) : (
               data.top5College.map((entry, index) => (
                 <LeaderboardCardRow
@@ -78,13 +90,17 @@ export default async function ComparisonTopCollegeDepartmentPage({
           </CardContent>
         </Card>
 
-        <Card className="border-slate-100 bg-white shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-slate-900">أفضل في القسم</CardTitle>
+        <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl md:rounded-2xl">
+          <CardHeader className="pb-2 md:pb-3 px-3 md:px-6 pt-3 md:pt-6">
+            <CardTitle className="text-sm md:text-base font-semibold text-slate-900">
+              أفضل في القسم
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2 md:space-y-3 px-3 md:px-6 pb-3 md:pb-6">
             {data.top3Department.length === 0 ? (
-              <div className="text-sm text-slate-500">لا توجد بيانات كافية للقسم الحالي.</div>
+              <div className="text-[10px] md:text-sm text-slate-500">
+                لا توجد بيانات كافية للقسم الحالي.
+              </div>
             ) : (
               data.top3Department.map((entry, index) => (
                 <LeaderboardCardRow

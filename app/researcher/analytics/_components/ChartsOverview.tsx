@@ -39,16 +39,21 @@ export function ChartsOverview({ timeline }: ChartsOverviewProps) {
   }, []);
 
   if (!mounted) {
-    return <div className="rounded-2xl border border-slate-100 bg-white shadow-lg h-[280px]" />;
+    return (
+      <>
+        <div className="md:hidden rounded-xl border border-slate-100 bg-white shadow-sm h-[168px]" />
+        <div className="hidden md:block rounded-2xl border border-slate-100 bg-white shadow-lg h-[280px]" />
+      </>
+    );
   }
 
   return (
     <SectionCard title="النشاط الأكاديمي عبر الزمن" description="إجمالي النشاط مع متوسط الأداء وأفضل فترة">
       {timeline.length === 0 ? (
-        <div className="text-sm text-slate-500">لا توجد بيانات للفترة المحددة.</div>
+        <div className="text-xs md:text-sm text-slate-500">لا توجد بيانات للفترة المحددة.</div>
       ) : (
-        <div className="h-[260px]">
-          <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+        <div className="h-[168px] md:h-[260px]">
+          <ResponsiveContainer width="100%" height="100%" minHeight={140}>
             <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.15} />
               <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 12 }} />

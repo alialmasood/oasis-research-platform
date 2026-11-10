@@ -407,6 +407,45 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
 
+  const supervisionActionsMenu = (c: Supervision) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => handleView(c)}>
+          <Eye className="h-4 w-4 ml-2" />
+          عرض التفاصيل
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenAdd(c)}>
+          <Pencil className="h-4 w-4 ml-2" />
+          تعديل
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-red-600"
+          onClick={() => {
+            if (confirm("هل أنت متأكد من حذف هذا الإشراف؟")) {
+              startTransition(async () => {
+                const res = await deleteSupervision(c.id);
+                if (res.error) showToast(res.error, "error");
+                else {
+                  showToast("✅ تم حذف الإشراف بنجاح");
+                  loadSupervisions();
+                  notifyDashboardUpdate("activities");
+                }
+              });
+            }
+          }}
+        >
+          <Trash2 className="h-4 w-4 ml-2" />
+          حذف
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   // بيانات الرسوم البيانية
   const byYearData = stats.byYear.map((item) => ({
     name: item.name,
@@ -429,32 +468,154 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
     "عدد الإشرافات": item.value,
   }));
 
+  const hasActiveFilters =
+    Boolean(search) ||
+    degreeTypeFilter !== "__all__" ||
+    statusFilter !== "__all__" ||
+    supervisionTypeFilter !== "__all__" ||
+    yearFilter !== "__all__";
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 min-w-0">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg md:text-2xl font-semibold text-gray-900">الإشراف على الطلبة</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1">سجّل إشرافاتك على الطلبة والنشاطات العلمية</p>
-          <p className="text-sm md:text-base text-slate-600 mt-1.5 font-medium" aria-live="polite">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base md:text-2xl font-semibold text-gray-900 truncate">الإشراف على الطلبة</h1>
+          <p className="hidden md:block text-sm text-slate-500 mt-1">سجّل إشرافاتك على الطلبة والنشاطات العلمية</p>
+          <p
+            className="text-[11px] md:text-sm text-slate-500 md:text-slate-600 mt-0.5 md:mt-1.5 md:font-medium line-clamp-2 md:line-clamp-none"
+            aria-live="polite"
+          >
             {getContextSummary(filteredForDisplay, stats)}
           </p>
         </div>
         <Button
           onClick={() => handleOpenAdd()}
-          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex-shrink-0 w-full md:w-auto"
+          size="sm"
+          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
         >
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة إشراف
+          <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+          <span className="md:hidden">إضافة</span>
+          <span className="hidden md:inline">إضافة إشراف</span>
         </Button>
       </div>
 
       <SupervisionKPICards stats={stats} />
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">الرسوم البيانية</h3>
-        <div className="grid grid-cols-12 gap-4">
+        <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-2.5 md:mb-4">الرسوم البيانية</h3>
+
+        {/* موبايل: تخطيط متناسق */}
+        <div className="md:hidden space-y-2">
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">حسب السنة</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {byYearData.length > 0 ? (
+                  <BarChart
+                    data={byYearData}
+                    dataKeys={["عدد الإشرافات"]}
+                    colors={["#2563EB"]}
+                    tooltipLabel={(year, count) => `عدد الإشرافات في ${year}: ${count}`}
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  أنواع الدرجات
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {byDegreeTypeData.length > 0 ? (
+                    <PieChart
+                      data={byDegreeTypeData}
+                      outerRadius={40}
+                      innerRadius={14}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      legendWrapperStyle={{ fontSize: 10, paddingTop: 0 }}
+                      tooltipLabel={(name, value) => `${name}: ${value}`}
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  ملخص الإشرافات
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1 flex items-center justify-center h-[130px]">
+                <div className="text-center">
+                  <div className="text-2xl font-black tabular-nums text-gray-900 leading-none">
+                    {stats.total}
+                  </div>
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    {stats.completed} مكتمل · {stats.inProgress} غير مكتمل
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">توزيع الحالات</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {byStatusData.length > 0 ? (
+                  <BarChart
+                    data={byStatusData}
+                    dataKeys={["عدد الإشرافات"]}
+                    colors={["#10b981"]}
+                    tooltipLabel={(name, count) => `عدد الإشرافات ${name}: ${count}`}
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {bySupervisionTypeData.length > 0 && (
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+              <CardHeader className="px-2.5 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900">أنواع الإشراف</CardTitle>
+              </CardHeader>
+              <CardContent className="p-2.5 pt-1">
+                <div className="h-[132px]">
+                  <BarChart
+                    data={bySupervisionTypeData}
+                    dataKeys={["عدد الإشرافات"]}
+                    colors={["#8b5cf6"]}
+                    tooltipLabel={(name, count) => `عدد الإشرافات ${name}: ${count}`}
+                    tickFontSize={10}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* حاسوب: التخطيط السابق */}
+        <div className="hidden md:grid grid-cols-12 gap-4">
           {/* الصف الأول: عدد الإشرافات حسب السنة (أكبر) + توزيع الأدوار (أصغر) */}
           {/* عدد الإشرافات حسب السنة (Bar) - col-span-12 lg:col-span-8 */}
           <Card className="border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-8">
@@ -578,37 +739,32 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
 
       {/* آخر إشراف مضافة */}
       {supervisions.length > 0 && (
-        <Card className="border-slate-100 bg-white shadow-lg border-l-4 border-l-blue-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between gap-4">
+        <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg border-l-4 border-l-blue-500 gap-0 overflow-hidden rounded-xl">
+          <CardContent className="p-2.5 md:p-4">
+            <div className="flex items-center justify-between gap-2 md:gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span className="text-xs font-medium text-slate-500">آخر إشراف مضافة</span>
+                <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+                  <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-[10px] md:text-xs font-medium text-slate-500">آخر إشراف مضافة</span>
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 mb-1 line-clamp-1" dir="rtl">
+                <h3 className="text-xs md:text-base font-semibold text-slate-900 mb-0.5 md:mb-1 line-clamp-1" dir="rtl">
                   {supervisions[0].studentName}
                 </h3>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {formatDate(supervisions[0].startDate)}
-                  </span>
-                  <Badge variant={supervisions[0].status === "COMPLETED" ? "default" : "secondary"} className={supervisions[0].status === "COMPLETED" ? "bg-green-100 text-green-800" : ""}>
-                    {statusLabels[supervisions[0].status]}
-                  </Badge>
-                  <span className="text-slate-600">
-                    {degreeTypeLabels[supervisions[0].degreeType]}
-                  </span>
-                </div>
+                <p className="text-[10px] md:text-sm text-slate-600 truncate">
+                  {[
+                    formatDate(supervisions[0].startDate),
+                    degreeTypeLabels[supervisions[0].degreeType],
+                    statusLabels[supervisions[0].status],
+                  ].join(" · ")}
+                </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleView(supervisions[0])}
-                className="flex-shrink-0"
+                className="flex-shrink-0 h-8 px-2.5 text-[11px] md:text-sm"
               >
-                <Eye className="h-4 w-4 ml-2" />
+                <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
                 عرض
               </Button>
             </div>
@@ -616,118 +772,170 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
         </Card>
       )}
 
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="text-base font-semibold text-slate-800">جدول الإشرافات</div>
-            <div className="flex items-center gap-2">
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl">
+        <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
+          <div className="flex items-center justify-between gap-2 mb-3 md:mb-4">
+            <div className="text-sm md:text-base font-semibold text-slate-800 truncate">جدول الإشرافات</div>
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportExcel}
                 disabled={isExporting}
               >
-                تصدير Excel
+                <span className="md:hidden">Excel</span>
+                <span className="hidden md:inline">تصدير Excel</span>
               </Button>
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportPDF}
                 disabled={isExporting}
               >
-                تصدير PDF
+                <span className="md:hidden">PDF</span>
+                <span className="hidden md:inline">تصدير PDF</span>
               </Button>
             </div>
           </div>
-          <h3 className="text-base font-semibold text-slate-800 mb-4">بحث في الإشرافات</h3>
-          <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" dir="rtl">
-              {/* البحث */}
-              <div className="sm:col-span-2 lg:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                  <Input
-                    placeholder="اسم الطالب أو عنوان الرسالة..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                  />
-                  <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
-                    بحث
-                  </Button>
-                </div>
-              </div>
-              {/* نوع الدرجة */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">نوع الدرجة</label>
-                <Select
-                  value={degreeTypeFilter}
-                  onValueChange={(v) => {
-                    setDegreeTypeFilter(v);
-                    loadSupervisions({ degreeType: v });
-                  }}
+
+          {/* فلاتر موبايل: سطر واحد */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="md:hidden rounded-xl bg-slate-50 p-1.5 mb-3"
+          >
+            <div className="flex items-center gap-1 flex-nowrap min-w-0">
+              <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 min-w-0 flex-[1.2]">
+                <Input
+                  placeholder="بحث..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-8 min-w-0 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 text-[10px] px-1.5"
+                />
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 rounded-md px-2 text-[10px] shrink-0"
                 >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    <SelectItem value="PHD">دكتوراه</SelectItem>
-                    <SelectItem value="MASTERS">ماجستير</SelectItem>
-                    <SelectItem value="BACHELORS">بكالوريوس</SelectItem>
-                    <SelectItem value="HIGHER_DIPLOMA">دبلوم عالي</SelectItem>
-                  </SelectContent>
-                </Select>
+                  بحث
+                </Button>
               </div>
-              {/* الحالة */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">الحالة</label>
-                <Select
-                  value={statusFilter}
-                  onValueChange={(v) => {
-                    setStatusFilter(v);
-                    loadSupervisions({ status: v });
-                  }}
+              <Select
+                value={degreeTypeFilter}
+                onValueChange={(v) => {
+                  setDegreeTypeFilter(v);
+                  loadSupervisions({ degreeType: v });
+                }}
+              >
+                <SelectTrigger
+                  className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                  aria-label="نوع الدرجة"
                 >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    <SelectItem value="COMPLETED">مكتمل</SelectItem>
-                    <SelectItem value="IN_PROGRESS">غير مكتمل</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* نوع الإشراف */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">نوع الإشراف</label>
-                <Select
-                  value={supervisionTypeFilter}
-                  onValueChange={(v) => {
-                    setSupervisionTypeFilter(v);
-                    loadSupervisions({ supervisionType: v });
-                  }}
+                  <SelectValue placeholder="الدرجة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">كل الدرجات</SelectItem>
+                  <SelectItem value="PHD">دكتوراه</SelectItem>
+                  <SelectItem value="MASTERS">ماجستير</SelectItem>
+                  <SelectItem value="BACHELORS">بكالوريوس</SelectItem>
+                  <SelectItem value="HIGHER_DIPLOMA">دبلوم عالي</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={statusFilter}
+                onValueChange={(v) => {
+                  setStatusFilter(v);
+                  loadSupervisions({ status: v });
+                }}
+              >
+                <SelectTrigger
+                  className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                  aria-label="الحالة"
                 >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    <SelectItem value="SOLE">منفرد</SelectItem>
-                    <SelectItem value="JOINT">مشترك</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* السنة */}
+                  <SelectValue placeholder="الحالة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">كل الحالات</SelectItem>
+                  <SelectItem value="COMPLETED">مكتمل</SelectItem>
+                  <SelectItem value="IN_PROGRESS">غير مكتمل</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={supervisionTypeFilter}
+                onValueChange={(v) => {
+                  setSupervisionTypeFilter(v);
+                  loadSupervisions({ supervisionType: v });
+                }}
+              >
+                <SelectTrigger
+                  className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                  aria-label="نوع الإشراف"
+                >
+                  <SelectValue placeholder="الإشراف" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">كل الأنواع</SelectItem>
+                  <SelectItem value="SOLE">منفرد</SelectItem>
+                  <SelectItem value="JOINT">مشترك</SelectItem>
+                </SelectContent>
+              </Select>
               {uniqueYears.length > 0 && (
+                <Select
+                  value={yearFilter}
+                  onValueChange={(v) => {
+                    setYearFilter(v);
+                    loadSupervisions({ year: v });
+                  }}
+                >
+                  <SelectTrigger
+                    className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                    aria-label="السنة"
+                  >
+                    <SelectValue placeholder="السنة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">كل السنوات</SelectItem>
+                    {uniqueYears.map((year) => (
+                      <SelectItem key={year} value={String(year)}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </form>
+
+          {/* فلاتر حاسوب */}
+          <div className="hidden md:block">
+            <h3 className="text-base font-semibold text-slate-800 mb-4">بحث في الإشرافات</h3>
+            <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" dir="rtl">
+                {/* البحث */}
+                <div className="sm:col-span-2 lg:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    <Input
+                      placeholder="اسم الطالب أو عنوان الرسالة..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
+                    />
+                    <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
+                      بحث
+                    </Button>
+                  </div>
+                </div>
+                {/* نوع الدرجة */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">نوع الدرجة</label>
                   <Select
-                    value={yearFilter}
+                    value={degreeTypeFilter}
                     onValueChange={(v) => {
-                      setYearFilter(v);
-                      loadSupervisions({ year: v });
+                      setDegreeTypeFilter(v);
+                      loadSupervisions({ degreeType: v });
                     }}
                   >
                     <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
@@ -735,40 +943,102 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">الكل</SelectItem>
-                      {uniqueYears.map((year) => (
-                        <SelectItem key={year} value={String(year)}>
-                          {year}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="PHD">دكتوراه</SelectItem>
+                      <SelectItem value="MASTERS">ماجستير</SelectItem>
+                      <SelectItem value="BACHELORS">بكالوريوس</SelectItem>
+                      <SelectItem value="HIGHER_DIPLOMA">دبلوم عالي</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              )}
-            </div>
-          </form>
+                {/* الحالة */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">الحالة</label>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={(v) => {
+                      setStatusFilter(v);
+                      loadSupervisions({ status: v });
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                      <SelectValue placeholder="الكل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">الكل</SelectItem>
+                      <SelectItem value="COMPLETED">مكتمل</SelectItem>
+                      <SelectItem value="IN_PROGRESS">غير مكتمل</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* نوع الإشراف */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">نوع الإشراف</label>
+                  <Select
+                    value={supervisionTypeFilter}
+                    onValueChange={(v) => {
+                      setSupervisionTypeFilter(v);
+                      loadSupervisions({ supervisionType: v });
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                      <SelectValue placeholder="الكل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">الكل</SelectItem>
+                      <SelectItem value="SOLE">منفرد</SelectItem>
+                      <SelectItem value="JOINT">مشترك</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* السنة */}
+                {uniqueYears.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+                    <Select
+                      value={yearFilter}
+                      onValueChange={(v) => {
+                        setYearFilter(v);
+                        loadSupervisions({ year: v });
+                      }}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                        <SelectValue placeholder="الكل" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">الكل</SelectItem>
+                        {uniqueYears.map((year) => (
+                          <SelectItem key={year} value={String(year)}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
 
           {filteredForDisplay.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-              <div className="rounded-full bg-white border border-slate-200 p-6 mb-5 shadow-sm">
-                <GraduationCap className="h-14 w-14 text-slate-400" />
+            <div className="flex flex-col items-center justify-center py-10 md:py-20 px-4 md:px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+              <div className="rounded-full bg-white border border-slate-200 p-4 md:p-6 mb-3 md:mb-5 shadow-sm">
+                <GraduationCap className="h-8 w-8 md:h-14 md:w-14 text-slate-400" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">
-                {search || degreeTypeFilter !== "__all__" || statusFilter !== "__all__" || supervisionTypeFilter !== "__all__" || yearFilter !== "__all__"
-                  ? "لا توجد نتائج"
-                  : "لم يتم تسجيل أي إشراف بعد"}
+              <h3 className="text-sm md:text-xl font-semibold text-slate-800 mb-1 md:mb-2 text-center">
+                {hasActiveFilters ? "لا توجد نتائج" : "لم يتم تسجيل أي إشراف بعد"}
               </h3>
-              <p className="text-sm text-slate-600 text-center max-w-md mb-6">
-                {search || degreeTypeFilter !== "__all__" || statusFilter !== "__all__" || supervisionTypeFilter !== "__all__" || yearFilter !== "__all__"
+              <p className="text-xs md:text-sm text-slate-600 text-center max-w-md mb-4 md:mb-6">
+                {hasActiveFilters
                   ? "لا توجد إشرافات تطابق الفلاتر. جرّب تغيير البحث أو الفلاتر."
                   : "ابدأ بإضافة أول إشراف لك."}
               </p>
-              {!search && degreeTypeFilter === "__all__" && statusFilter === "__all__" && supervisionTypeFilter === "__all__" && yearFilter === "__all__" && (
+              {!hasActiveFilters && (
                 <Button
                   onClick={() => handleOpenAdd()}
-                  size="lg"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm"
+                  size="sm"
+                  className="md:h-11 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm"
                 >
-                  <Plus className="h-5 w-5 ml-2" />
+                  <Plus className="h-4 w-4 md:h-5 md:w-5 ml-1 md:ml-2" />
                   إضافة أول إشراف
                 </Button>
               )}
@@ -805,42 +1075,7 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
                       {filteredForDisplay.map((c) => (
                         <TableRow key={c.id} className="hover:bg-slate-50/50">
                           <TableCell className="align-middle whitespace-nowrap">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => handleView(c)}>
-                                  <Eye className="h-4 w-4 ml-2" />
-                                  عرض التفاصيل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenAdd(c)}>
-                                  <Pencil className="h-4 w-4 ml-2" />
-                                  تعديل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => {
-                                    if (confirm("هل أنت متأكد من حذف هذا الإشراف؟")) {
-                                      startTransition(async () => {
-                                        const res = await deleteSupervision(c.id);
-                                        if (res.error) showToast(res.error, "error");
-                                        else {
-                                          showToast("✅ تم حذف الإشراف بنجاح");
-                                          loadSupervisions();
-                                          notifyDashboardUpdate("activities");
-                                        }
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 ml-2" />
-                                  حذف
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            {supervisionActionsMenu(c)}
                           </TableCell>
                           <TableCell className="align-middle">
                             <span className="font-medium text-slate-900 block" dir="rtl">
@@ -885,109 +1120,46 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
               </div>
 
               {/* Mobile Cards List */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-2">
                 {filteredForDisplay.map((c) => (
-                  <Card key={c.id} className="border-slate-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-slate-900 text-base mb-1" dir="rtl">
-                            {c.studentName}
-                          </h3>
-                          <p className="text-sm text-slate-600 line-clamp-2" dir="rtl">
-                            {c.thesisTitle}
+                  <div
+                    key={c.id}
+                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm min-h-[96px]"
+                  >
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleView(c)}
+                        className="min-w-0 flex-1 text-right space-y-0.5"
+                      >
+                        <p className="text-[12px] font-semibold text-slate-900 line-clamp-1 leading-snug">
+                          {c.studentName}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {[formatDate(c.startDate), degreeTypeLabels[c.degreeType], statusLabels[c.status]].join(" · ")}
+                        </p>
+                      </button>
+                      {supervisionActionsMenu(c)}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">عنوان الرسالة</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate" dir="rtl">
+                          {c.thesisTitle}
+                        </p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">نوع الإشراف</p>
+                        {c.supervisionType ? (
+                          <p className="text-[11px] font-medium text-slate-800 truncate">
+                            {supervisionTypeLabels[c.supervisionType]}
                           </p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handleView(c)}>
-                              <Eye className="h-4 w-4 ml-2" />
-                              عرض التفاصيل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenAdd(c)}>
-                              <Pencil className="h-4 w-4 ml-2" />
-                              تعديل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => {
-                                if (confirm("هل أنت متأكد من حذف هذا الإشراف؟")) {
-                                  startTransition(async () => {
-                                    const res = await deleteSupervision(c.id);
-                                    if (res.error) showToast(res.error, "error");
-                                    else {
-                                      showToast("✅ تم حذف الإشراف بنجاح");
-                                      loadSupervisions();
-                                      notifyDashboardUpdate("activities");
-                                    }
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 ml-2" />
-                              حذف
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      <div className="grid grid-cols-1 gap-3 text-sm mb-3">
-                        <div>
-                          <span className="text-slate-500">نوع الدرجة:</span>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800 mr-2">
-                            {degreeTypeLabels[c.degreeType]}
-                          </Badge>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">تاريخ البداية:</span>
-                          <span className="text-slate-900 font-medium mr-2">
-                            {formatDate(c.startDate)}
-                          </span>
-                        </div>
-                        {c.endDate && (
-                          <div>
-                            <span className="text-slate-500">تاريخ الانتهاء:</span>
-                            <span className="text-slate-900 font-medium mr-2">
-                              {formatDate(c.endDate)}
-                            </span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-slate-500">الحالة:</span>
-                          <Badge variant={c.status === "COMPLETED" ? "default" : "secondary"} className={c.status === "COMPLETED" ? "bg-green-100 text-green-800 mr-2" : "mr-2"}>
-                            {statusLabels[c.status]}
-                          </Badge>
-                        </div>
-                        {c.supervisionType && (
-                          <div>
-                            <span className="text-slate-500">نوع الإشراف:</span>
-                            <Badge variant="outline" className="mr-2">
-                              {supervisionTypeLabels[c.supervisionType]}
-                            </Badge>
-                          </div>
+                        ) : (
+                          <p className="text-[11px] text-slate-400">—</p>
                         )}
                       </div>
-                      {c.description && (
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                            onClick={() => {
-                              setViewingSupervision(c);
-                              setIsDetailsOpen(true);
-                            }}
-                          >
-                            عرض الوصف
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </>
@@ -997,18 +1169,20 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddOpen} onOpenChange={(open) => !open && handleCloseAdd()}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle>{editingSupervision ? "تعديل الإشراف" : "إضافة إشراف"}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-base md:text-lg">
+              {editingSupervision ? "تعديل الإشراف" : "إضافة إشراف"}
+            </DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
               {editingSupervision
                 ? "تعديل بيانات الإشراف."
                 : "أدخل بيانات الإشراف. التاريخ لا يقبل أي تاريخ في المستقبل."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddSubmit} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-3 md:space-y-4">
             <div>
-              <Label htmlFor="studentName">اسم الطالب *</Label>
+              <Label htmlFor="studentName" className="text-xs md:text-sm">اسم الطالب *</Label>
               <Input
                 id="studentName"
                 value={formData.studentName}
@@ -1016,34 +1190,57 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
                 placeholder="اسم الطالب"
                 required
                 minLength={2}
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
-            <div>
-              <Label>نوع الدرجة *</Label>
-              <Select
-                value={formData.degreeType}
-                onValueChange={(v: "PHD" | "MASTERS" | "BACHELORS" | "HIGHER_DIPLOMA") => {
-                  setFormData((p) => ({
-                    ...p,
-                    degreeType: v,
-                    supervisionType: (v === "PHD" || v === "MASTERS") ? (p.supervisionType || "SOLE") : null,
-                  }));
-                }}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PHD">دكتوراه</SelectItem>
-                  <SelectItem value="MASTERS">ماجستير</SelectItem>
-                  <SelectItem value="BACHELORS">بكالوريوس</SelectItem>
-                  <SelectItem value="HIGHER_DIPLOMA">دبلوم عالي</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label className="text-xs md:text-sm">نوع الدرجة *</Label>
+                <Select
+                  value={formData.degreeType}
+                  onValueChange={(v: "PHD" | "MASTERS" | "BACHELORS" | "HIGHER_DIPLOMA") => {
+                    setFormData((p) => ({
+                      ...p,
+                      degreeType: v,
+                      supervisionType: (v === "PHD" || v === "MASTERS") ? (p.supervisionType || "SOLE") : null,
+                    }));
+                  }}
+                >
+                  <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PHD">دكتوراه</SelectItem>
+                    <SelectItem value="MASTERS">ماجستير</SelectItem>
+                    <SelectItem value="BACHELORS">بكالوريوس</SelectItem>
+                    <SelectItem value="HIGHER_DIPLOMA">دبلوم عالي</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-0">
+                <Label className="text-xs md:text-sm">حالة المشروع *</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(v) => {
+                    setFormData((p) => ({
+                      ...p,
+                      status: v as "COMPLETED" | "IN_PROGRESS",
+                      endDate: v === "COMPLETED" ? (p.endDate || null) : null,
+                    }));
+                  }}
+                >
+                  <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="COMPLETED">مكتمل</SelectItem>
+                    <SelectItem value="IN_PROGRESS">غير مكتمل</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
-              <Label htmlFor="thesisTitle">عنوان الرسالة/المشروع *</Label>
+              <Label htmlFor="thesisTitle" className="text-xs md:text-sm">عنوان الرسالة/المشروع *</Label>
               <Input
                 id="thesisTitle"
                 value={formData.thesisTitle}
@@ -1051,54 +1248,56 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
                 placeholder="عنوان الرسالة أو المشروع"
                 required
                 minLength={2}
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
-            <div>
-              <Label htmlFor="startDate">تاريخ البداية *</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={formData.startDate}
-                max={getTodayISO()}
-                onChange={(e) => {
-                  const selectedDate = e.target.value;
-                  const today = getTodayISO();
-                  if (selectedDate > today) {
-                    showToast("تاريخ البداية لا يمكن أن يكون في المستقبل", "error");
-                    return;
-                  }
-                  setFormData((p) => ({ ...p, startDate: selectedDate }));
-                }}
-                required
-                className="mt-1"
-              />
-              <p className="text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label htmlFor="startDate" className="text-xs md:text-sm">تاريخ البداية *</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  max={getTodayISO()}
+                  onChange={(e) => {
+                    const selectedDate = e.target.value;
+                    const today = getTodayISO();
+                    if (selectedDate > today) {
+                      showToast("تاريخ البداية لا يمكن أن يكون في المستقبل", "error");
+                      return;
+                    }
+                    setFormData((p) => ({ ...p, startDate: selectedDate }));
+                  }}
+                  required
+                  className="mt-1 h-9 md:h-10 text-sm"
+                />
+              </div>
+              {(formData.degreeType === "PHD" || formData.degreeType === "MASTERS") ? (
+                <div className="min-w-0">
+                  <Label className="text-xs md:text-sm">نوع الإشراف *</Label>
+                  <Select
+                    value={formData.supervisionType || "SOLE"}
+                    onValueChange={(v: "SOLE" | "JOINT") => {
+                      setFormData((p) => ({ ...p, supervisionType: v }));
+                    }}
+                  >
+                    <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SOLE">منفرد</SelectItem>
+                      <SelectItem value="JOINT">مشترك</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="min-w-0" />
+              )}
             </div>
-            <div>
-              <Label>حالة المشروع *</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(v) => {
-                  setFormData((p) => ({
-                    ...p,
-                    status: v as "COMPLETED" | "IN_PROGRESS",
-                    endDate: v === "COMPLETED" ? (p.endDate || null) : null,
-                  }));
-                }}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="COMPLETED">مكتمل</SelectItem>
-                  <SelectItem value="IN_PROGRESS">غير مكتمل</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <p className="text-[10px] md:text-xs text-slate-500 -mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
             {formData.status === "COMPLETED" && (
               <div>
-                <Label htmlFor="endDate">تاريخ الانتهاء *</Label>
+                <Label htmlFor="endDate" className="text-xs md:text-sm">تاريخ الانتهاء *</Label>
                 <Input
                   id="endDate"
                   type="date"
@@ -1118,46 +1317,26 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
                     setFormData((p) => ({ ...p, endDate: selectedDate }));
                   }}
                   required={formData.status === "COMPLETED"}
-                  className="mt-1"
+                  className="mt-1 h-9 md:h-10 text-sm"
                 />
-                <p className="text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
-              </div>
-            )}
-            {(formData.degreeType === "PHD" || formData.degreeType === "MASTERS") && (
-              <div>
-                <Label>نوع الإشراف *</Label>
-                <Select
-                  value={formData.supervisionType || "SOLE"}
-                  onValueChange={(v: "SOLE" | "JOINT") => {
-                    setFormData((p) => ({ ...p, supervisionType: v }));
-                  }}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SOLE">منفرد</SelectItem>
-                    <SelectItem value="JOINT">مشترك</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             )}
             <div>
-              <Label htmlFor="description">الوصف (اختياري)</Label>
+              <Label htmlFor="description" className="text-xs md:text-sm">الوصف (اختياري)</Label>
               <textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                 placeholder="وصف إضافي عن الإشراف..."
                 rows={3}
-                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-1 flex min-h-[72px] md:min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleCloseAdd}>
+              <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleCloseAdd}>
                 إلغاء
               </Button>
-              <Button type="submit" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+              <Button type="submit" size="sm" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8] h-9">
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : editingSupervision ? (
@@ -1176,84 +1355,155 @@ export function SupervisionPageClient({ initialSupervisions }: SupervisionPageCl
         open={isDetailsOpen}
         onOpenChange={(open) => !open && (setIsDetailsOpen(false), setViewingSupervision(null))}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-right" dir="rtl">
+            <DialogTitle className="text-right text-base md:text-lg" dir="rtl">
               تفاصيل الإشراف
             </DialogTitle>
             <DialogDescription className="sr-only">عرض تفاصيل الإشراف المحددة</DialogDescription>
           </DialogHeader>
           {viewingSupervision && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-sm md:text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
                 {viewingSupervision.studentName}
               </h3>
-              <p className="text-sm text-slate-600 mb-3" dir="rtl">
-                {viewingSupervision.thesisTitle}
+              <p className="text-[11px] md:text-xs text-slate-500 line-clamp-2" dir="rtl">
+                {[
+                  degreeTypeLabels[viewingSupervision.degreeType],
+                  statusLabels[viewingSupervision.status],
+                  formatDate(viewingSupervision.startDate),
+                ].join(" · ")}
               </p>
-              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                <span className="text-slate-500">نوع الدرجة</span>
-                <span className="font-medium text-slate-900">{degreeTypeLabels[viewingSupervision.degreeType]}</span>
-                <span className="text-slate-500">تاريخ البداية</span>
-                <span className="font-medium text-slate-900">{formatDate(viewingSupervision.startDate)}</span>
-                <span className="text-slate-500">الحالة</span>
-                <span className="font-medium text-slate-900">
-                  <Badge variant={viewingSupervision.status === "COMPLETED" ? "default" : "secondary"} className={viewingSupervision.status === "COMPLETED" ? "bg-green-100 text-green-800" : ""}>
+              <div className="grid grid-cols-2 gap-1.5 md:hidden">
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">نوع الدرجة</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {degreeTypeLabels[viewingSupervision.degreeType]}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">الحالة</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
                     {statusLabels[viewingSupervision.status]}
-                  </Badge>
-                </span>
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">تاريخ البداية</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {formatDate(viewingSupervision.startDate)}
+                  </p>
+                </div>
                 {viewingSupervision.endDate && (
-                  <>
-                    <span className="text-slate-500">تاريخ الانتهاء</span>
-                    <span className="font-medium text-slate-900">{formatDate(viewingSupervision.endDate)}</span>
-                  </>
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">تاريخ الانتهاء</p>
+                    <p className="text-xs font-semibold text-slate-900 truncate">
+                      {formatDate(viewingSupervision.endDate)}
+                    </p>
+                  </div>
                 )}
                 {viewingSupervision.supervisionType && (
-                  <>
-                    <span className="text-slate-500">نوع الإشراف</span>
-                    <span className="font-medium text-slate-900">{supervisionTypeLabels[viewingSupervision.supervisionType]}</span>
-                  </>
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">نوع الإشراف</p>
+                    <p className="text-xs font-semibold text-slate-900 truncate">
+                      {supervisionTypeLabels[viewingSupervision.supervisionType]}
+                    </p>
+                  </div>
                 )}
+                <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">عنوان الرسالة/المشروع</p>
+                  <p className="text-xs font-medium text-slate-900" dir="rtl">
+                    {viewingSupervision.thesisTitle}
+                  </p>
+                </div>
                 {viewingSupervision.description && (
-                  <>
-                    <span className="text-slate-500">الوصف</span>
-                    <span className="font-medium text-slate-900" dir="rtl">
+                  <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">الوصف</p>
+                    <p className="text-xs font-medium text-slate-900 whitespace-pre-wrap" dir="rtl">
                       {viewingSupervision.description}
-                    </span>
-                  </>
+                    </p>
+                  </div>
                 )}
               </div>
-              <div className="flex flex-wrap justify-end gap-2 pt-4">
+              <div className="hidden md:block">
+                <p className="text-sm text-slate-600 mb-3" dir="rtl">
+                  {viewingSupervision.thesisTitle}
+                </p>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                  <span className="text-slate-500">نوع الدرجة</span>
+                  <span className="font-medium text-slate-900">{degreeTypeLabels[viewingSupervision.degreeType]}</span>
+                  <span className="text-slate-500">تاريخ البداية</span>
+                  <span className="font-medium text-slate-900">{formatDate(viewingSupervision.startDate)}</span>
+                  <span className="text-slate-500">الحالة</span>
+                  <span className="font-medium text-slate-900">
+                    <Badge variant={viewingSupervision.status === "COMPLETED" ? "default" : "secondary"} className={viewingSupervision.status === "COMPLETED" ? "bg-green-100 text-green-800" : ""}>
+                      {statusLabels[viewingSupervision.status]}
+                    </Badge>
+                  </span>
+                  {viewingSupervision.endDate && (
+                    <>
+                      <span className="text-slate-500">تاريخ الانتهاء</span>
+                      <span className="font-medium text-slate-900">{formatDate(viewingSupervision.endDate)}</span>
+                    </>
+                  )}
+                  {viewingSupervision.supervisionType && (
+                    <>
+                      <span className="text-slate-500">نوع الإشراف</span>
+                      <span className="font-medium text-slate-900">{supervisionTypeLabels[viewingSupervision.supervisionType]}</span>
+                    </>
+                  )}
+                  {viewingSupervision.description && (
+                    <>
+                      <span className="text-slate-500">الوصف</span>
+                      <span className="font-medium text-slate-900" dir="rtl">
+                        {viewingSupervision.description}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row md:flex-wrap md:justify-end gap-2 pt-2 md:pt-4">
                 <Button
                   variant="outline"
-                  className="text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800"
+                  size="sm"
+                  className="h-9 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 justify-center"
                   onClick={() => shareSupervisionViaWhatsApp(viewingSupervision)}
                 >
                   <MessageCircle className="h-4 w-4 ml-2" />
-                  إرسال عبر واتساب
+                  <span className="md:hidden">واتساب</span>
+                  <span className="hidden md:inline">إرسال عبر واتساب</span>
                 </Button>
-                <Button variant="outline" onClick={() => (setIsDetailsOpen(false), setViewingSupervision(null))}>
-                  إغلاق
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDetailsOpen(false);
-                    handleOpenAdd(viewingSupervision);
-                    setViewingSupervision(null);
-                  }}
-                >
-                  <Pencil className="h-4 w-4 ml-2" />
-                  تعديل
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(viewingSupervision.id)}
-                  disabled={isPending}
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
-                </Button>
+                <div className="grid grid-cols-3 gap-2 md:contents">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => (setIsDetailsOpen(false), setViewingSupervision(null))}
+                  >
+                    إغلاق
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => {
+                      setIsDetailsOpen(false);
+                      handleOpenAdd(viewingSupervision);
+                      setViewingSupervision(null);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 ml-1 md:ml-2" />
+                    تعديل
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-red-600 hover:bg-red-50"
+                    onClick={() => handleDelete(viewingSupervision.id)}
+                    disabled={isPending}
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

@@ -82,26 +82,41 @@ export function Header({ userName, avatarUrl }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200/60 bg-white/80 backdrop-blur-md shadow-sm w-full flex-shrink-0 left-0 right-0 will-change-transform">
-      <div className="flex h-16 items-center justify-between gap-4 px-6 w-full">
-        {/* Mobile Menu Button */}
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-64 p-0">
-            <MobileSidebar user={{ fullName: userName, department: "كلية العلوم" }} />
-          </SheetContent>
-        </Sheet>
-
-        {/* Page Title */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold text-gray-900">{pageTitle}</h1>
+      <div className="flex h-14 md:h-16 items-center justify-between gap-2 md:gap-4 px-3 md:px-6 w-full">
+        {/* موبايل: زر القائمة + عنوان الصفحة بجانب بعض. حاسوب: العنوان فقط (القائمة مخفية) */}
+        <div className="flex items-center gap-1.5 md:gap-4 min-w-0">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden h-9 w-9 shrink-0 text-slate-700"
+                aria-label="القائمة"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="w-[min(100vw-2.5rem,20rem)] max-w-[20rem] p-0 gap-0 border-l border-slate-200 [&>button]:left-3 [&>button]:right-auto [&>button]:top-3.5 [&>button]:rounded-lg [&>button]:p-1.5 [&>button]:bg-slate-50 [&>button]:opacity-100"
+            >
+              <MobileSidebar
+                user={{
+                  fullName: userName,
+                  department: "كلية العلوم",
+                  avatarUrl,
+                }}
+                onNavigate={() => setMobileMenuOpen(false)}
+              />
+            </SheetContent>
+          </Sheet>
+          <h1 className="text-base md:text-lg font-semibold text-gray-900 truncate leading-none">
+            {pageTitle}
+          </h1>
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
           {/* Search (Desktop) */}
           <div className="hidden md:flex relative max-w-xs">
             <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

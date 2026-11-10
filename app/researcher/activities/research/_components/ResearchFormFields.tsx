@@ -102,9 +102,11 @@ export function ResearchFormFields({
   const hasScopus = formData.categories.includes("SCOPUS");
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">العنوان *</Label>
+    <div className="space-y-3 md:space-y-4">
+      <div className="space-y-1.5 md:space-y-2">
+        <Label htmlFor="title" className="text-xs md:text-sm">
+          العنوان *
+        </Label>
         <Input
           id="title"
           name="title"
@@ -112,14 +114,17 @@ export function ResearchFormFields({
           onChange={(e) => onFieldChange("title", e.target.value)}
           required
           placeholder="عنوان البحث"
+          className="h-9 md:h-10 text-sm"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="researchType">نوع البحث *</Label>
+      <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+        <div className="space-y-1.5 md:space-y-2 min-w-0">
+          <Label htmlFor="researchType" className="text-xs md:text-sm">
+            نوع البحث *
+          </Label>
           <Select value={formData.researchType} onValueChange={(v) => onFieldChange("researchType", v)}>
-            <SelectTrigger id="researchType">
+            <SelectTrigger id="researchType" className="h-9 md:h-10 text-sm">
               <SelectValue placeholder="اختر نوع البحث" />
             </SelectTrigger>
             <SelectContent>
@@ -132,10 +137,12 @@ export function ResearchFormFields({
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="ownership">الملكية *</Label>
+        <div className="space-y-1.5 md:space-y-2 min-w-0">
+          <Label htmlFor="ownership" className="text-xs md:text-sm">
+            الملكية *
+          </Label>
           <Select value={formData.ownership} onValueChange={(v) => onFieldChange("ownership", v)}>
-            <SelectTrigger id="ownership">
+            <SelectTrigger id="ownership" className="h-9 md:h-10 text-sm">
               <SelectValue placeholder="اختر الملكية" />
             </SelectTrigger>
             <SelectContent>
@@ -149,11 +156,13 @@ export function ResearchFormFields({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="status">الحالة *</Label>
+      <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+        <div className="space-y-1.5 md:space-y-2 min-w-0">
+          <Label htmlFor="status" className="text-xs md:text-sm">
+            الحالة *
+          </Label>
           <Select value={formData.status} onValueChange={(v) => onFieldChange("status", v)}>
-            <SelectTrigger id="status">
+            <SelectTrigger id="status" className="h-9 md:h-10 text-sm">
               <SelectValue placeholder="اختر الحالة" />
             </SelectTrigger>
             <SelectContent>
@@ -163,10 +172,12 @@ export function ResearchFormFields({
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="year">السنة *</Label>
+        <div className="space-y-1.5 md:space-y-2 min-w-0">
+          <Label htmlFor="year" className="text-xs md:text-sm">
+            السنة *
+          </Label>
           <Select value={formData.year} onValueChange={(v) => onFieldChange("year", v)}>
-            <SelectTrigger id="year">
+            <SelectTrigger id="year" className="h-9 md:h-10 text-sm">
               <SelectValue placeholder="اختر السنة" />
             </SelectTrigger>
             <SelectContent>
@@ -181,8 +192,10 @@ export function ResearchFormFields({
       </div>
 
       {isInProgress && (
-        <div className="space-y-2">
-          <Label htmlFor="progressPercent">نسبة الإنجاز (0-100) *</Label>
+        <div className="space-y-1.5 md:space-y-2">
+          <Label htmlFor="progressPercent" className="text-xs md:text-sm">
+            نسبة الإنجاز (0-100) *
+          </Label>
           <Input
             id="progressPercent"
             name="progressPercent"
@@ -193,19 +206,22 @@ export function ResearchFormFields({
             onChange={(e) => onFieldChange("progressPercent", e.target.value)}
             required
             placeholder="مثال: 75"
+            className="h-9 md:h-10 text-sm"
           />
         </div>
       )}
 
       {isCompleted && (
         <>
-          <div className="space-y-2">
-            <Label htmlFor="publishStatus">حالة النشر *</Label>
+          <div className="space-y-1.5 md:space-y-2">
+            <Label htmlFor="publishStatus" className="text-xs md:text-sm">
+              حالة النشر *
+            </Label>
             <Select
               value={formData.publishStatus}
               onValueChange={(v) => onFieldChange("publishStatus", v)}
             >
-              <SelectTrigger id="publishStatus">
+              <SelectTrigger id="publishStatus" className="h-9 md:h-10 text-sm">
                 <SelectValue placeholder="اختر حالة النشر" />
               </SelectTrigger>
               <SelectContent>
@@ -220,8 +236,10 @@ export function ResearchFormFields({
 
           {isPublished && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="researchUrl">رابط البحث</Label>
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="researchUrl" className="text-xs md:text-sm">
+                  رابط البحث
+                </Label>
                 <Input
                   id="researchUrl"
                   name="researchUrl"
@@ -229,17 +247,20 @@ export function ResearchFormFields({
                   value={formData.researchUrl}
                   onChange={(e) => onFieldChange("researchUrl", e.target.value)}
                   placeholder="https://..."
+                  className="h-9 md:h-10 text-sm"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="publishType">نوع النشر *</Label>
+              <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+                <div className="space-y-1.5 md:space-y-2 min-w-0">
+                  <Label htmlFor="publishType" className="text-xs md:text-sm">
+                    نوع النشر *
+                  </Label>
                   <Select
                     value={formData.publishType}
                     onValueChange={(v) => onFieldChange("publishType", v)}
                   >
-                    <SelectTrigger id="publishType">
+                    <SelectTrigger id="publishType" className="h-9 md:h-10 text-sm">
                       <SelectValue placeholder="اختر نوع النشر" />
                     </SelectTrigger>
                     <SelectContent>
@@ -252,8 +273,10 @@ export function ResearchFormFields({
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="publisher">الناشر *</Label>
+                <div className="space-y-1.5 md:space-y-2 min-w-0">
+                  <Label htmlFor="publisher" className="text-xs md:text-sm">
+                    الناشر *
+                  </Label>
                   <Input
                     id="publisher"
                     name="publisher"
@@ -261,29 +284,35 @@ export function ResearchFormFields({
                     onChange={(e) => onFieldChange("publisher", e.target.value)}
                     required
                     placeholder="اسم الناشر"
+                    className="h-9 md:h-10 text-sm"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="doi">DOI</Label>
+              <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+                <div className="space-y-1.5 md:space-y-2 min-w-0">
+                  <Label htmlFor="doi" className="text-xs md:text-sm">
+                    DOI
+                  </Label>
                   <Input
                     id="doi"
                     name="doi"
                     value={formData.doi}
                     onChange={(e) => onFieldChange("doi", e.target.value)}
                     placeholder="10.xxxx/xxxx"
+                    className="h-9 md:h-10 text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="publishMonth">شهر النشر</Label>
+                <div className="space-y-1.5 md:space-y-2 min-w-0">
+                  <Label htmlFor="publishMonth" className="text-xs md:text-sm">
+                    شهر النشر
+                  </Label>
                   <Select
                     value={formData.publishMonth}
                     onValueChange={(v) => onFieldChange("publishMonth", v)}
                   >
-                    <SelectTrigger id="publishMonth">
+                    <SelectTrigger id="publishMonth" className="h-9 md:h-10 text-sm">
                       <SelectValue placeholder="اختر الشهر" />
                     </SelectTrigger>
                     <SelectContent>
@@ -297,8 +326,10 @@ export function ResearchFormFields({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="downloadUrl">رابط التحميل</Label>
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="downloadUrl" className="text-xs md:text-sm">
+                  رابط التحميل
+                </Label>
                 <Input
                   id="downloadUrl"
                   name="downloadUrl"
@@ -306,6 +337,7 @@ export function ResearchFormFields({
                   value={formData.downloadUrl}
                   onChange={(e) => onFieldChange("downloadUrl", e.target.value)}
                   placeholder="https://..."
+                  className="h-9 md:h-10 text-sm"
                 />
               </div>
             </>
@@ -315,14 +347,14 @@ export function ResearchFormFields({
 
       {isPublished && (
         <>
-          <div className="space-y-2">
-            <Label>التصنيفات *</Label>
-            <p className="text-xs text-slate-500">{ISI_DESCRIPTION}</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-1.5 md:space-y-2">
+            <Label className="text-xs md:text-sm">التصنيفات *</Label>
+            <p className="text-[10px] md:text-xs text-slate-500">{ISI_DESCRIPTION}</p>
+            <div className="grid grid-cols-2 gap-1.5 md:flex md:flex-wrap md:gap-2">
               {categoryOptions.map((cat) => (
                 <label
                   key={cat.value}
-                  className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-slate-50"
+                  className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 border rounded-lg cursor-pointer hover:bg-slate-50"
                 >
                   <input
                     type="checkbox"
@@ -333,22 +365,24 @@ export function ResearchFormFields({
                         : formData.categories.filter((c) => c !== cat.value);
                       onFieldChange("categories", newCategories);
                     }}
-                    className="w-4 h-4"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4"
                   />
-                  <span className="text-sm">{cat.label}</span>
+                  <span className="text-[11px] md:text-sm truncate">{cat.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
           {hasScopus && (
-            <div className="space-y-2">
-              <Label htmlFor="scopusQuartile">تصنيف سكوبس (Q1-Q4) *</Label>
+            <div className="space-y-1.5 md:space-y-2">
+              <Label htmlFor="scopusQuartile" className="text-xs md:text-sm">
+                تصنيف سكوبس (Q1-Q4) *
+              </Label>
               <Select
                 value={formData.scopusQuartile}
                 onValueChange={(v) => onFieldChange("scopusQuartile", v)}
               >
-                <SelectTrigger id="scopusQuartile">
+                <SelectTrigger id="scopusQuartile" className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="اختر التصنيف" />
                 </SelectTrigger>
                 <SelectContent>

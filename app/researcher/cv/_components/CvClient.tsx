@@ -156,29 +156,64 @@ export function CvClient({ initialProfileCv }: CvClientProps) {
       })
     : [];
 
+  const kpiItems = [
+    {
+      key: "gender",
+      label: "الجنس",
+      value: profileCv?.gender ? genderLabels[profileCv.gender] : "غير محدد",
+      icon: User,
+    },
+    {
+      key: "age",
+      label: "العمر",
+      value: age !== null ? `${age} سنة` : "غير محدد",
+      icon: Calendar,
+    },
+    {
+      key: "languages",
+      label: "اللغات",
+      value: String(profileCv?.languages.length ?? 0),
+      icon: Languages,
+    },
+    {
+      key: "skills",
+      label: "المهارات",
+      value: String(profileCv?.skills.length ?? 0),
+      icon: Code,
+    },
+    {
+      key: "experiences",
+      label: "الخبرات",
+      value: String(profileCv?.experiences.length ?? 0),
+      icon: Briefcase,
+    },
+  ];
+
   if (!hasData) {
     return (
-      <div className="space-y-6">
-        {/* Header - Sticky */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 pb-4 -mx-6 px-6 pt-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">السيرة الذاتية</h1>
-              <p className="text-sm text-gray-500 mt-1">ابدأ بإنشاء سيرتك الذاتية المختصرة</p>
+      <div className="space-y-3 md:space-y-6 min-w-0">
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 pb-3 md:pb-4 -mx-4 px-4 pt-3 md:-mx-6 md:px-6 md:pt-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base md:text-2xl font-bold text-gray-900 truncate">السيرة الذاتية</h1>
+              <p className="text-[11px] md:text-sm text-gray-500 mt-0.5 md:mt-1 line-clamp-1">
+                ابدأ بإنشاء سيرتك الذاتية المختصرة
+              </p>
             </div>
             <Button
               onClick={handleEdit}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
             >
-              <Edit className="h-4 w-4 ml-2" />
-              تعديل السيرة الذاتية
+              <Edit className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+              <span className="md:hidden">تعديل</span>
+              <span className="hidden md:inline">تعديل السيرة الذاتية</span>
             </Button>
           </div>
         </div>
 
-        {/* Empty State */}
-        <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-12">
+        <Card className="rounded-xl md:rounded-2xl border border-slate-200 bg-white shadow-sm gap-0">
+          <CardContent className="p-6 md:p-12">
             <EmptyState
               icon={User}
               title="لا توجد سيرة ذاتية"
@@ -193,138 +228,86 @@ export function CvClient({ initialProfileCv }: CvClientProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 min-w-0">
       {/* Header - Sticky */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 pb-4 -mx-6 px-6 pt-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">السيرة الذاتية</h1>
-            <p className="text-sm text-gray-500 mt-1">عرض معلوماتك الشخصية والمهارات والخبرات</p>
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 pb-3 md:pb-4 -mx-4 px-4 pt-3 md:-mx-6 md:px-6 md:pt-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-base md:text-2xl font-bold text-gray-900 truncate">السيرة الذاتية</h1>
+            <p className="text-[11px] md:text-sm text-gray-500 mt-0.5 md:mt-1 line-clamp-1">
+              عرض معلوماتك الشخصية والمهارات والخبرات
+            </p>
           </div>
           <Button
             onClick={handleEdit}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
           >
-            <Edit className="h-4 w-4 ml-2" />
-            تعديل السيرة الذاتية
+            <Edit className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+            <span className="md:hidden">تعديل</span>
+            <span className="hidden md:inline">تعديل السيرة الذاتية</span>
           </Button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Gender */}
-        <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <User className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">الجنس</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {profileCv.gender ? genderLabels[profileCv.gender] : "غير محدد"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Age */}
-        <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Calendar className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">العمر</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {age !== null ? `${age} سنة` : "غير محدد"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Languages Count */}
-        <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Languages className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">عدد اللغات</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {profileCv.languages.length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Skills Count */}
-        <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Code className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">عدد المهارات</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {profileCv.skills.length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Experiences Count */}
-        <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Briefcase className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 mb-1">عدد الخبرات</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {profileCv.experiences.length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* KPI Cards — موبايل: شبكة مضغوطة 2 أعمدة */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
+        {kpiItems.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <Card
+              key={item.key}
+              className={`rounded-xl md:rounded-2xl border border-slate-200 bg-white shadow-sm gap-0 overflow-hidden ${
+                index === kpiItems.length - 1 ? "col-span-2 md:col-span-1 lg:col-span-1" : ""
+              }`}
+            >
+              <CardContent className="p-2.5 md:p-4">
+                <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                  <div className="p-1.5 md:p-2 rounded-lg bg-blue-50 shrink-0">
+                    <Icon className="h-3.5 w-3.5 md:h-5 md:w-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] md:text-xs text-slate-500 mb-0.5 md:mb-1 truncate">
+                      {item.label}
+                    </p>
+                    <p className="text-xs md:text-sm font-semibold text-gray-900 truncate">
+                      {item.value}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Content Cards - All Data */}
-      <div className="space-y-6">
-        {/* Personal Information & Languages Section */}
+      {/* Content Cards */}
+      <div className="space-y-3 md:space-y-6">
         <div>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 lg:col-span-7">
+          {/* عناوين الأقسام تظهر على الحاسوب فقط؛ الموبايل يعتمد عناوين البطاقات */}
+          <div className="hidden lg:grid grid-cols-12 gap-6 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 col-span-7">
               المعلومات الشخصية
             </h2>
-            <h2 className="text-lg font-semibold text-gray-900 lg:col-span-5">
+            <h2 className="text-lg font-semibold text-gray-900 col-span-5">
               اللغات ومستوى الإتقان
             </h2>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            <div className="lg:col-span-7">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 items-stretch">
+            <div className="lg:col-span-7 min-w-0">
               <PersonalInfoCard profileCv={profileCv} age={age} />
             </div>
-            <div className="lg:col-span-5">
+            <div className="lg:col-span-5 min-w-0">
               <LanguagesDisplayCard languages={profileCv.languages} />
             </div>
           </div>
         </div>
 
-        {/* Skills and Experiences Section */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">المهارات والخبرات</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <h2 className="hidden md:block text-lg font-semibold text-gray-900 mb-4">
+            المهارات والخبرات
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
             <SkillsAndExperiencesDisplayCard
               skills={profileCv.skills}
               experiences={profileCv.experiences}
@@ -335,20 +318,21 @@ export function CvClient({ initialProfileCv }: CvClientProps) {
 
       {/* Charts Section */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">تحليل المهارات واللغات</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Languages Donut Chart */}
+        <h2 className="text-sm md:text-lg font-semibold text-gray-900 mb-2.5 md:mb-4">
+          تحليل المهارات واللغات
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
           {profileCv.languages.length > 0 ? (
-            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold text-gray-900">
+            <Card className="rounded-xl md:rounded-2xl border border-slate-200 bg-white shadow-sm gap-0 overflow-hidden">
+              <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+                <CardTitle className="text-sm md:text-base font-semibold text-gray-900">
                   توزيع مستويات اللغات
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
                 {languageChartData.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                    <div style={{ height: "280px" }} className="relative">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 items-center">
+                    <div className="h-[200px] md:h-[280px] relative">
                       {mounted ? (
                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={160}>
                           <RechartsPieChart>
@@ -356,8 +340,8 @@ export function CvClient({ initialProfileCv }: CvClientProps) {
                             data={languageChartData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={70}
-                            outerRadius={100}
+                            innerRadius={58}
+                            outerRadius={84}
                             paddingAngle={3}
                             dataKey="value"
                           >
@@ -385,28 +369,30 @@ export function CvClient({ initialProfileCv }: CvClientProps) {
                       )}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="text-center">
-                          <div className="text-3xl font-bold text-gray-900">
+                          <div className="text-2xl md:text-3xl font-bold text-gray-900">
                             {profileCv.languages.length}
                           </div>
-                          <div className="text-xs text-slate-500 mt-1">إجمالي اللغات</div>
+                          <div className="text-[10px] md:text-xs text-slate-500 mt-0.5 md:mt-1">
+                            إجمالي اللغات
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-2.5">
+                    <div className="flex flex-wrap gap-1.5 md:block md:space-y-2.5">
                       {languageChartData.map((item, index) => {
                         const percentage = ((item.value / profileCv.languages.length) * 100).toFixed(1);
                         return (
                           <div
                             key={index}
-                            className="inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50/50 text-sm"
+                            className="inline-flex items-center gap-1.5 md:gap-2.5 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-slate-200 bg-slate-50/50 text-[11px] md:text-sm"
                           >
                             <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0"
                               style={{ backgroundColor: item.color }}
                             />
                             <span className="text-gray-700 font-medium">{item.name}</span>
                             <span className="text-slate-600 font-semibold">{item.value}</span>
-                            <span className="text-slate-500 text-xs">({percentage}%)</span>
+                            <span className="text-slate-500 text-[10px] md:text-xs">({percentage}%)</span>
                           </div>
                         );
                       })}
@@ -419,29 +405,28 @@ export function CvClient({ initialProfileCv }: CvClientProps) {
             </Card>
           ) : null}
 
-          {/* Skills Bar Chart */}
           {profileCv.skills.length > 0 ? (
-            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold text-gray-900">
+            <Card className="rounded-xl md:rounded-2xl border border-slate-200 bg-white shadow-sm gap-0 overflow-hidden">
+              <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+                <CardTitle className="text-sm md:text-base font-semibold text-gray-900">
                   مستويات المهارات
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
                 {skillChartData.length > 0 ? (
-                  <div style={{ height: "280px" }}>
+                  <div className="h-[200px] md:h-[280px]">
                     {mounted ? (
                       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={160}>
                         <BarChart data={skillChartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.1} />
                         <XAxis
                           dataKey="name"
-                          tick={{ fill: "#6b7280", fontSize: 12 }}
+                          tick={{ fill: "#6b7280", fontSize: 11 }}
                           axisLine={{ stroke: "#e5e7eb" }}
                           tickLine={{ stroke: "#e5e7eb" }}
                         />
                         <YAxis
-                          tick={{ fill: "#6b7280", fontSize: 12 }}
+                          tick={{ fill: "#6b7280", fontSize: 11 }}
                           axisLine={{ stroke: "#e5e7eb" }}
                           tickLine={{ stroke: "#e5e7eb" }}
                         />
@@ -476,58 +461,61 @@ export function CvClient({ initialProfileCv }: CvClientProps) {
 
       {/* Experiences Timeline */}
       {sortedExperiences.length > 0 && (
-        <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">
+        <Card className="rounded-xl md:rounded-2xl border border-slate-200 bg-white shadow-sm gap-0 overflow-hidden">
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+            <CardTitle className="text-sm md:text-base font-semibold text-gray-900">
               الخط الزمني للخبرات
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {sortedExperiences.map((exp, index) => {
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="space-y-3 md:space-y-4">
+              {sortedExperiences.map((exp) => {
                 const startDate = new Date(exp.startDate);
                 const endDate = exp.endDate ? new Date(exp.endDate) : null;
-                
-                // Determine experience type (static for now)
                 const orgLower = exp.organization?.toLowerCase() || "";
                 const titleLower = exp.title?.toLowerCase() || "";
-                const isAcademic = 
-                  orgLower.includes("جامعة") || 
-                  orgLower.includes("كلية") || 
+                const isAcademic =
+                  orgLower.includes("جامعة") ||
+                  orgLower.includes("كلية") ||
                   orgLower.includes("معهد") ||
                   titleLower.includes("أستاذ") ||
                   titleLower.includes("باحث") ||
                   titleLower.includes("مدرس");
-                
                 const experienceType = isAcademic ? "خبرة أكاديمية" : "خبرة مهنية";
-                const experienceTypeColor = isAcademic 
-                  ? "bg-green-100 text-green-700 border-green-200" 
+                const experienceTypeColor = isAcademic
+                  ? "bg-green-100 text-green-700 border-green-200"
                   : "bg-blue-100 text-blue-700 border-blue-200";
-                
+
                 return (
                   <div
                     key={exp.id}
-                    className="flex items-start gap-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0"
+                    className="flex items-start gap-2.5 md:gap-4 pb-3 md:pb-4 border-b border-slate-100 last:border-0 last:pb-0"
                   >
-                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-600 mt-2" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-gray-900">{exp.title}</h4>
+                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-600 mt-1.5 md:mt-2" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between mb-1">
+                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                          <h4 className="text-xs md:text-sm font-semibold text-gray-900">
+                            {exp.title}
+                          </h4>
                           <Badge
                             variant="outline"
-                            className={`text-xs ${experienceTypeColor}`}
+                            className={`text-[10px] md:text-xs ${experienceTypeColor}`}
                           >
                             {experienceType}
                           </Badge>
                         </div>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-[10px] md:text-xs text-slate-500 shrink-0">
                           {startDate.getFullYear()} - {endDate ? endDate.getFullYear() : "حتى الآن"}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-600 mb-1">{exp.organization}</p>
+                      <p className="text-[11px] md:text-xs text-slate-600 mb-0.5 md:mb-1">
+                        {exp.organization}
+                      </p>
                       {exp.description && (
-                        <p className="text-xs text-slate-500 leading-relaxed">{exp.description}</p>
+                        <p className="text-[11px] md:text-xs text-slate-500 leading-relaxed">
+                          {exp.description}
+                        </p>
                       )}
                     </div>
                   </div>

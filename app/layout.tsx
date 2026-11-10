@@ -15,11 +15,30 @@ const inter = Inter({
   display: "swap",
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+  process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
+  "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "منصة البحث العلمي - جامعة البصرة",
-  description: "منصة بحثية لجامعة البصرة",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "منصة البحث العلمي - جامعة البصرة",
+    template: "%s | منصة البحث العلمي",
+  },
+  description:
+    "واحة الباحث — منصة البحث العلمي لجامعة البصرة. صمّمها وبنىها من الصفر علي حسين مزهر المسعود (Ali Hussein Mezher Almasood).",
+  authors: [
+    { name: "علي حسين مزهر المسعود" },
+    { name: "Ali Hussein Mezher Almasood" },
+  ],
+  creator: "Ali Hussein Mezher Almasood",
   icons: {
     icon: "/ooiissiiss.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

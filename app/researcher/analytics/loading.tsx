@@ -1,19 +1,32 @@
 export default function Loading() {
   return (
-    <div className="space-y-6">
-      <div className="h-6 w-64 rounded-lg bg-slate-200" />
-      <div className="h-4 w-72 rounded-lg bg-slate-100" />
+    <div className="space-y-3 md:space-y-6">
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-1.5 min-w-0 flex-1">
+          <div className="h-5 md:h-6 w-40 md:w-64 rounded-lg bg-slate-200" />
+          <div className="hidden md:block h-4 w-72 rounded-lg bg-slate-100" />
+        </div>
+        <div className="h-8 md:h-10 w-14 md:w-32 rounded-lg bg-slate-100 shrink-0" />
+      </div>
 
-      <div className="h-28 rounded-2xl bg-slate-100" />
+      <div className="md:hidden h-10 rounded-xl bg-slate-100" />
+      <div className="hidden md:block h-28 rounded-2xl bg-slate-100" />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="h-28 md:h-40 rounded-xl md:rounded-2xl bg-slate-100" />
+
+      <div className="grid grid-cols-2 gap-2 md:hidden">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div key={idx} className="h-[64px] rounded-xl bg-slate-100" />
+        ))}
+      </div>
+      <div className="hidden md:grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {Array.from({ length: 6 }).map((_, idx) => (
           <div key={idx} className="h-24 rounded-2xl bg-slate-100" />
         ))}
       </div>
 
-      {Array.from({ length: 6 }).map((_, idx) => (
-        <div key={idx} className="h-72 rounded-2xl bg-slate-100" />
+      {Array.from({ length: 4 }).map((_, idx) => (
+        <div key={idx} className="h-[168px] md:h-72 rounded-xl md:rounded-2xl bg-slate-100" />
       ))}
     </div>
   );

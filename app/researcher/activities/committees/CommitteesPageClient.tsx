@@ -339,38 +339,176 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
 
+  const committeeActionsMenu = (c: Committee) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => handleView(c)}>
+          <Eye className="h-4 w-4 ml-2" />
+          عرض التفاصيل
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenAdd(c)}>
+          <Pencil className="h-4 w-4 ml-2" />
+          تعديل
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-red-600"
+          onClick={() => {
+            if (confirm("هل أنت متأكد من حذف هذه اللجنة؟")) {
+              startTransition(async () => {
+                const res = await deleteCommittee(c.id);
+                if (res.error) showToast(res.error, "error");
+                else {
+                  showToast("✅ تم حذف اللجنة بنجاح");
+                  loadCommittees();
+                  notifyDashboardUpdate("activities");
+                }
+              });
+            }
+          }}
+        >
+          <Trash2 className="h-4 w-4 ml-2" />
+          حذف
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   // بيانات الرسوم البيانية
   const byYearData = stats.byYear.map((item) => ({
     name: item.name,
     "عدد اللجان": item.value,
   }));
 
+  const hasActiveFilters =
+    Boolean(search) || roleFilter !== "__all__" || yearFilter !== "__all__";
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 min-w-0">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg md:text-2xl font-semibold text-gray-900">اللجان</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1">سجّل مشاركاتك في اللجان الأكاديمية</p>
-          <p className="text-sm md:text-base text-slate-600 mt-1.5 font-medium" aria-live="polite">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base md:text-2xl font-semibold text-gray-900 truncate">اللجان</h1>
+          <p className="hidden md:block text-sm text-slate-500 mt-1">سجّل مشاركاتك في اللجان الأكاديمية</p>
+          <p
+            className="text-[11px] md:text-sm text-slate-500 md:text-slate-600 mt-0.5 md:mt-1.5 md:font-medium line-clamp-2 md:line-clamp-none"
+            aria-live="polite"
+          >
             {getContextSummary(filteredForDisplay, stats)}
           </p>
         </div>
         <Button
           onClick={() => handleOpenAdd()}
-          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex-shrink-0 w-full md:w-auto"
+          size="sm"
+          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
         >
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة لجنة
+          <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+          <span className="md:hidden">إضافة</span>
+          <span className="hidden md:inline">إضافة لجنة</span>
         </Button>
       </div>
 
       <CommitteesKPICards stats={stats} />
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">الرسوم البيانية</h3>
-        <div className="grid grid-cols-12 gap-4">
+        <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-2.5 md:mb-4">الرسوم البيانية</h3>
+
+        {/* موبايل: تخطيط متناسق */}
+        <div className="md:hidden space-y-2">
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">حسب السنة</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {byYearData.length > 0 ? (
+                  <BarChart
+                    data={byYearData}
+                    dataKeys={["عدد اللجان"]}
+                    colors={["#2563EB"]}
+                    tooltipLabel={(year, count) => `عدد اللجان في ${year}: ${count}`}
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  نوع التكليف
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {stats.rolePieData.length > 0 ? (
+                    <PieChart
+                      data={stats.rolePieData}
+                      outerRadius={40}
+                      innerRadius={14}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      legendWrapperStyle={{ fontSize: 10, paddingTop: 0 }}
+                      tooltipLabel={(name, value) => `عدد اللجان كمشارك ${name}: ${value}`}
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  توزيع الأدوار
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1 flex items-center justify-center h-[130px]">
+                <div className="text-center">
+                  <div className="text-2xl font-black tabular-nums text-gray-900 leading-none">
+                    {stats.total}
+                  </div>
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    {stats.asMember} عضو · {stats.asChairperson} رئيس
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">التكليف عبر الزمن</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {stats.roleByYear.length > 0 ? (
+                  <BarChart
+                    data={stats.roleByYear}
+                    dataKeys={["عضو", "رئيس"]}
+                    colors={["#2563EB", "#f59e0b"]}
+                    stackId="role"
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* حاسوب: التخطيط السابق */}
+        <div className="hidden md:grid grid-cols-12 gap-4">
           {/* نوع التكليف (Pie) - col-span-12 lg:col-span-4 */}
           <Card className="border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-4">
             <CardHeader className="pb-3">
@@ -469,37 +607,28 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
 
       {/* آخر لجنة مضافة */}
       {committees.length > 0 && (
-        <Card className="border-slate-100 bg-white shadow-lg border-l-4 border-l-blue-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between gap-4">
+        <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg border-l-4 border-l-blue-500 gap-0 overflow-hidden rounded-xl">
+          <CardContent className="p-2.5 md:p-4">
+            <div className="flex items-center justify-between gap-2 md:gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span className="text-xs font-medium text-slate-500">آخر لجنة مضافة</span>
+                <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+                  <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-[10px] md:text-xs font-medium text-slate-500">آخر لجنة مضافة</span>
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 mb-1 line-clamp-1" dir="rtl">
+                <h3 className="text-xs md:text-base font-semibold text-slate-900 mb-0.5 md:mb-1 line-clamp-1" dir="rtl">
                   {committees[0].title}
                 </h3>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {formatDate(committees[0].assignmentDate)}
-                  </span>
-                  <Badge
-                    variant={committees[0].role === "CHAIRPERSON" ? "default" : "secondary"}
-                    className={committees[0].role === "CHAIRPERSON" ? "bg-amber-100 text-amber-800" : ""}
-                  >
-                    {roleLabels[committees[0].role]}
-                  </Badge>
-                </div>
+                <p className="text-[10px] md:text-sm text-slate-600 truncate">
+                  {[formatDate(committees[0].assignmentDate), roleLabels[committees[0].role]].join(" · ")}
+                </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleView(committees[0])}
-                className="flex-shrink-0"
+                className="flex-shrink-0 h-8 px-2.5 text-[11px] md:text-sm"
               >
-                <Eye className="h-4 w-4 ml-2" />
+                <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
                 عرض
               </Button>
             </div>
@@ -507,77 +636,116 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
         </Card>
       )}
 
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="text-base font-semibold text-slate-800">جدول اللجان</div>
-            <div className="flex items-center gap-2">
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl">
+        <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
+          <div className="flex items-center justify-between gap-2 mb-3 md:mb-4">
+            <div className="text-sm md:text-base font-semibold text-slate-800 truncate">جدول اللجان</div>
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportExcel}
                 disabled={isExporting}
               >
-                تصدير Excel
+                <span className="md:hidden">Excel</span>
+                <span className="hidden md:inline">تصدير Excel</span>
               </Button>
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportPDF}
                 disabled={isExporting}
               >
-                تصدير PDF
+                <span className="md:hidden">PDF</span>
+                <span className="hidden md:inline">تصدير PDF</span>
               </Button>
             </div>
           </div>
-          <h3 className="text-base font-semibold text-slate-800 mb-4">بحث في اللجان</h3>
-          <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" dir="rtl">
-              {/* البحث */}
-              <div className="sm:col-span-2 lg:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                  <Input
-                    placeholder="عنوان اللجنة..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                  />
-                  <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
-                    بحث
-                  </Button>
-                </div>
-              </div>
-              {/* الجهة المستفيدة */}
-              {/* نوع التكليف */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">نوع التكليف</label>
+
+          {/* فلاتر موبايل */}
+          <form onSubmit={handleSearchSubmit} className="md:hidden rounded-xl bg-slate-50 p-2 space-y-1.5 mb-3">
+            <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-0.5">
+              <Input
+                placeholder="بحث..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-8 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0 text-[11px] px-2"
+              />
+              <Button type="submit" variant="secondary" size="sm" className="h-7 rounded-md px-2.5 text-[11px] shrink-0">
+                بحث
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <Select
+                value={roleFilter}
+                onValueChange={(v) => {
+                  setRoleFilter(v);
+                  loadCommittees({ role: v });
+                }}
+              >
+                <SelectTrigger className="h-8 rounded-lg bg-white text-[11px] px-2" aria-label="نوع التكليف">
+                  <SelectValue placeholder="النوع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">الكل</SelectItem>
+                  <SelectItem value="MEMBER">عضو لجنة</SelectItem>
+                  <SelectItem value="CHAIRPERSON">رئيس لجنة</SelectItem>
+                </SelectContent>
+              </Select>
+              {uniqueYears.length > 0 && (
                 <Select
-                  value={roleFilter}
+                  value={yearFilter}
                   onValueChange={(v) => {
-                    setRoleFilter(v);
-                    loadCommittees({ role: v });
+                    setYearFilter(v);
+                    loadCommittees({ year: v });
                   }}
                 >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
+                  <SelectTrigger className="h-8 rounded-lg bg-white text-[11px] px-2" aria-label="السنة">
+                    <SelectValue placeholder="السنة" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    <SelectItem value="MEMBER">عضو لجنة</SelectItem>
-                    <SelectItem value="CHAIRPERSON">رئيس لجنة</SelectItem>
+                    <SelectItem value="__all__">كل السنوات</SelectItem>
+                    {uniqueYears.map((year) => (
+                      <SelectItem key={year} value={String(year)}>
+                        {year}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </div>
-              {/* السنة */}
-              {uniqueYears.length > 0 && (
+              )}
+            </div>
+          </form>
+
+          {/* فلاتر حاسوب */}
+          <div className="hidden md:block">
+            <h3 className="text-base font-semibold text-slate-800 mb-4">بحث في اللجان</h3>
+            <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end" dir="rtl">
+                {/* البحث */}
+                <div className="sm:col-span-2 lg:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    <Input
+                      placeholder="عنوان اللجنة..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
+                    />
+                    <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
+                      بحث
+                    </Button>
+                  </div>
+                </div>
+                {/* نوع التكليف */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">نوع التكليف</label>
                   <Select
-                    value={yearFilter}
+                    value={roleFilter}
                     onValueChange={(v) => {
-                      setYearFilter(v);
-                      loadCommittees({ year: v });
+                      setRoleFilter(v);
+                      loadCommittees({ role: v });
                     }}
                   >
                     <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
@@ -585,40 +753,60 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">الكل</SelectItem>
-                      {uniqueYears.map((year) => (
-                        <SelectItem key={year} value={String(year)}>
-                          {year}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="MEMBER">عضو لجنة</SelectItem>
+                      <SelectItem value="CHAIRPERSON">رئيس لجنة</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              )}
-            </div>
-          </form>
+                {/* السنة */}
+                {uniqueYears.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+                    <Select
+                      value={yearFilter}
+                      onValueChange={(v) => {
+                        setYearFilter(v);
+                        loadCommittees({ year: v });
+                      }}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                        <SelectValue placeholder="الكل" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">الكل</SelectItem>
+                        {uniqueYears.map((year) => (
+                          <SelectItem key={year} value={String(year)}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
 
           {filteredForDisplay.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-              <div className="rounded-full bg-white border border-slate-200 p-6 mb-5 shadow-sm">
-                <Users className="h-14 w-14 text-slate-400" />
+            <div className="flex flex-col items-center justify-center py-10 md:py-20 px-4 md:px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+              <div className="rounded-full bg-white border border-slate-200 p-4 md:p-6 mb-3 md:mb-5 shadow-sm">
+                <Users className="h-8 w-8 md:h-14 md:w-14 text-slate-400" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">
-                {search || roleFilter !== "__all__" || roleFilter !== "__all__" || yearFilter !== "__all__"
-                  ? "لا توجد نتائج"
-                  : "لم يتم تسجيل أي لجنة بعد"}
+              <h3 className="text-sm md:text-xl font-semibold text-slate-800 mb-1 md:mb-2 text-center">
+                {hasActiveFilters ? "لا توجد نتائج" : "لم يتم تسجيل أي لجنة بعد"}
               </h3>
-              <p className="text-sm text-slate-600 text-center max-w-md mb-6">
-                {search || roleFilter !== "__all__" || roleFilter !== "__all__" || yearFilter !== "__all__"
-                  ? "لا توجد ندوات تطابق الفلاتر. جرّب تغيير البحث أو الفلاتر."
+              <p className="text-xs md:text-sm text-slate-600 text-center max-w-md mb-4 md:mb-6">
+                {hasActiveFilters
+                  ? "لا توجد لجان تطابق الفلاتر. جرّب تغيير البحث أو الفلاتر."
                   : "ابدأ بإضافة أول لجنة لك."}
               </p>
-              {!search && roleFilter === "__all__" && roleFilter === "__all__" && yearFilter === "__all__" && (
+              {!hasActiveFilters && (
                 <Button
                   onClick={() => handleOpenAdd()}
-                  size="lg"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm"
+                  size="sm"
+                  className="md:h-11 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm"
                 >
-                  <Plus className="h-5 w-5 ml-2" />
+                  <Plus className="h-4 w-4 md:h-5 md:w-5 ml-1 md:ml-2" />
                   إضافة أول لجنة
                 </Button>
               )}
@@ -650,42 +838,7 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
                       {filteredForDisplay.map((c) => (
                         <TableRow key={c.id} className="hover:bg-slate-50/50">
                           <TableCell className="align-middle whitespace-nowrap">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => handleView(c)}>
-                                  <Eye className="h-4 w-4 ml-2" />
-                                  عرض التفاصيل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenAdd(c)}>
-                                  <Pencil className="h-4 w-4 ml-2" />
-                                  تعديل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => {
-                                    if (confirm("هل أنت متأكد من حذف هذه اللجنة؟")) {
-                                      startTransition(async () => {
-                                        const res = await deleteCommittee(c.id);
-                                        if (res.error) showToast(res.error, "error");
-                                        else {
-                                          showToast("✅ تم حذف اللجنة بنجاح");
-                                          loadCommittees();
-                                          notifyDashboardUpdate("activities");
-                                        }
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 ml-2" />
-                                  حذف
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            {committeeActionsMenu(c)}
                           </TableCell>
                           <TableCell className="align-middle">
                             <span className="font-medium text-slate-900 block" dir="rtl">
@@ -739,87 +892,53 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
               </div>
 
               {/* Mobile Cards List */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-2">
                 {filteredForDisplay.map((c) => (
-                  <Card key={c.id} className="border-slate-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-slate-900 text-base mb-1" dir="rtl">
-                            {c.title}
-                          </h3>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handleView(c)}>
-                              <Eye className="h-4 w-4 ml-2" />
-                              عرض التفاصيل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenAdd(c)}>
-                              <Pencil className="h-4 w-4 ml-2" />
-                              تعديل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => {
-                                if (confirm("هل أنت متأكد من حذف هذه اللجنة؟")) {
-                                  startTransition(async () => {
-                                    const res = await deleteCommittee(c.id);
-                                    if (res.error) showToast(res.error, "error");
-                                    else {
-                                      showToast("✅ تم حذف اللجنة بنجاح");
-                                      loadCommittees();
-                                      notifyDashboardUpdate("activities");
-                                    }
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 ml-2" />
-                              حذف
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  <div
+                    key={c.id}
+                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm min-h-[96px]"
+                  >
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleView(c)}
+                        className="min-w-0 flex-1 text-right space-y-0.5"
+                      >
+                        <p className="text-[12px] font-semibold text-slate-900 line-clamp-1 leading-snug">
+                          {c.title}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {[formatDate(c.assignmentDate), roleLabels[c.role]].join(" · ")}
+                        </p>
+                      </button>
+                      {committeeActionsMenu(c)}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">نوع التكليف</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate">
+                          {roleLabels[c.role]}
+                        </p>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-                        <div>
-                          <span className="text-slate-500">تاريخ التكليف:</span>
-                          <span className="text-slate-900 font-medium mr-2">
-                            {formatDate(c.assignmentDate)}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">نوع التكليف:</span>
-                          <Badge
-                            variant={c.role === "CHAIRPERSON" ? "default" : "secondary"}
-                            className={c.role === "CHAIRPERSON" ? "bg-amber-100 text-amber-800 mr-2" : "mr-2"}
-                          >
-                            {roleLabels[c.role]}
-                          </Badge>
-                        </div>
-                      </div>
-                      {c.description && (
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">الوصف</p>
+                        {c.description ? (
+                          <button
+                            type="button"
+                            className="text-[11px] font-medium text-blue-600 truncate block w-full text-right"
                             onClick={() => {
                               setViewingCommittee(c);
                               setIsDetailsOpen(true);
                             }}
                           >
-                            عرض الوصف
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                            عرض التفاصيل
+                          </button>
+                        ) : (
+                          <p className="text-[11px] text-slate-400">—</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </>
@@ -829,18 +948,20 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddOpen} onOpenChange={(open) => !open && handleCloseAdd()}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle>{editingCommittee ? "تعديل اللجنة" : "إضافة لجنة"}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-base md:text-lg">
+              {editingCommittee ? "تعديل اللجنة" : "إضافة لجنة"}
+            </DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
               {editingCommittee
                 ? "تعديل بيانات اللجنة."
                 : "أدخل بيانات اللجنة. التاريخ لا يقبل أي تاريخ في المستقبل."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddSubmit} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-3 md:space-y-4">
             <div>
-              <Label htmlFor="title">عنوان اللجنة *</Label>
+              <Label htmlFor="title" className="text-xs md:text-sm">عنوان اللجنة *</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -848,63 +969,65 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
                 placeholder="عنوان اللجنة"
                 required
                 minLength={2}
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
-            <div>
-              <Label htmlFor="assignmentDate">تاريخ التكليف *</Label>
-              <Input
-                id="assignmentDate"
-                type="date"
-                value={formData.assignmentDate}
-                max={getTodayISO()}
-                onChange={(e) => {
-                  const selectedDate = e.target.value;
-                  const today = getTodayISO();
-                  if (selectedDate > today) {
-                    showToast("تاريخ التكليف لا يمكن أن يكون في المستقبل", "error");
-                    return;
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label htmlFor="assignmentDate" className="text-xs md:text-sm">تاريخ التكليف *</Label>
+                <Input
+                  id="assignmentDate"
+                  type="date"
+                  value={formData.assignmentDate}
+                  max={getTodayISO()}
+                  onChange={(e) => {
+                    const selectedDate = e.target.value;
+                    const today = getTodayISO();
+                    if (selectedDate > today) {
+                      showToast("تاريخ التكليف لا يمكن أن يكون في المستقبل", "error");
+                      return;
+                    }
+                    setFormData((p) => ({ ...p, assignmentDate: selectedDate }));
+                  }}
+                  required
+                  className="mt-1 h-9 md:h-10 text-sm"
+                />
+              </div>
+              <div className="min-w-0">
+                <Label className="text-xs md:text-sm">نوع التكليف *</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(v: "MEMBER" | "CHAIRPERSON") =>
+                    setFormData((p) => ({ ...p, role: v }))
                   }
-                  setFormData((p) => ({ ...p, assignmentDate: selectedDate }));
-                }}
-                required
-                className="mt-1"
-              />
-              <p className="text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
+                >
+                  <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MEMBER">عضو لجنة</SelectItem>
+                    <SelectItem value="CHAIRPERSON">رئيس لجنة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+            <p className="text-[10px] md:text-xs text-slate-500 -mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
             <div>
-              <Label>نوع التكليف *</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(v: "MEMBER" | "CHAIRPERSON") =>
-                  setFormData((p) => ({ ...p, role: v }))
-                }
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MEMBER">عضو لجنة</SelectItem>
-                  <SelectItem value="CHAIRPERSON">رئيس لجنة</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="description">الوصف (اختياري)</Label>
+              <Label htmlFor="description" className="text-xs md:text-sm">الوصف (اختياري)</Label>
               <textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                 placeholder="وصف إضافي عن اللجنة..."
                 rows={3}
-                className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-1 flex min-h-[72px] md:min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleCloseAdd}>
+              <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleCloseAdd}>
                 إلغاء
               </Button>
-              <Button type="submit" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+              <Button type="submit" size="sm" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8] h-9">
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : editingCommittee ? (
@@ -923,69 +1046,108 @@ export function CommitteesPageClient({ initialCommittees }: CommitteesPageClient
         open={isDetailsOpen}
         onOpenChange={(open) => !open && (setIsDetailsOpen(false), setViewingCommittee(null))}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-right" dir="rtl">
+            <DialogTitle className="text-right text-base md:text-lg" dir="rtl">
               تفاصيل اللجنة
             </DialogTitle>
             <DialogDescription className="sr-only">عرض تفاصيل اللجنة المحددة</DialogDescription>
           </DialogHeader>
           {viewingCommittee && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-sm md:text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
                 {viewingCommittee.title}
               </h3>
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant={viewingCommittee.role === "CHAIRPERSON" ? "default" : "secondary"}
-                  className={viewingCommittee.role === "CHAIRPERSON" ? "bg-amber-100 text-amber-800" : ""}
-                >
-                  {roleLabels[viewingCommittee.role]}
-                </Badge>
-              </div>
-              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                <span className="text-slate-500">تاريخ التكليف</span>
-                <span className="font-medium text-slate-900">{formatDate(viewingCommittee.assignmentDate)}</span>
+              <p className="text-[11px] md:text-xs text-slate-500">
+                {[roleLabels[viewingCommittee.role], formatDate(viewingCommittee.assignmentDate)].join(" · ")}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 md:hidden">
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">تاريخ التكليف</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {formatDate(viewingCommittee.assignmentDate)}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">نوع التكليف</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {roleLabels[viewingCommittee.role]}
+                  </p>
+                </div>
                 {viewingCommittee.description && (
-                  <>
-                    <span className="text-slate-500">الوصف</span>
-                    <span className="font-medium text-slate-900" dir="rtl">
+                  <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">الوصف</p>
+                    <p className="text-xs font-medium text-slate-900 whitespace-pre-wrap" dir="rtl">
                       {viewingCommittee.description}
-                    </span>
-                  </>
+                    </p>
+                  </div>
                 )}
               </div>
-              <div className="flex flex-wrap justify-end gap-2 pt-4">
+              <div className="hidden md:block space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge
+                    variant={viewingCommittee.role === "CHAIRPERSON" ? "default" : "secondary"}
+                    className={viewingCommittee.role === "CHAIRPERSON" ? "bg-amber-100 text-amber-800" : ""}
+                  >
+                    {roleLabels[viewingCommittee.role]}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                  <span className="text-slate-500">تاريخ التكليف</span>
+                  <span className="font-medium text-slate-900">{formatDate(viewingCommittee.assignmentDate)}</span>
+                  {viewingCommittee.description && (
+                    <>
+                      <span className="text-slate-500">الوصف</span>
+                      <span className="font-medium text-slate-900" dir="rtl">
+                        {viewingCommittee.description}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row md:flex-wrap md:justify-end gap-2 pt-2 md:pt-4">
                 <Button
                   variant="outline"
-                  className="text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800"
+                  size="sm"
+                  className="h-9 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 justify-center"
                   onClick={() => shareCommitteeViaWhatsApp(viewingCommittee)}
                 >
                   <MessageCircle className="h-4 w-4 ml-2" />
-                  إرسال عبر واتساب
+                  <span className="md:hidden">واتساب</span>
+                  <span className="hidden md:inline">إرسال عبر واتساب</span>
                 </Button>
-                <Button variant="outline" onClick={() => (setIsDetailsOpen(false), setViewingCommittee(null))}>
-                  إغلاق
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDetailsOpen(false);
-                    handleOpenAdd(viewingCommittee);
-                    setViewingCommittee(null);
-                  }}
-                >
-                  <Pencil className="h-4 w-4 ml-2" />
-                  تعديل
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(viewingCommittee.id)}
-                  disabled={isPending}
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
-                </Button>
+                <div className="grid grid-cols-3 gap-2 md:contents">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => (setIsDetailsOpen(false), setViewingCommittee(null))}
+                  >
+                    إغلاق
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => {
+                      setIsDetailsOpen(false);
+                      handleOpenAdd(viewingCommittee);
+                      setViewingCommittee(null);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 ml-1 md:ml-2" />
+                    تعديل
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-red-600 hover:bg-red-50"
+                    onClick={() => handleDelete(viewingCommittee.id)}
+                    disabled={isPending}
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

@@ -389,183 +389,267 @@ export function DashboardClient({
   const filteredKpis = statsToKpis(filteredResearchStats);
   const filteredActivitiesKpis = activitiesToKpis(filteredAcademicStats);
 
+  /** هاتف: أقسام بعرض كامل من الجهتين. حاسوب: كما هو */
+  const flushBand =
+    "w-full px-3 py-4 md:px-0 md:py-0 border-b border-slate-200/70 md:border-0";
+  const flushBandEdge =
+    "w-full px-0 py-0 md:px-0 md:py-0 border-b border-slate-200/70 md:border-0";
+  const flushCard =
+    "rounded-none border-0 shadow-none md:rounded-2xl md:border md:border-slate-100 md:shadow-lg overflow-hidden";
+
   return (
-    <div className="w-full max-w-full px-3 sm:px-4 md:px-8 space-y-3 md:space-y-6 dashboard-print-container">
-      {/* Welcome Message - عمودي بالموبايل، أفقي بالديسكتوب */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-2">
-        <div>
-          <h1 className="text-lg md:text-2xl font-semibold text-gray-900">
-            مرحبًا بك <span className="font-medium text-slate-800">{welcomeName}</span>
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-0.5">
-            {[welcomeAcademicTitle, `العام الدراسي ${getAcademicYearLabel()}`]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
+    <div className="w-full max-w-full px-0 md:px-8 space-y-0 md:space-y-6 bg-slate-50/80 md:bg-transparent dashboard-print-container">
+      {/* Welcome + metrics — شريط ترحيب بعرض كامل */}
+      <section className={`${flushBand} bg-gradient-to-l from-blue-50 via-white to-slate-50 md:bg-none`}>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-2">
+          <div className="min-w-0">
+            <h1 className="text-base md:text-2xl font-semibold text-gray-900 leading-snug">
+              مرحبًا بك <span className="font-medium text-slate-800">{welcomeName}</span>
+            </h1>
+            <p className="text-[11px] md:text-base text-muted-foreground mt-0.5 leading-snug">
+              {[welcomeAcademicTitle, `العام الدراسي ${getAcademicYearLabel()}`]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
+          <div className="rounded-xl border border-blue-100/80 bg-white/90 p-2 shadow-sm md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+            <div className="grid grid-cols-4 gap-1 md:flex md:items-center md:justify-end md:gap-3 flex-shrink-0">
+              <div className="flex flex-col items-center gap-0.5 md:flex-row md:items-center md:gap-2 min-w-0">
+                <span className="text-[9px] md:text-sm text-slate-500 whitespace-nowrap leading-none">نقاطك هي</span>
+                <span className="text-base md:text-lg font-black tabular-nums text-[#2563EB] leading-none">{pointsScore}</span>
+              </div>
+              <span className="hidden md:block h-4 w-px bg-slate-200 shrink-0" aria-hidden />
+              <div className="flex flex-col items-center gap-0.5 md:flex-row md:items-center md:gap-2 min-w-0 border-r border-slate-100 md:border-0">
+                <span className="text-[9px] md:text-sm text-slate-500 whitespace-nowrap leading-none">H-Index</span>
+                <span className="text-base md:text-lg font-black tabular-nums text-slate-900 leading-none">
+                  {externalMetrics.hIndex ?? "—"}
+                </span>
+              </div>
+              <span className="hidden md:block h-4 w-px bg-slate-200 shrink-0" aria-hidden />
+              <div className="flex flex-col items-center gap-0.5 md:flex-row md:items-center md:gap-2 min-w-0 border-r border-slate-100 md:border-0">
+                <span className="text-[9px] md:text-sm text-slate-500 whitespace-nowrap leading-none">Citations</span>
+                <span className="text-base md:text-lg font-black tabular-nums text-emerald-700 leading-none">
+                  {externalMetrics.citations ?? "—"}
+                </span>
+              </div>
+              <span className="hidden md:block h-4 w-px bg-slate-200 shrink-0" aria-hidden />
+              <div className="flex flex-col items-center gap-0.5 md:flex-row md:items-center md:gap-2 min-w-0 border-r border-slate-100 md:border-0">
+                <span className="text-[9px] md:text-sm text-slate-500 whitespace-nowrap leading-none">Publications</span>
+                <span className="text-base md:text-lg font-black tabular-nums text-violet-700 leading-none">
+                  {externalMetrics.publications ?? "—"}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">نقاطك هي</span>
-            <span className="text-lg font-bold tabular-nums text-[#2563EB]">{pointsScore}</span>
-          </div>
-          <span className="h-4 w-px bg-slate-300 shrink-0" aria-hidden />
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">H-Index</span>
-            <span className="text-lg font-bold tabular-nums text-slate-900">
-              {externalMetrics.hIndex ?? "—"}
-            </span>
-          </div>
-          <span className="h-4 w-px bg-slate-300 shrink-0" aria-hidden />
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">Citations</span>
-            <span className="text-lg font-bold tabular-nums text-slate-900">
-              {externalMetrics.citations ?? "—"}
-            </span>
-          </div>
-          <span className="h-4 w-px bg-slate-300 shrink-0" aria-hidden />
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">Publications</span>
-            <span className="text-lg font-bold tabular-nums text-slate-900">
-              {externalMetrics.publications ?? "—"}
-            </span>
-          </div>
-        </div>
-      </div>
+      </section>
 
       {/* SECTION A: Lifetime Stats */}
-      <Card className="border-slate-100 bg-white shadow-lg border-l-4 border-l-blue-500 p-3 md:p-6">
-        <CardHeader className="pb-3 px-0 pt-0">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-row items-center justify-between gap-2 mb-1">
-              <CardTitle className="text-lg md:text-xl font-semibold text-gray-900 min-w-0 order-first">
-                الإحصائيات العامة
-              </CardTitle>
-              {/* أقصى اليسار: ترتيبك (بدون كبسولات، سطر واحد) */}
-              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0 order-last">
-                <RankStatInline
-                  label="ترتيبك في الجامعة"
-                  value={ranks.universityRank}
-                  icon={<Trophy className="h-3 w-3 md:h-3.5 md:w-3.5" />}
-                  tone="amber"
-                />
-                <RankStatInline
-                  label="ترتيبك في الكلية"
-                  value={ranks.collegeRank}
-                  icon={<Award className="h-3 w-3 md:h-3.5 md:w-3.5" />}
-                  tone="blue"
-                />
-                <RankStatInline
-                  label="ترتيبك في القسم"
-                  value={ranks.departmentRank}
-                  icon={<Medal className="h-3 w-3 md:h-3.5 md:w-3.5" />}
-                  tone="purple"
-                />
+      <section className={`${flushBand} bg-white overflow-hidden`}>
+        <Card className={`${flushCard} gap-2 md:gap-6 bg-transparent md:bg-white border-r-0 border-t-0 md:border-l-4 md:border-l-blue-500 p-0 md:p-6`}>
+          <CardHeader className="pb-0 md:pb-3 px-0 pt-0 gap-1.5 md:gap-2">
+            <div className="flex-1 min-w-0 space-y-1.5 md:space-y-2">
+              {/* موبايل: عنوان ثم شريط ترتيب بسطر واحد */}
+              <div className="md:hidden space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="h-4 w-1 rounded-full bg-blue-500 shrink-0" aria-hidden />
+                  <CardTitle className="text-sm font-semibold text-gray-900 min-w-0">
+                    الإحصائيات العامة
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-xs text-slate-500 leading-snug">
+                  ملخص مسيرتك البحثية والأكاديمية
+                </CardDescription>
+                <div className="flex w-full items-center justify-between gap-1 rounded-xl border border-slate-100 bg-gradient-to-l from-amber-50/80 via-blue-50/50 to-violet-50/80 px-2 py-1.5">
+                  <RankStatInline
+                    label="ترتيبك في الجامعة"
+                    shortLabel="ترتيبك في الجامعة"
+                    value={ranks.universityRank}
+                    icon={<Trophy className="h-3 w-3" />}
+                    tone="amber"
+                  />
+                  <span className="h-4 w-px bg-slate-200/80 shrink-0" aria-hidden />
+                  <RankStatInline
+                    label="ترتيبك في الكلية"
+                    shortLabel="ترتيبك في الكلية"
+                    value={ranks.collegeRank}
+                    icon={<Award className="h-3 w-3" />}
+                    tone="blue"
+                  />
+                  <span className="h-4 w-px bg-slate-200/80 shrink-0" aria-hidden />
+                  <RankStatInline
+                    label="ترتيبك في القسم"
+                    shortLabel="ترتيبك في القسم"
+                    value={ranks.departmentRank}
+                    icon={<Medal className="h-3 w-3" />}
+                    tone="purple"
+                  />
+                </div>
               </div>
-            </div>
-            <CardDescription className="text-sm text-slate-500">
-              ملخص كامل لمسيرتك البحثية والأكاديمية منذ بداية مسيرتك الاكاديمية والعلمية
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3 md:space-y-4 px-0 pb-0 pt-0">
-          {/* KPI Row */}
-          <KpiRow
-            currentScore={kpiData.currentScore}
-            previousScore={kpiData.previousScore}
-            topIndexing={kpiData.topIndexing}
-            topActivity={kpiData.topActivity}
-            lastUpdate={kpiData.lastUpdate}
-          />
-          {/* Research KPI Strip */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-800 mb-3">
-              ملخص البحوث (عام)
-            </h3>
-            <KpiStrip kpis={lifetimeResearchKpis} />
-          </div>
 
-          {/* Academic Activities Grid */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-800 mb-2 md:mb-3">
-              ملخص النشاطات الأكاديمية (عام)
-            </h3>
-            <AcademicActivitiesGrid activities={lifetimeActivitiesKpis} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* الرسوم العامة */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 dashboard-print-general-charts">
-        <Card className="border-slate-100 bg-white shadow-lg rounded-2xl p-3 md:p-6">
-          <CardHeader className="pb-2 pt-0 px-0 md:pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">
-              توزيع الفهرسة (عام)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-0 pb-0 pt-0">
-            <div className="h-[180px] sm:h-[220px] md:h-[300px]">
-              {overallChartsData.indexingData.some((d) => d.value > 0) ? (
-                <PieChart
-                  data={overallChartsData.indexingData}
-                  legendLayout="horizontal"
-                  legendVerticalAlign="bottom"
-                  legendWrapperStyle={legendWrapperStyle}
-                  outerRadius={80}
-                  innerRadius={28}
-                  tooltipLabel={(name, value) => `${name}: ${value}`}
-                />
-              ) : (
-                <EmptyChartState type="pie" />
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-100 bg-white shadow-lg rounded-2xl p-3 md:p-6">
-          <CardHeader className="pb-2 pt-0 px-0 md:pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">
-              توزيع النشاطات الأكاديمية (عام)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-0 pb-0 pt-0">
-            <div className="h-[180px] sm:h-[220px] md:h-[300px]">
-              {overallChartsData.activitiesDistributionData.some((d) => d.value > 0) ? (
-                <PieChart
-                  data={overallChartsData.activitiesDistributionData}
-                  legendLayout="horizontal"
-                  legendVerticalAlign="bottom"
-                  legendWrapperStyle={legendWrapperStyle}
-                  outerRadius={80}
-                  innerRadius={28}
-                  tooltipLabel={(name, value) => `${name}: ${value}`}
-                />
-              ) : (
-                <EmptyChartState type="pie" />
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* SECTION B: Filtered Stats */}
-      <div className="space-y-3 md:space-y-4">
-        <Card className="border-slate-100 bg-white shadow-lg border-l-4 border-l-[#2563EB] p-3 md:p-6">
-          <CardHeader className="pb-3 px-0 pt-0">
-            <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-lg md:text-xl font-semibold text-gray-900 mb-1">
-                  إحصائيات حسب السنة والشهر
-                </CardTitle>
-                <CardDescription className="text-sm text-slate-500">
-                  اختر سنة أو شهر لعرض الأداء التفصيلي.
+              {/* حاسوب: العنوان والترتيب في صف واحد كما كان */}
+              <div className="hidden md:block">
+                <div className="flex flex-row items-center justify-between gap-2 mb-1">
+                  <CardTitle className="text-xl font-semibold text-gray-900 min-w-0">
+                    الإحصائيات العامة
+                  </CardTitle>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <RankStatInline
+                      label="ترتيبك في الجامعة"
+                      shortLabel="الجامعة"
+                      value={ranks.universityRank}
+                      icon={<Trophy className="h-3.5 w-3.5" />}
+                      tone="amber"
+                    />
+                    <RankStatInline
+                      label="ترتيبك في الكلية"
+                      shortLabel="الكلية"
+                      value={ranks.collegeRank}
+                      icon={<Award className="h-3.5 w-3.5" />}
+                      tone="blue"
+                    />
+                    <RankStatInline
+                      label="ترتيبك في القسم"
+                      shortLabel="القسم"
+                      value={ranks.departmentRank}
+                      icon={<Medal className="h-3.5 w-3.5" />}
+                      tone="purple"
+                    />
+                  </div>
+                </div>
+                <CardDescription className="text-sm text-slate-500 leading-snug">
+                  ملخص كامل لمسيرتك البحثية والأكاديمية منذ بداية مسيرتك الاكاديمية والعلمية
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0 print:hidden">
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 md:space-y-4 px-0 pb-0 pt-0 gap-0">
+            <KpiRow
+              currentScore={kpiData.currentScore}
+              previousScore={kpiData.previousScore}
+              topIndexing={kpiData.topIndexing}
+              topActivity={kpiData.topActivity}
+              lastUpdate={kpiData.lastUpdate}
+            />
+            <div>
+              <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-2 md:mb-3">
+                ملخص البحوث (عام)
+              </h3>
+              <KpiStrip kpis={lifetimeResearchKpis} />
+            </div>
+            <div className="pt-1">
+              <div className="flex items-center gap-2 mb-2 md:mb-3">
+                <span className="md:hidden h-3.5 w-1 rounded-full bg-emerald-500 shrink-0" aria-hidden />
+                <h3 className="text-sm md:text-base font-semibold text-gray-800">
+                  ملخص النشاطات الأكاديمية (عام)
+                </h3>
+              </div>
+              <AcademicActivitiesGrid activities={lifetimeActivitiesKpis} />
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* الرسوم العامة */}
+      <section className={`${flushBand} bg-slate-50/90 md:bg-transparent`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 dashboard-print-general-charts">
+          <Card className={`${flushCard} bg-white rounded-xl md:rounded-2xl p-3 md:p-6`}>
+            <CardHeader className="pb-1.5 pt-0 px-0 md:pb-3">
+              <CardTitle className="text-sm md:text-base font-semibold text-gray-900">
+                توزيع الفهرسة (عام)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 pb-0 pt-0">
+              <div className="h-[210px] sm:h-[220px] md:h-[300px]">
+                {overallChartsData.indexingData.some((d) => d.value > 0) ? (
+                  <PieChart
+                    data={overallChartsData.indexingData}
+                    legendLayout="horizontal"
+                    legendVerticalAlign="bottom"
+                    legendWrapperStyle={legendWrapperStyle}
+                    outerRadius={isMobile ? 56 : 80}
+                    innerRadius={isMobile ? 20 : 28}
+                    tooltipLabel={(name, value) => `${name}: ${value}`}
+                  />
+                ) : (
+                  <EmptyChartState type="pie" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={`${flushCard} bg-white rounded-xl md:rounded-2xl p-3 md:p-6`}>
+            <CardHeader className="pb-1.5 pt-0 px-0 md:pb-3">
+              <CardTitle className="text-sm md:text-base font-semibold text-gray-900">
+                توزيع النشاطات الأكاديمية (عام)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 pb-0 pt-0">
+              <div className="h-[210px] sm:h-[220px] md:h-[300px]">
+                {overallChartsData.activitiesDistributionData.some((d) => d.value > 0) ? (
+                  <PieChart
+                    data={overallChartsData.activitiesDistributionData}
+                    legendLayout="horizontal"
+                    legendVerticalAlign="bottom"
+                    legendWrapperStyle={legendWrapperStyle}
+                    outerRadius={isMobile ? 56 : 80}
+                    innerRadius={isMobile ? 20 : 28}
+                    tooltipLabel={(name, value) => `${name}: ${value}`}
+                  />
+                ) : (
+                  <EmptyChartState type="pie" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* SECTION B: Filtered Stats */}
+      <section className={`${flushBand} bg-white overflow-hidden`}>
+        <Card className={`${flushCard} bg-transparent md:bg-white border-r-0 md:border-l-4 md:border-l-[#2563EB] p-0 md:p-6`}>
+          <CardHeader className="pb-2.5 md:pb-3 px-0 pt-0 gap-2">
+            <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between md:gap-3">
+              <div className="flex items-start justify-between gap-2 w-full md:contents">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="md:hidden h-4 w-1 rounded-full bg-[#2563EB] shrink-0" aria-hidden />
+                    <CardTitle className="text-sm md:text-xl font-semibold text-gray-900 mb-0 md:mb-1">
+                      إحصائيات حسب السنة والشهر
+                    </CardTitle>
+                  </div>
+                  <CardDescription className="text-[11px] md:text-sm text-slate-500 leading-snug mt-0.5 md:mt-0">
+                    اختر سنة أو شهر لعرض الأداء التفصيلي.
+                  </CardDescription>
+                </div>
+                {/* موبايل: أزرار التصدير بنفس سطر العنوان */}
+                <div className="flex items-center gap-1 shrink-0 md:hidden print:hidden">
+                  <Button
+                    onClick={handleExportReport}
+                    size="sm"
+                    className="h-8 px-2.5 text-[11px] bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Download className="h-3.5 w-3.5 ml-1" />
+                    تصدير
+                  </Button>
+                  <Button
+                    onClick={handlePrint}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 text-[11px] border-slate-200 text-slate-700"
+                  >
+                    <Printer className="h-3.5 w-3.5 ml-1" />
+                    طباعة
+                  </Button>
+                </div>
+              </div>
+              {/* حاسوب: أزرار التصدير كما كانت */}
+              <div className="hidden md:flex md:items-center md:gap-2 flex-shrink-0 print:hidden">
                 <Button
                   onClick={handleExportReport}
                   className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  <Download className="h-3.5 w-3.5 ml-1.5" />
+                  <Download className="h-3.5 w-3.5 ml-1" />
                   تصدير تقرير السنة
                 </Button>
                 <Button
@@ -573,7 +657,7 @@ export function DashboardClient({
                   variant="outline"
                   className="h-8 px-3 text-xs border-slate-200 text-slate-700 hover:bg-slate-50"
                 >
-                  <Printer className="h-3.5 w-3.5 ml-1.5" />
+                  <Printer className="h-3.5 w-3.5 ml-1" />
                   طباعة
                 </Button>
               </div>
@@ -591,17 +675,15 @@ export function DashboardClient({
               onTypeChange={setSelectedType}
             />
 
-            {/* ملخص البحوث (حسب الفلتر) - يظهر فقط عند "الكل" أو "بحوث" */}
             {(selectedType === "all" || selectedType === "research") && (
               <div>
-                <h3 className="text-base font-semibold text-gray-800 mb-2 md:mb-3">
+                <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-2 md:mb-3">
                   ملخص البحوث (حسب الفلتر)
                 </h3>
                 <KpiStrip kpis={filteredKpis} />
               </div>
             )}
 
-            {/* ملخص النشاطات الأكاديمية (حسب الفلتر) - يظهر فقط عند "الكل" أو "نشاطات" */}
             {(selectedType === "all" || selectedType === "activities") && (
               <FilteredAcademicActivities
                 activities={filteredActivitiesKpis}
@@ -612,9 +694,11 @@ export function DashboardClient({
             )}
           </CardContent>
         </Card>
+      </section>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-6">
+      {/* Charts — موبايل: امتداد حافة لحافة بدون حشو جانبي */}
+      <section className={`${flushBandEdge} bg-slate-50/90 md:bg-transparent`}>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:gap-6">
           <ChartsPanel
             indexingData={chartsData.indexingData}
             yearlyData={chartsData.yearlyData}
@@ -624,8 +708,10 @@ export function DashboardClient({
             selectedType={selectedType}
           />
         </div>
+      </section>
 
-        {/* Annual Progress */}
+      {/* Annual Progress */}
+      <section className={`${flushBand} bg-white`}>
         <AnnualProgressCard
           year={annualProgress.year}
           progress={annualProgress.progress}
@@ -649,27 +735,31 @@ export function DashboardClient({
             }));
           }}
         />
-      </div>
+      </section>
 
-      {/* Timeline & Insights - عمود واحد بالموبايل */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
-        <div className="min-w-0">
-          <ActivityTimeline initialActivities={initialRecentActivities} />
+      {/* Timeline & Insights */}
+      <section className={`${flushBand} bg-amber-50/40 md:bg-transparent`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+          <div className="min-w-0">
+            <ActivityTimeline initialActivities={initialRecentActivities} />
+          </div>
+          <div className="min-w-0">
+            <InsightsCard
+              suggestions={evaluation.suggestions}
+              weeklyTasks={weeklyPlan}
+            />
+          </div>
         </div>
-        <div className="min-w-0">
-          <InsightsCard
-            suggestions={evaluation.suggestions}
-            weeklyTasks={weeklyPlan}
-          />
-        </div>
-      </div>
+      </section>
 
       {/* Evaluation */}
-      <div className="grid grid-cols-1 gap-2 md:gap-6">
-        <div className="min-w-0">
-          <EvaluationCard score={evaluation.score} suggestions={evaluation.suggestions} />
+      <section className={`${flushBand} bg-white border-b-0`}>
+        <div className="grid grid-cols-1 gap-3 md:gap-6">
+          <div className="min-w-0">
+            <EvaluationCard score={evaluation.score} suggestions={evaluation.suggestions} />
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { ReactNode } from "react";
 
 interface RankStatInlineProps {
   label: string;
+  /** نص مختصر للهاتف فقط — سطح المكتب يبقى على label كاملاً */
+  shortLabel?: string;
   value: number;
   icon: ReactNode;
   tone?: "purple" | "blue" | "amber";
@@ -35,6 +37,7 @@ function easeOutCubic(t: number): number {
 
 export function RankStatInline({
   label,
+  shortLabel,
   value,
   icon,
   tone = "blue",
@@ -95,10 +98,17 @@ export function RankStatInline({
   }, [value]);
 
   return (
-    <span className="inline-flex items-center gap-1 shrink-0">
-      <span className={`${config.iconColor} flex-shrink-0 [&>svg]:h-3 [&>svg]:w-3 md:[&>svg]:h-3.5 md:[&>svg]:w-3.5`}>{icon}</span>
-      <span className="text-[10px] md:text-xs text-slate-600 leading-tight whitespace-nowrap">{label}</span>
-      <span className={`${config.badgeText} text-xs md:text-sm font-semibold transition-all duration-150`}>
+    <span className="inline-flex items-center gap-0.5 md:gap-1 shrink-0 min-w-0 max-w-[34%] md:max-w-none">
+      <span className={`${config.iconColor} flex-shrink-0 [&>svg]:h-3 [&>svg]:w-3 md:[&>svg]:h-3.5 md:[&>svg]:w-3.5`}>
+        {icon}
+      </span>
+      <span className="text-[9px] md:text-xs text-slate-600 leading-tight whitespace-nowrap truncate min-w-0">
+        <span className="md:hidden">{shortLabel ?? label}</span>
+        <span className="hidden md:inline">{label}</span>
+      </span>
+      <span
+        className={`${config.badgeText} text-[11px] md:text-sm font-black transition-all duration-150 tabular-nums shrink-0`}
+      >
         {displayValue > 0 ? `#${displayValue}` : "—"}
       </span>
     </span>

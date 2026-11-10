@@ -791,10 +791,15 @@ export function ExportReportButton({
   };
 
   return (
-    <Button onClick={handleExportPDF} variant="outline" className="h-10 rounded-xl shrink-0 bg-white">
-      <span className="inline-flex items-center gap-2">
-        <FileDown className="h-4 w-4" />
-        تصدير التقرير
+    <Button
+      onClick={handleExportPDF}
+      variant="outline"
+      className="h-8 md:h-10 px-2 md:px-4 rounded-lg md:rounded-xl shrink-0 bg-white text-[10px] md:text-sm"
+    >
+      <span className="inline-flex items-center gap-1 md:gap-2">
+        <FileDown className="h-3.5 w-3.5 md:h-4 md:w-4" />
+        <span className="md:hidden">PDF</span>
+        <span className="hidden md:inline">تصدير التقرير</span>
       </span>
     </Button>
   );

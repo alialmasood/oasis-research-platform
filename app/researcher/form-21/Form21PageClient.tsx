@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Form21Input } from "./_components/Form21Input";
 import { Form21Print } from "./_components/Form21Print";
 import { getDefaultForm21Data, computeForm21 } from "./utils";
 import type { Form21Data, Form21Basic } from "./types";
-import { getLastForm21Submission, saveForm21Submission } from "./actions";
+import { saveForm21Submission } from "./actions";
 import "./form21-print.css";
 
 const currentYear = new Date().getFullYear();
@@ -72,9 +72,33 @@ export function Form21PageClient({
   return (
     <div className="min-h-screen bg-white" dir="rtl">
       <link rel="stylesheet" href="/form21-print.css" />
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* الهيدر - لا يظهر عند الطباعة */}
-        <div className="no-print flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 pb-6 mb-6">
+      <div className="max-w-5xl mx-auto px-3 py-4 md:px-4 md:py-8">
+        {/* الهيدر موبايل مضغوط */}
+        <div className="no-print md:hidden flex items-center gap-2 border-b border-slate-200 pb-3 mb-3">
+          <div className="relative w-12 h-12 shrink-0">
+            <Image
+              src="/mohesr21.png"
+              alt="شعار وزارة التعليم العالي والبحث العلمي"
+              width={48}
+              height={48}
+              className="object-contain"
+            />
+          </div>
+          <div className="min-w-0 flex-1 text-right space-y-0">
+            <p className="text-[10px] font-semibold text-slate-800 leading-tight truncate">
+              وزارة التعليم العالي والبحث العلمي
+            </p>
+            <p className="text-[9px] text-slate-600 leading-tight truncate">
+              جهاز الإشراف والتقويم العلمي · ضمان الجودة
+            </p>
+            <p className="text-[9px] text-slate-500 leading-tight">
+              رقم الاستمارة: — · الترميز: —
+            </p>
+          </div>
+        </div>
+
+        {/* الهيدر سطح المكتب - دون تغيير */}
+        <div className="no-print hidden md:flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 pb-6 mb-6">
           <div className="flex-1 min-w-[200px] text-right space-y-0.5">
             <p className="text-sm font-semibold text-slate-800">
               وزارة التعليم العالي والبحث العلمي
@@ -106,20 +130,27 @@ export function Form21PageClient({
           </div>
         </div>
 
-        <div className="no-print text-center mb-4">
-          <h1 className="text-lg md:text-xl font-bold text-slate-900 leading-relaxed">
-            استمارة رقم (21): تقييم أداء أعضاء الهيئة التدريسية للعام الدراسي (
-            <span className="text-[#2563EB]">{academicYearLabel}</span>)
+        <div className="no-print text-center mb-3 md:mb-4">
+          <h1 className="text-sm md:text-xl font-bold text-slate-900 leading-snug md:leading-relaxed">
+            <span className="md:hidden">
+              استمارة (21) — تقييم الأداء{" "}
+              <span className="text-[#2563EB]">{academicYearLabel}</span>
+            </span>
+            <span className="hidden md:inline">
+              استمارة رقم (21): تقييم أداء أعضاء الهيئة التدريسية للعام الدراسي (
+              <span className="text-[#2563EB]">{academicYearLabel}</span>)
+            </span>
           </h1>
         </div>
 
         {/* زر الطباعة */}
-        <div className="no-print mb-8 flex justify-center">
+        <div className="no-print mb-4 md:mb-8 flex justify-center">
           <Button
             onClick={handlePrint}
-            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white"
+            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-8 md:h-9 px-3 md:px-4 text-[11px] md:text-sm"
           >
-            🖨 طباعة الاستمارة الوزارية
+            <span className="md:hidden">🖨 طباعة</span>
+            <span className="hidden md:inline">🖨 طباعة الاستمارة الوزارية</span>
           </Button>
         </div>
 

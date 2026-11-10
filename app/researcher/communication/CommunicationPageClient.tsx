@@ -152,7 +152,7 @@ function formatInboxTime(value: string | null | undefined) {
 }
 
 const workspaceShell =
-  "rounded-[20px] border border-slate-200/70 bg-white shadow-sm overflow-hidden flex flex-col min-h-0";
+  "rounded-xl md:rounded-[20px] border border-slate-200/70 bg-white shadow-sm overflow-hidden flex flex-col min-h-0";
 
 const listPanelShell =
   "flex flex-col min-h-0 min-w-0 h-full bg-white border-b lg:border-b-0 lg:border-e border-slate-200/70";
@@ -429,19 +429,21 @@ export function CommunicationPageClient({
       .join(" · ");
 
   return (
-    <div className="flex flex-col gap-3 pb-4">
+    <div className="flex flex-col gap-2 md:gap-3 pb-4">
       <div className="shrink-0">
-        <h1 className="text-2xl font-semibold text-slate-900">التواصل</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-base md:text-2xl font-semibold text-slate-900 tracking-tight">
+          التواصل
+        </h1>
+        <p className="hidden md:block mt-1 text-sm text-slate-500">
           تواصل مباشرة مع باحثي جامعة البصرة وتابع محادثاتك الأكاديمية.
         </p>
       </div>
 
-      <div className="flex gap-2 lg:hidden shrink-0">
+      <div className="flex gap-1.5 md:gap-2 lg:hidden shrink-0">
         <Button
           type="button"
           variant={mobileTab === "directory" ? "default" : "outline"}
-          className={`h-9 rounded-xl flex-1 ${focusRing} ${mobileTab === "directory" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : ""}`}
+          className={`h-8 md:h-9 rounded-lg md:rounded-xl flex-1 text-[10px] md:text-sm ${focusRing} ${mobileTab === "directory" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : ""}`}
           onClick={() => setMobileTab("directory")}
         >
           القائمة
@@ -449,12 +451,12 @@ export function CommunicationPageClient({
         <Button
           type="button"
           variant={mobileTab === "messages" ? "default" : "outline"}
-          className={`h-9 rounded-xl flex-1 ${focusRing} ${mobileTab === "messages" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : ""}`}
+          className={`h-8 md:h-9 rounded-lg md:rounded-xl flex-1 text-[10px] md:text-sm ${focusRing} ${mobileTab === "messages" ? "bg-[#2563EB] hover:bg-[#1D4ED8]" : ""}`}
           onClick={() => setMobileTab("messages")}
         >
           المحادثة
           {unreadTotal > 0 ? (
-            <span className="mr-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2563EB] px-1.5 text-[10px] text-white">
+            <span className="mr-1.5 md:mr-2 inline-flex h-4 md:h-5 min-w-4 md:min-w-5 items-center justify-center rounded-full bg-[#2563EB] px-1 md:px-1.5 text-[9px] md:text-[10px] text-white">
               {unreadTotal}
             </span>
           ) : null}
@@ -462,13 +464,13 @@ export function CommunicationPageClient({
       </div>
 
       {error ? (
-        <div className="shrink-0 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <div className="shrink-0 rounded-lg md:rounded-xl border border-rose-200 bg-rose-50 px-2.5 md:px-3 py-1.5 md:py-2 text-[10px] md:text-sm text-rose-800">
           {error}
         </div>
       ) : null}
 
       <div
-        className={`${workspaceShell} min-h-[560px] lg:min-h-[620px] h-[calc(100vh-190px)] max-h-[calc(100vh-160px)]`}
+        className={`${workspaceShell} min-h-[420px] md:min-h-[560px] lg:min-h-[620px] h-[calc(100vh-160px)] md:h-[calc(100vh-190px)] max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)]`}
       >
         <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(320px,min(34%,440px))_minmax(0,1fr)]">
           <section
@@ -476,24 +478,24 @@ export function CommunicationPageClient({
               mobileTab === "directory" ? "flex" : "hidden lg:flex"
             }`}
           >
-            <div className="shrink-0 border-b border-slate-100 px-3 pt-2.5 pb-2.5 space-y-2">
+            <div className="shrink-0 border-b border-slate-100 px-2.5 md:px-3 pt-2 md:pt-2.5 pb-2 md:pb-2.5 space-y-1.5 md:space-y-2">
               <div className="flex items-center justify-between gap-2 px-0.5">
-                <h2 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-slate-500" />
+                <h2 className="text-sm md:text-[15px] font-semibold text-slate-900 flex items-center gap-1.5 md:gap-2">
+                  <MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500" />
                   المحادثات
                 </h2>
                 {conversations.length > 0 ? (
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[10px] md:text-[11px] text-slate-400">
                     {conversations.length.toLocaleString("ar-IQ")}
                   </span>
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100/70 p-1">
+              <div className="grid grid-cols-2 gap-1 rounded-lg md:rounded-xl bg-slate-100/70 p-0.5 md:p-1">
                 <button
                   type="button"
                   onClick={() => setPanelView("conversations")}
-                  className={`h-9 rounded-[10px] text-[13px] font-medium transition-all duration-150 ${focusRing} ${
+                  className={`h-8 md:h-9 rounded-md md:rounded-[10px] text-[10px] md:text-[13px] font-medium transition-all duration-150 ${focusRing} ${
                     panelView === "conversations"
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
@@ -504,7 +506,7 @@ export function CommunicationPageClient({
                 <button
                   type="button"
                   onClick={() => setPanelView("researchers")}
-                  className={`h-9 rounded-[10px] text-[13px] font-medium transition-all duration-150 ${focusRing} ${
+                  className={`h-8 md:h-9 rounded-md md:rounded-[10px] text-[10px] md:text-[13px] font-medium transition-all duration-150 ${focusRing} ${
                     panelView === "researchers"
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
@@ -514,33 +516,25 @@ export function CommunicationPageClient({
                 </button>
               </div>
 
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                {panelView === "conversations" ? (
-                  <Input
-                    value={conversationQuery}
-                    onChange={(e) => setConversationQuery(e.target.value)}
-                    placeholder="ابحث في المحادثات..."
-                    className={`h-10 rounded-xl pr-9 border-slate-200 bg-white ${focusRing}`}
-                  />
-                ) : (
-                  <Input
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="ابحث عن باحث بالاسم أو اللقب..."
-                    className={`h-10 rounded-xl pr-9 border-slate-200 bg-white ${focusRing}`}
-                  />
-                )}
-              </div>
-
+              {/* موبايل: البحث + الفلاتر في صف واحد عند عرض الباحثين */}
               {panelView === "researchers" ? (
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="md:hidden flex items-center gap-1 flex-nowrap min-w-0">
+                  <div className="relative flex-1 min-w-0">
+                    <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                    <Input
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder="ابحث..."
+                      className={`h-8 rounded-lg pr-7 border-slate-200 bg-white text-[10px] ${focusRing}`}
+                    />
+                  </div>
                   <select
                     value={college}
                     onChange={(e) => setCollege(e.target.value)}
-                    className={`h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 truncate ${focusRing}`}
+                    className={`h-8 w-[68px] shrink-0 rounded-lg border border-slate-200 bg-white px-1 text-[10px] text-slate-700 truncate ${focusRing}`}
+                    title="الكلية"
                   >
-                    <option value="all">كل الكليات</option>
+                    <option value="all">كلية</option>
                     {filters.colleges.map((item) => (
                       <option key={item} value={item}>
                         {item}
@@ -550,9 +544,10 @@ export function CommunicationPageClient({
                   <select
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className={`h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 truncate ${focusRing}`}
+                    className={`h-8 w-[68px] shrink-0 rounded-lg border border-slate-200 bg-white px-1 text-[10px] text-slate-700 truncate ${focusRing}`}
+                    title="القسم"
                   >
-                    <option value="all">كل الأقسام</option>
+                    <option value="all">قسم</option>
                     {filters.departments.map((item) => (
                       <option key={item} value={item}>
                         {item}
@@ -562,9 +557,10 @@ export function CommunicationPageClient({
                   <select
                     value={specialization}
                     onChange={(e) => setSpecialization(e.target.value)}
-                    className={`h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 truncate ${focusRing}`}
+                    className={`h-8 w-[68px] shrink-0 rounded-lg border border-slate-200 bg-white px-1 text-[10px] text-slate-700 truncate ${focusRing}`}
+                    title="التخصص"
                   >
-                    <option value="all">كل التخصصات</option>
+                    <option value="all">تخصص</option>
                     {filters.specializations.map((item) => (
                       <option key={item} value={item}>
                         {item}
@@ -572,7 +568,80 @@ export function CommunicationPageClient({
                     ))}
                   </select>
                 </div>
-              ) : null}
+              ) : (
+                <div className="md:hidden relative">
+                  <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  <Input
+                    value={conversationQuery}
+                    onChange={(e) => setConversationQuery(e.target.value)}
+                    placeholder="ابحث في المحادثات..."
+                    className={`h-8 rounded-lg pr-8 border-slate-200 bg-white text-[10px] ${focusRing}`}
+                  />
+                </div>
+              )}
+
+              {/* سطح المكتب: البحث والفلاتر كما هما */}
+              <div className="hidden md:block space-y-2">
+                <div className="relative">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  {panelView === "conversations" ? (
+                    <Input
+                      value={conversationQuery}
+                      onChange={(e) => setConversationQuery(e.target.value)}
+                      placeholder="ابحث في المحادثات..."
+                      className={`h-10 rounded-xl pr-9 border-slate-200 bg-white ${focusRing}`}
+                    />
+                  ) : (
+                    <Input
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder="ابحث عن باحث بالاسم أو اللقب..."
+                      className={`h-10 rounded-xl pr-9 border-slate-200 bg-white ${focusRing}`}
+                    />
+                  )}
+                </div>
+
+                {panelView === "researchers" ? (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <select
+                      value={college}
+                      onChange={(e) => setCollege(e.target.value)}
+                      className={`h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 truncate ${focusRing}`}
+                    >
+                      <option value="all">كل الكليات</option>
+                      {filters.colleges.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className={`h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 truncate ${focusRing}`}
+                    >
+                      <option value="all">كل الأقسام</option>
+                      {filters.departments.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={specialization}
+                      onChange={(e) => setSpecialization(e.target.value)}
+                      className={`h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 truncate ${focusRing}`}
+                    >
+                      <option value="all">كل التخصصات</option>
+                      {filters.specializations.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div
@@ -581,13 +650,13 @@ export function CommunicationPageClient({
             >
               {panelView === "conversations" ? (
                 filteredConversations.length === 0 ? (
-                  <div className="h-full min-h-[200px] flex flex-col items-center justify-center px-6 text-center gap-2.5">
-                    <div className="h-14 w-14 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
-                      <MessageSquare className="h-5 w-5 text-slate-400" />
+                  <div className="h-full min-h-[160px] md:min-h-[200px] flex flex-col items-center justify-center px-4 md:px-6 text-center gap-2 md:gap-2.5">
+                    <div className="h-10 w-10 md:h-14 md:w-14 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
+                      <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[15px] font-semibold text-slate-800">لا توجد محادثات بعد</p>
-                      <p className="text-[13px] text-slate-500 leading-relaxed">
+                    <div className="space-y-0.5 md:space-y-1">
+                      <p className="text-sm md:text-[15px] font-semibold text-slate-800">لا توجد محادثات بعد</p>
+                      <p className="text-[10px] md:text-[13px] text-slate-500 leading-relaxed">
                         {conversationQuery.trim()
                           ? "لا توجد نتائج مطابقة لبحثك في المحادثات."
                           : "ابدأ بالتواصل مع أحد الباحثين من دليل الباحثين."}
@@ -598,7 +667,7 @@ export function CommunicationPageClient({
                         type="button"
                         size="sm"
                         variant="outline"
-                        className={`h-8 rounded-lg text-xs border-slate-200 ${focusRing}`}
+                        className={`h-7 md:h-8 rounded-lg text-[10px] md:text-xs border-slate-200 ${focusRing}`}
                         onClick={() => setPanelView("researchers")}
                       >
                         استعرض الباحثين
@@ -614,25 +683,25 @@ export function CommunicationPageClient({
                           key={conversation.id}
                           type="button"
                           onClick={() => selectConversation(conversation.id)}
-                          className={`relative w-full text-right px-3 pe-3.5 py-2.5 min-h-[70px] border-b border-slate-100 transition-colors duration-150 ${focusRing} ${
+                          className={`relative w-full text-right px-2.5 md:px-3 pe-3 md:pe-3.5 py-2 md:py-2.5 min-h-[96px] md:min-h-[70px] border-b border-slate-100 transition-colors duration-150 ${focusRing} ${
                             active ? "bg-blue-50/60" : "hover:bg-slate-50"
                           }`}
                         >
                           {active ? (
                             <span className="absolute top-2 bottom-2 start-0 w-[2.5px] rounded-full bg-[#2563EB]" />
                           ) : null}
-                          <div className="flex items-start gap-2.5">
+                          <div className="flex items-start gap-2 md:gap-2.5 h-full">
                             <AvatarBubble
                               name={conversation.peer.fullName}
                               src={conversation.peer.avatarUrl}
                               size="lg"
                             />
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 flex flex-col justify-center gap-0.5">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-slate-900 truncate">
+                                <p className="text-[13px] md:text-sm font-semibold text-slate-900 truncate">
                                   {conversation.peer.fullName}
                                 </p>
-                                <span className="text-[11px] text-slate-400 shrink-0">
+                                <span className="text-[10px] md:text-[11px] text-slate-400 shrink-0">
                                   {formatInboxTime(
                                     conversation.lastMessageAt ||
                                       conversation.lastMessage?.createdAt
@@ -640,16 +709,16 @@ export function CommunicationPageClient({
                                 </span>
                               </div>
                               {conversation.peer.academicTitle ? (
-                                <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                                <p className="text-[10px] md:text-[11px] text-slate-500 truncate">
                                   {conversation.peer.academicTitle}
                                 </p>
                               ) : null}
                               <div className="flex items-center gap-2 mt-0.5 min-w-0">
-                                <p className="text-xs text-slate-500 truncate min-w-0 flex-1 text-start">
+                                <p className="text-[10px] md:text-xs text-slate-500 truncate min-w-0 flex-1 text-start">
                                   {conversation.lastMessage?.body || "بدون رسائل بعد"}
                                 </p>
                                 {conversation.unreadCount > 0 ? (
-                                  <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#2563EB] px-1.5 text-[10px] font-semibold text-white shrink-0 ms-0.5">
+                                  <span className="inline-flex h-[16px] md:h-[18px] min-w-[16px] md:min-w-[18px] items-center justify-center rounded-full bg-[#2563EB] px-1 md:px-1.5 text-[9px] md:text-[10px] font-semibold text-white shrink-0 ms-0.5">
                                     {conversation.unreadCount}
                                   </span>
                                 ) : null}
@@ -662,18 +731,18 @@ export function CommunicationPageClient({
                   </div>
                 )
               ) : loadingDirectory ? (
-                <div className="min-h-[200px] flex items-center justify-center py-12 text-slate-500 gap-2 text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="min-h-[160px] md:min-h-[200px] flex items-center justify-center py-8 md:py-12 text-slate-500 gap-2 text-[10px] md:text-sm">
+                  <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin" />
                   جاري التحديث...
                 </div>
               ) : researchers.length === 0 ? (
-                <div className="h-full min-h-[200px] flex flex-col items-center justify-center px-6 text-center gap-2.5">
-                  <div className="h-14 w-14 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
-                    <Users className="h-5 w-5 text-slate-400" />
+                <div className="h-full min-h-[160px] md:min-h-[200px] flex flex-col items-center justify-center px-4 md:px-6 text-center gap-2 md:gap-2.5">
+                  <div className="h-10 w-10 md:h-14 md:w-14 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
+                    <Users className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[15px] font-semibold text-slate-800">لم يتم العثور على باحثين</p>
-                    <p className="text-[13px] text-slate-500 leading-relaxed">
+                  <div className="space-y-0.5 md:space-y-1">
+                    <p className="text-sm md:text-[15px] font-semibold text-slate-800">لم يتم العثور على باحثين</p>
+                    <p className="text-[10px] md:text-[13px] text-slate-500 leading-relaxed">
                       جرّب تغيير كلمات البحث أو عوامل التصفية.
                     </p>
                   </div>
@@ -686,9 +755,9 @@ export function CommunicationPageClient({
                       type="button"
                       disabled={sending}
                       onClick={() => void openConversation(researcher)}
-                      className={`relative w-full text-right px-3 py-2.5 min-h-[70px] border-b border-slate-100 transition-colors duration-150 hover:bg-slate-50 disabled:opacity-60 ${focusRing}`}
+                      className={`relative w-full text-right px-2.5 md:px-3 py-2 md:py-2.5 min-h-[96px] md:min-h-[70px] border-b border-slate-100 transition-colors duration-150 hover:bg-slate-50 disabled:opacity-60 ${focusRing}`}
                     >
-                      <div className="flex items-center gap-2.5 pe-1">
+                      <div className="flex items-center gap-2 md:gap-2.5 pe-1 h-full">
                         <AvatarBubble
                           name={researcher.fullName}
                           src={researcher.avatarUrl}
@@ -696,7 +765,7 @@ export function CommunicationPageClient({
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 truncate">
+                            <p className="text-[13px] md:text-sm font-semibold text-slate-900 truncate">
                               {researcher.fullName}
                             </p>
                             {researcher.sameCollege ? (
@@ -710,15 +779,15 @@ export function CommunicationPageClient({
                               </span>
                             ) : null}
                           </div>
-                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                          <p className="text-[10px] md:text-[11px] text-slate-500 truncate mt-0.5">
                             {researcherSubtitle(researcher) || "بيانات أكاديمية غير مكتملة"}
                           </p>
                         </div>
                         <span
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 shrink-0 transition-colors duration-150"
+                          className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 shrink-0 transition-colors duration-150"
                           title="مراسلة"
                         >
-                          <MessageCircle className="h-3.5 w-3.5" />
+                          <MessageCircle className="h-3 w-3 md:h-3.5 md:w-3.5" />
                         </span>
                       </div>
                     </button>
@@ -728,8 +797,8 @@ export function CommunicationPageClient({
             </div>
 
             {panelView === "researchers" && directoryTotal > 0 ? (
-              <div className="shrink-0 h-11 border-t border-slate-100 px-3 flex items-center justify-between gap-2">
-                <p className="text-[10px] text-slate-400">
+              <div className="shrink-0 h-9 md:h-11 border-t border-slate-100 px-2.5 md:px-3 flex items-center justify-between gap-2">
+                <p className="text-[9px] md:text-[10px] text-slate-400">
                   {((page - 1) * pageSize + 1).toLocaleString("ar-IQ")}–
                   {Math.min(page * pageSize, directoryTotal).toLocaleString("ar-IQ")} من{" "}
                   {directoryTotal.toLocaleString("ar-IQ")}
@@ -739,21 +808,21 @@ export function CommunicationPageClient({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={`h-8 w-8 p-0 rounded-md ${focusRing}`}
+                    className={`h-7 w-7 md:h-8 md:w-8 p-0 rounded-md ${focusRing}`}
                     disabled={page <= 1 || loadingDirectory}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     title="الصفحة السابقة"
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
                   </Button>
-                  <span className="text-[11px] text-slate-500 min-w-[3.25rem] text-center">
+                  <span className="text-[10px] md:text-[11px] text-slate-500 min-w-[3.25rem] text-center">
                     {page.toLocaleString("ar-IQ")} / {totalPages.toLocaleString("ar-IQ")}
                   </span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={`h-8 w-8 p-0 rounded-md ${focusRing}`}
+                    className={`h-7 w-7 md:h-8 md:w-8 p-0 rounded-md ${focusRing}`}
                     disabled={page >= totalPages || loadingDirectory}
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     title="الصفحة التالية"
@@ -772,16 +841,16 @@ export function CommunicationPageClient({
           >
             <div className="flex flex-col h-full min-h-0 min-w-0">
               {activeConversationId && activePeerName ? (
-                <div className="shrink-0 h-[72px] px-4 sm:px-5 lg:px-6 border-b border-slate-200/70 bg-white flex items-center gap-2">
+                <div className="shrink-0 h-14 md:h-[72px] px-2.5 sm:px-5 lg:px-6 border-b border-slate-200/70 bg-white flex items-center gap-1.5 md:gap-2">
                   <button
                     type="button"
-                    className={`lg:hidden inline-flex items-center gap-1 rounded-lg px-1.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 shrink-0 ${focusRing}`}
+                    className={`lg:hidden inline-flex items-center gap-0.5 md:gap-1 rounded-lg px-1 md:px-1.5 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-slate-600 hover:bg-slate-50 shrink-0 ${focusRing}`}
                     onClick={() => setMobileTab("directory")}
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     المحادثات
                   </button>
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
                     {activeConversation ? (
                       <AvatarBubble
                         name={activeConversation.peer.fullName}
@@ -796,11 +865,11 @@ export function CommunicationPageClient({
                       />
                     ) : null}
                     <div className="min-w-0 flex flex-col justify-center">
-                      <p className="text-[15px] font-semibold text-slate-900 truncate leading-snug">
+                      <p className="text-sm md:text-[15px] font-semibold text-slate-900 truncate leading-snug">
                         {activePeerName}
                       </p>
                       {activePeerSubtitle ? (
-                        <p className="text-xs text-slate-500 truncate mt-0.5 leading-snug">
+                        <p className="text-[10px] md:text-xs text-slate-500 truncate mt-0.5 leading-snug">
                           {activePeerSubtitle}
                         </p>
                       ) : null}
@@ -810,30 +879,30 @@ export function CommunicationPageClient({
               ) : null}
 
               <div
-                className={`flex-1 min-h-0 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-5 bg-slate-50/40 ${thinScroll}`}
+                className={`flex-1 min-h-0 overflow-y-auto px-2.5 py-2.5 sm:px-4 sm:py-4 lg:px-6 lg:py-5 bg-slate-50/40 ${thinScroll}`}
               >
                 {!activeConversationId ? (
-                  <div className="h-full min-h-[240px] flex flex-col items-center justify-center text-center px-6 gap-3">
-                    <div className="h-16 w-16 rounded-full bg-blue-50 flex items-center justify-center">
-                      <MessageSquare className="h-7 w-7 text-blue-500" />
+                  <div className="h-full min-h-[180px] md:min-h-[240px] flex flex-col items-center justify-center text-center px-4 md:px-6 gap-2 md:gap-3">
+                    <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-blue-50 flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 md:h-7 md:w-7 text-blue-500" />
                     </div>
-                    <div className="space-y-1.5 max-w-sm">
-                      <p className="text-[17px] font-semibold text-slate-800">ابدأ محادثة جديدة</p>
-                      <p className="text-[13px] text-slate-500 leading-relaxed">
+                    <div className="space-y-1 md:space-y-1.5 max-w-sm">
+                      <p className="text-sm md:text-[17px] font-semibold text-slate-800">ابدأ محادثة جديدة</p>
+                      <p className="text-[10px] md:text-[13px] text-slate-500 leading-relaxed">
                         اختر محادثة من القائمة أو ابحث عن باحث لبدء التواصل الأكاديمي.
                       </p>
-                      <p className="text-xs text-slate-400 leading-relaxed pt-0.5">
+                      <p className="hidden md:block text-xs text-slate-400 leading-relaxed pt-0.5">
                         المراسلات داخل واحة الباحث مخصصة للتواصل العلمي والأكاديمي.
                       </p>
                     </div>
                   </div>
                 ) : loadingThread ? (
-                  <div className="h-full min-h-[200px] flex flex-col items-center justify-center gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                    <p className="text-xs text-slate-400">جاري تحميل الرسائل...</p>
+                  <div className="h-full min-h-[160px] md:min-h-[200px] flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-blue-500" />
+                    <p className="text-[10px] md:text-xs text-slate-400">جاري تحميل الرسائل...</p>
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="h-full min-h-[200px] flex flex-col items-center justify-center text-center px-6 gap-2.5">
+                  <div className="h-full min-h-[160px] md:min-h-[200px] flex flex-col items-center justify-center text-center px-4 md:px-6 gap-2 md:gap-2.5">
                     {activeConversation ? (
                       <AvatarBubble
                         name={activeConversation.peer.fullName}
@@ -847,33 +916,33 @@ export function CommunicationPageClient({
                         size="lg"
                       />
                     ) : (
-                      <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center">
-                        <MessageSquare className="h-6 w-6 text-blue-500" />
+                      <div className="h-10 w-10 md:h-14 md:w-14 rounded-full bg-blue-50 flex items-center justify-center">
+                        <MessageSquare className="h-5 w-5 md:h-6 md:w-6 text-blue-500" />
                       </div>
                     )}
-                    <div className="space-y-1.5 max-w-sm">
-                      <p className="text-[17px] font-semibold text-slate-800">
+                    <div className="space-y-1 md:space-y-1.5 max-w-sm">
+                      <p className="text-sm md:text-[17px] font-semibold text-slate-800">
                         ابدأ المحادثة مع {activePeerName}
                       </p>
-                      <p className="text-[13px] text-slate-500 leading-relaxed">
+                      <p className="text-[10px] md:text-[13px] text-slate-500 leading-relaxed">
                         أرسل أول رسالة لبدء التواصل حول موضوعك الأكاديمي أو البحثي.
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col justify-start gap-3">
+                  <div className="flex flex-col justify-start gap-2 md:gap-3">
                     {messages.map((message) => (
                       <div
                         key={message.id}
                         className={`flex w-full ${message.isMine ? "justify-start" : "justify-end"}`}
                       >
                         <div
-                          className={`flex flex-col max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] min-w-0 ${
+                          className={`flex flex-col max-w-[88%] sm:max-w-[75%] lg:max-w-[70%] min-w-0 ${
                             message.isMine ? "items-start" : "items-end"
                           }`}
                         >
                           <div
-                            className={`px-4 py-2 text-sm leading-snug text-right shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${
+                            className={`px-3 md:px-4 py-1.5 md:py-2 text-[13px] md:text-sm leading-snug text-right shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${
                               message.isMine
                                 ? "bg-[#2563EB] text-white rounded-2xl rounded-tr-md"
                                 : "bg-white text-slate-800 border border-slate-200/80 rounded-2xl rounded-tl-md"
@@ -883,7 +952,7 @@ export function CommunicationPageClient({
                               {message.body}
                             </p>
                           </div>
-                          <p className="text-[10px] text-slate-400 mt-[3px] px-1 leading-none">
+                          <p className="text-[9px] md:text-[10px] text-slate-400 mt-[3px] px-1 leading-none">
                             {formatMessageTime(message.createdAt)}
                           </p>
                         </div>
@@ -894,9 +963,9 @@ export function CommunicationPageClient({
                 <div ref={bottomRef} />
               </div>
 
-              <div className="shrink-0 border-t border-slate-100 bg-white px-2 py-2 sm:px-3 sm:py-2.5">
+              <div className="shrink-0 border-t border-slate-100 bg-white px-1.5 py-1.5 sm:px-3 sm:py-2.5">
                 <div
-                  className={`flex items-end gap-2 min-h-[48px] rounded-2xl border border-slate-200 px-1.5 py-1.5 transition-all duration-150 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100/60 ${
+                  className={`flex items-end gap-1.5 md:gap-2 min-h-[40px] md:min-h-[48px] rounded-xl md:rounded-2xl border border-slate-200 px-1 md:px-1.5 py-1 md:py-1.5 transition-all duration-150 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100/60 ${
                     activeConversationId ? "bg-slate-50/50" : "bg-slate-50/60 opacity-80"
                   }`}
                 >
@@ -908,7 +977,7 @@ export function CommunicationPageClient({
                     placeholder={
                       activeConversationId ? "اكتب رسالتك..." : "اختر محادثة للبدء"
                     }
-                    className="flex-1 min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0 disabled:bg-transparent disabled:text-slate-400"
+                    className="flex-1 min-h-[36px] md:min-h-[44px] max-h-[100px] md:max-h-[120px] resize-none border-0 bg-transparent px-2.5 md:px-3 py-2 md:py-2.5 text-[13px] md:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0 disabled:bg-transparent disabled:text-slate-400"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -920,12 +989,12 @@ export function CommunicationPageClient({
                     type="button"
                     onClick={() => void sendMessage()}
                     disabled={!activeConversationId || !draft.trim() || sending}
-                    className={`h-10 w-10 rounded-xl bg-[#2563EB] hover:bg-blue-700 disabled:bg-blue-100 disabled:text-white/80 disabled:opacity-100 p-0 shrink-0 shadow-sm ${focusRing}`}
+                    className={`h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl bg-[#2563EB] hover:bg-blue-700 disabled:bg-blue-100 disabled:text-white/80 disabled:opacity-100 p-0 shrink-0 shadow-sm ${focusRing}`}
                   >
                     {sending ? (
-                      <Loader2 className="h-[18px] w-[18px] animate-spin text-white" />
+                      <Loader2 className="h-4 w-4 md:h-[18px] md:w-[18px] animate-spin text-white" />
                     ) : (
-                      <Send className="h-[18px] w-[18px]" />
+                      <Send className="h-4 w-4 md:h-[18px] md:w-[18px]" />
                     )}
                   </Button>
                 </div>

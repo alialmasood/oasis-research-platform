@@ -546,32 +546,167 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
     "عدد الأعمال الطوعية": item.value,
   }));
 
+  const volunteeringActionsMenu = (v: Volunteering) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => handleView(v)}>
+          <Eye className="h-4 w-4 ml-2" />
+          عرض التفاصيل
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenAdd(v)}>
+          <Pencil className="h-4 w-4 ml-2" />
+          تعديل
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-red-600"
+          onClick={() => {
+            if (confirm("هل أنت متأكد من حذف هذا العمل الطوعي؟")) {
+              startTransition(async () => {
+                const res = await deleteVolunteering(v.id);
+                if (res.error) showToast(res.error, "error");
+                else {
+                  showToast("✅ تم حذف العمل الطوعي بنجاح");
+                  loadVolunteerings();
+                  notifyDashboardUpdate("activities");
+                }
+              });
+            }
+          }}
+        >
+          <Trash2 className="h-4 w-4 ml-2" />
+          حذف
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 min-w-0">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg md:text-2xl font-semibold text-gray-900">الأعمال الطوعية</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1">سجّل أعمالك الطوعية</p>
-          <p className="text-sm md:text-base text-slate-600 mt-1.5 font-medium" aria-live="polite">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base md:text-2xl font-semibold text-gray-900 truncate">الأعمال الطوعية</h1>
+          <p className="hidden md:block text-sm text-slate-500 mt-1">سجّل أعمالك الطوعية</p>
+          <p
+            className="text-[11px] md:text-sm text-slate-500 md:text-slate-600 mt-0.5 md:mt-1.5 md:font-medium line-clamp-2 md:line-clamp-none"
+            aria-live="polite"
+          >
             {getContextSummary(filteredForDisplay, stats)}
           </p>
         </div>
         <Button
           onClick={() => handleOpenAdd()}
-          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex-shrink-0 w-full md:w-auto"
+          size="sm"
+          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
         >
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة عمل طوعي
+          <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+          <span className="md:hidden">إضافة</span>
+          <span className="hidden md:inline">إضافة عمل طوعي</span>
         </Button>
       </div>
 
       <VolunteeringKPICards stats={stats} />
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">الرسوم البيانية</h3>
-        <div className="grid grid-cols-12 gap-4">
+        <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-2.5 md:mb-4">الرسوم البيانية</h3>
+
+        {/* موبايل: تخطيط متناسق */}
+        <div className="md:hidden space-y-2">
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">حسب السنة</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {byYearData.length > 0 ? (
+                  <BarChart
+                    data={byYearData}
+                    dataKeys={["عدد الأعمال الطوعية"]}
+                    colors={["#2563EB"]}
+                    tooltipLabel={(year, count) => `عدد الأعمال الطوعية في ${year}: ${count}`}
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  أنواع التطوع
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {byTypeData.length > 0 ? (
+                    <PieChart
+                      data={byTypeData}
+                      outerRadius={40}
+                      innerRadius={14}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      legendWrapperStyle={{ fontSize: 10, paddingTop: 0 }}
+                      tooltipLabel={(name, value) => `${name}: ${value}`}
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  ملخص التطوع
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1 flex items-center justify-center h-[130px]">
+                <div className="text-center">
+                  <div className="text-2xl font-black tabular-nums text-gray-900 leading-none">
+                    {stats.total}
+                  </div>
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    {stats.ongoing} مستمر · {stats.completed} مكتمل
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">توزيع الأدوار</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {byRoleData.length > 0 ? (
+                  <BarChart
+                    data={byRoleData}
+                    dataKeys={["عدد الأعمال الطوعية"]}
+                    colors={["#10b981"]}
+                    tooltipLabel={(name, count) => `عدد الأعمال الطوعية ${name}: ${count}`}
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* حاسوب: التخطيط السابق */}
+        <div className="hidden md:grid grid-cols-12 gap-4">
           {/* الصف الأول: عدد الأعمال الطوعية حسب السنة (أكبر) + توزيع أنواع الأعمال الطوعية (أصغر) */}
           {/* عدد الأعمال الطوعية حسب السنة (Bar) - col-span-12 lg:col-span-8 */}
           <Card className="border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-8">
@@ -670,40 +805,33 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
 
       {/* آخر عمل طوعي مضافة */}
       {volunteerings.length > 0 && (
-        <Card className="border-slate-100 bg-white shadow-lg border-l-4 border-l-blue-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between gap-4">
+        <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg border-l-4 border-l-blue-500 gap-0 overflow-hidden rounded-xl">
+          <CardContent className="p-2.5 md:p-4">
+            <div className="flex items-center justify-between gap-2 md:gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span className="text-xs font-medium text-slate-500">آخر عمل طوعي مضافة</span>
+                <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+                  <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-[10px] md:text-xs font-medium text-slate-500">آخر عمل طوعي مضافة</span>
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 mb-1 line-clamp-1" dir="rtl">
+                <h3 className="text-xs md:text-base font-semibold text-slate-900 mb-0.5 md:mb-1 line-clamp-1" dir="rtl">
                   {volunteerings[0].title}
                 </h3>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {formatDate(volunteerings[0].startDate)}
-                  </span>
-                  <Badge variant={volunteerings[0].isOngoing ? "default" : "secondary"} className={volunteerings[0].isOngoing ? "bg-green-100 text-green-800" : ""}>
-                    {volunteerings[0].isOngoing ? "مستمر" : "مكتمل"}
-                  </Badge>
-                  <span className="text-slate-600">
-                    {typeLabels[volunteerings[0].type]}
-                  </span>
-                  <span className="text-slate-600">
-                    {roleLabels[volunteerings[0].role]}
-                  </span>
-                </div>
+                <p className="text-[10px] md:text-sm text-slate-600 truncate">
+                  {[
+                    formatDate(volunteerings[0].startDate),
+                    typeLabels[volunteerings[0].type],
+                    volunteerings[0].isOngoing ? "مستمر" : "مكتمل",
+                    roleLabels[volunteerings[0].role],
+                  ].join(" · ")}
+                </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleView(volunteerings[0])}
-                className="flex-shrink-0"
+                className="flex-shrink-0 h-8 px-2.5 text-[11px] md:text-sm"
               >
-                <Eye className="h-4 w-4 ml-2" />
+                <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
                 عرض
               </Button>
             </div>
@@ -711,98 +839,151 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
         </Card>
       )}
 
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="text-base font-semibold text-slate-800">جدول الأعمال الطوعية</div>
-            <div className="flex items-center gap-2">
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl">
+        <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
+          <div className="flex items-center justify-between gap-2 mb-3 md:mb-4">
+            <div className="text-sm md:text-base font-semibold text-slate-800 truncate">جدول الأعمال الطوعية</div>
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportExcel}
                 disabled={isExporting}
               >
-                تصدير Excel
+                <span className="md:hidden">Excel</span>
+                <span className="hidden md:inline">تصدير Excel</span>
               </Button>
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportPDF}
                 disabled={isExporting}
               >
-                تصدير PDF
+                <span className="md:hidden">PDF</span>
+                <span className="hidden md:inline">تصدير PDF</span>
               </Button>
             </div>
           </div>
-          <h3 className="text-base font-semibold text-slate-800 mb-4">بحث في الأعمال الطوعية</h3>
-          <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
-            <div className="flex flex-wrap items-end gap-3" dir="rtl">
-              {/* البحث */}
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                  <Input
-                    placeholder="عنوان العمل الطوعي..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                  />
-                  <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
-                    بحث
-                  </Button>
-                </div>
-              </div>
-              {/* نوع العمل */}
-              <div className="min-w-[180px]">
-                <label className="block text-sm font-medium text-slate-700 mb-2">نوع العمل</label>
-                <Select
-                  value={typeFilter}
-                  onValueChange={(v) => {
-                    setTypeFilter(v);
-                    loadVolunteerings({ type: v });
-                  }}
+
+          {/* فلاتر موبايل: سطر واحد */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="md:hidden rounded-xl bg-slate-50 p-1.5 mb-3"
+          >
+            <div className="flex items-center gap-1 flex-nowrap min-w-0">
+              <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 min-w-0 flex-[1.2]">
+                <Input
+                  placeholder="بحث..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-8 min-w-0 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 text-[10px] px-1.5"
+                />
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 rounded-md px-2 text-[10px] shrink-0"
                 >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    {Object.entries(typeLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  بحث
+                </Button>
               </div>
-              {/* الدور */}
-              <div className="min-w-[150px]">
-                <label className="block text-sm font-medium text-slate-700 mb-2">الدور</label>
-                <Select
-                  value={roleFilter}
-                  onValueChange={(v) => {
-                    setRoleFilter(v);
-                    loadVolunteerings({ role: v });
-                  }}
+              <Select
+                value={typeFilter}
+                onValueChange={(v) => {
+                  setTypeFilter(v);
+                  loadVolunteerings({ type: v });
+                }}
+              >
+                <SelectTrigger
+                  className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                  aria-label="نوع العمل"
                 >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    {Object.entries(roleLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* السنة */}
+                  <SelectValue placeholder="النوع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">كل الأنواع</SelectItem>
+                  {Object.entries(typeLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={roleFilter}
+                onValueChange={(v) => {
+                  setRoleFilter(v);
+                  loadVolunteerings({ role: v });
+                }}
+              >
+                <SelectTrigger
+                  className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                  aria-label="الدور"
+                >
+                  <SelectValue placeholder="الدور" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">كل الأدوار</SelectItem>
+                  {Object.entries(roleLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {uniqueYears.length > 0 && (
-                <div className="min-w-[120px]">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+                <Select
+                  value={yearFilter}
+                  onValueChange={(v) => {
+                    setYearFilter(v);
+                    loadVolunteerings({ year: v });
+                  }}
+                >
+                  <SelectTrigger
+                    className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                    aria-label="السنة"
+                  >
+                    <SelectValue placeholder="السنة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">كل السنوات</SelectItem>
+                    {uniqueYears.map((year) => (
+                      <SelectItem key={year} value={String(year)}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </form>
+
+          {/* فلاتر حاسوب */}
+          <div className="hidden md:block">
+            <h3 className="text-base font-semibold text-slate-800 mb-4">بحث في الأعمال الطوعية</h3>
+            <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
+              <div className="flex flex-wrap items-end gap-3" dir="rtl">
+                {/* البحث */}
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    <Input
+                      placeholder="عنوان العمل الطوعي..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
+                    />
+                    <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
+                      بحث
+                    </Button>
+                  </div>
+                </div>
+                {/* نوع العمل */}
+                <div className="min-w-[180px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">نوع العمل</label>
                   <Select
-                    value={yearFilter}
+                    value={typeFilter}
                     onValueChange={(v) => {
-                      setYearFilter(v);
-                      loadVolunteerings({ year: v });
+                      setTypeFilter(v);
+                      loadVolunteerings({ type: v });
                     }}
                   >
                     <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
@@ -810,29 +991,73 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">الكل</SelectItem>
-                      {uniqueYears.map((year) => (
-                        <SelectItem key={year} value={String(year)}>
-                          {year}
-                        </SelectItem>
+                      {Object.entries(typeLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
-            </div>
-          </form>
+                {/* الدور */}
+                <div className="min-w-[150px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">الدور</label>
+                  <Select
+                    value={roleFilter}
+                    onValueChange={(v) => {
+                      setRoleFilter(v);
+                      loadVolunteerings({ role: v });
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                      <SelectValue placeholder="الكل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">الكل</SelectItem>
+                      {Object.entries(roleLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* السنة */}
+                {uniqueYears.length > 0 && (
+                  <div className="min-w-[120px]">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+                    <Select
+                      value={yearFilter}
+                      onValueChange={(v) => {
+                        setYearFilter(v);
+                        loadVolunteerings({ year: v });
+                      }}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                        <SelectValue placeholder="الكل" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">الكل</SelectItem>
+                        {uniqueYears.map((year) => (
+                          <SelectItem key={year} value={String(year)}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
 
           {filteredForDisplay.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-              <div className="rounded-full bg-white border border-slate-200 p-6 mb-5 shadow-sm">
-                <Heart className="h-14 w-14 text-slate-400" />
+            <div className="flex flex-col items-center justify-center py-10 md:py-20 px-4 md:px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+              <div className="rounded-full bg-white border border-slate-200 p-4 md:p-6 mb-4 md:mb-5 shadow-sm">
+                <Heart className="h-10 w-10 md:h-14 md:w-14 text-slate-400" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">
+              <h3 className="text-base md:text-xl font-semibold text-slate-800 mb-2">
                 {search || typeFilter !== "__all__" || roleFilter !== "__all__" || yearFilter !== "__all__"
                   ? "لا توجد نتائج"
                   : "لم يتم تسجيل أي عمل طوعي بعد"}
               </h3>
-              <p className="text-sm text-slate-600 text-center max-w-md mb-6">
+              <p className="text-xs md:text-sm text-slate-600 text-center max-w-md mb-4 md:mb-6">
                 {search || typeFilter !== "__all__" || roleFilter !== "__all__" || yearFilter !== "__all__"
                   ? "لا توجد أعمال طوعية تطابق الفلاتر. جرّب تغيير البحث أو الفلاتر."
                   : "ابدأ بإضافة أول عمل طوعي لك."}
@@ -840,10 +1065,10 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
               {!search && typeFilter === "__all__" && roleFilter === "__all__" && yearFilter === "__all__" && (
                 <Button
                   onClick={() => handleOpenAdd()}
-                  size="lg"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm"
+                  size="sm"
+                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm h-9 md:h-10"
                 >
-                  <Plus className="h-5 w-5 ml-2" />
+                  <Plus className="h-4 w-4 md:h-5 md:w-5 ml-2" />
                   إضافة أول عمل طوعي
                 </Button>
               )}
@@ -880,42 +1105,7 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
                       {filteredForDisplay.map((v) => (
                         <TableRow key={v.id} className="hover:bg-slate-50/50">
                           <TableCell className="align-middle whitespace-nowrap">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => handleView(v)}>
-                                  <Eye className="h-4 w-4 ml-2" />
-                                  عرض التفاصيل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenAdd(v)}>
-                                  <Pencil className="h-4 w-4 ml-2" />
-                                  تعديل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => {
-                                    if (confirm("هل أنت متأكد من حذف هذا العمل الطوعي؟")) {
-                                      startTransition(async () => {
-                                        const res = await deleteVolunteering(v.id);
-                                        if (res.error) showToast(res.error, "error");
-                                        else {
-                                          showToast("✅ تم حذف العمل الطوعي بنجاح");
-                                          loadVolunteerings();
-                                          notifyDashboardUpdate("activities");
-                                        }
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 ml-2" />
-                                  حذف
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            {volunteeringActionsMenu(v)}
                           </TableCell>
                           <TableCell className="align-middle">
                             <span className="font-medium text-slate-900 block" dir="rtl">
@@ -965,111 +1155,46 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
               </div>
 
               {/* Mobile Cards List */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-2">
                 {filteredForDisplay.map((v) => (
-                  <Card key={v.id} className="border-slate-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-slate-900 text-base mb-1" dir="rtl">
-                            {v.title}
-                          </h3>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handleView(v)}>
-                              <Eye className="h-4 w-4 ml-2" />
-                              عرض التفاصيل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenAdd(v)}>
-                              <Pencil className="h-4 w-4 ml-2" />
-                              تعديل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => {
-                                if (confirm("هل أنت متأكد من حذف هذا العمل الطوعي؟")) {
-                                  startTransition(async () => {
-                                    const res = await deleteVolunteering(v.id);
-                                    if (res.error) showToast(res.error, "error");
-                                    else {
-                                      showToast("✅ تم حذف العمل الطوعي بنجاح");
-                                      loadVolunteerings();
-                                      notifyDashboardUpdate("activities");
-                                    }
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 ml-2" />
-                              حذف
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  <div
+                    key={v.id}
+                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm min-h-[96px]"
+                  >
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleView(v)}
+                        className="min-w-0 flex-1 text-right space-y-0.5"
+                      >
+                        <p className="text-[12px] font-semibold text-slate-900 line-clamp-1 leading-snug" dir="rtl">
+                          {v.title}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {[
+                            formatDate(v.startDate),
+                            typeLabels[v.type],
+                            v.isOngoing ? "مستمر" : "مكتمل",
+                          ].join(" · ")}
+                        </p>
+                      </button>
+                      {volunteeringActionsMenu(v)}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">الجهة المنظمة</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate" dir="rtl">
+                          {v.organizationName}
+                        </p>
                       </div>
-                      <div className="grid grid-cols-1 gap-3 text-sm mb-3">
-                        <div>
-                          <span className="text-slate-500">نوع العمل:</span>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800 mr-2">
-                            {typeLabels[v.type]}
-                          </Badge>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">الدور:</span>
-                          <Badge variant="outline" className="bg-purple-100 text-purple-800 mr-2">
-                            {roleLabels[v.role]}
-                          </Badge>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">الجهة المنظمة:</span>
-                          <span className="text-slate-900 font-medium mr-2" dir="rtl">
-                            {v.organizationName}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">تاريخ البداية:</span>
-                          <span className="text-slate-900 font-medium mr-2">
-                            {formatDate(v.startDate)}
-                          </span>
-                        </div>
-                        {!v.isOngoing && (
-                          <div>
-                            <span className="text-slate-500">المدة:</span>
-                            <span className="text-slate-900 font-medium mr-2">
-                              {v.durationYears > 0 && `${v.durationYears} سنة `}
-                              {v.durationMonths > 0 && `${v.durationMonths} شهر `}
-                              {v.durationDays > 0 && `${v.durationDays} يوم`}
-                              {v.durationYears === 0 && v.durationMonths === 0 && v.durationDays === 0 && "—"}
-                            </span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-slate-500">الحالة:</span>
-                          <Badge variant={v.isOngoing ? "default" : "secondary"} className={v.isOngoing ? "bg-green-100 text-green-800 mr-2" : "bg-slate-100 text-slate-800 mr-2"}>
-                            {v.isOngoing ? "مستمر" : "مكتمل"}
-                          </Badge>
-                        </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">الدور</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate">
+                          {roleLabels[v.role]}
+                        </p>
                       </div>
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => {
-                            setViewingVolunteering(v);
-                            setIsDetailsOpen(true);
-                          }}
-                        >
-                          عرض التفاصيل
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </>
@@ -1079,18 +1204,20 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddOpen} onOpenChange={(open) => !open && handleCloseAdd()}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle>{editingVolunteering ? "تعديل الأعمال الطوعية" : "إضافة عمل طوعي"}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-base md:text-lg">
+              {editingVolunteering ? "تعديل الأعمال الطوعية" : "إضافة عمل طوعي"}
+            </DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
               {editingVolunteering
                 ? "تعديل بيانات الأعمال الطوعية."
                 : "أدخل بيانات الأعمال الطوعية. التاريخ لا يقبل أي تاريخ في المستقبل."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddSubmit} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-3 md:space-y-4">
             <div>
-              <Label htmlFor="title">عنوان العمل الطوعي *</Label>
+              <Label htmlFor="title" className="text-xs md:text-sm">عنوان العمل الطوعي *</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -1098,47 +1225,49 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
                 placeholder="عنوان العمل الطوعي"
                 required
                 minLength={2}
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
-            <div>
-              <Label>نوع العمل *</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(v: any) => {
-                  setFormData((p) => ({ ...p, type: v }));
-                }}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(typeLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label className="text-xs md:text-sm">نوع العمل *</Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(v: any) => {
+                    setFormData((p) => ({ ...p, type: v }));
+                  }}
+                >
+                  <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(typeLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-0">
+                <Label className="text-xs md:text-sm">الدور *</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(v: any) => {
+                    setFormData((p) => ({ ...p, role: v }));
+                  }}
+                >
+                  <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(roleLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
-              <Label>الدور *</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(v: any) => {
-                  setFormData((p) => ({ ...p, role: v }));
-                }}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(roleLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="organizationName">اسم الجهة المنظمة للعمل الطوعي *</Label>
+              <Label htmlFor="organizationName" className="text-xs md:text-sm">اسم الجهة المنظمة للعمل الطوعي *</Label>
               <Input
                 id="organizationName"
                 value={formData.organizationName}
@@ -1146,65 +1275,67 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
                 placeholder="اسم الجهة المنظمة"
                 required
                 minLength={2}
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
-            <div>
-              <Label htmlFor="startDate">تاريخ البداية *</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={formData.startDate}
-                max={getTodayISO()}
-                onChange={(e) => {
-                  const selectedDate = e.target.value;
-                  const today = getTodayISO();
-                  if (selectedDate > today) {
-                    showToast("تاريخ البداية لا يمكن أن يكون في المستقبل", "error");
-                    return;
-                  }
-                  
-                  // إذا كان هناك تاريخ نهاية، إعادة حساب المدة تلقائياً
-                  if (!formData.isOngoing && formData.endDate && selectedDate <= formData.endDate) {
-                    const duration = calculateDuration(selectedDate, formData.endDate);
-                    setFormData((p) => ({
-                      ...p,
-                      startDate: selectedDate,
-                      durationYears: duration.years,
-                      durationMonths: duration.months,
-                      durationDays: duration.days,
-                      durationUnit: duration.years > 0 ? "YEAR" : duration.months > 0 ? "MONTH" : "DAY",
-                    }));
-                  } else {
-                    setFormData((p) => ({ ...p, startDate: selectedDate }));
-                  }
-                }}
-                required
-                className="mt-1"
-              />
-              <p className="text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
-            </div>
-            <div>
-              <Label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.isOngoing}
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label htmlFor="startDate" className="text-xs md:text-sm">تاريخ البداية *</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  max={getTodayISO()}
                   onChange={(e) => {
-                    setFormData((p) => ({
-                      ...p,
-                      isOngoing: e.target.checked,
-                      endDate: e.target.checked ? null : p.endDate,
-                    }));
+                    const selectedDate = e.target.value;
+                    const today = getTodayISO();
+                    if (selectedDate > today) {
+                      showToast("تاريخ البداية لا يمكن أن يكون في المستقبل", "error");
+                      return;
+                    }
+                    
+                    // إذا كان هناك تاريخ نهاية، إعادة حساب المدة تلقائياً
+                    if (!formData.isOngoing && formData.endDate && selectedDate <= formData.endDate) {
+                      const duration = calculateDuration(selectedDate, formData.endDate);
+                      setFormData((p) => ({
+                        ...p,
+                        startDate: selectedDate,
+                        durationYears: duration.years,
+                        durationMonths: duration.months,
+                        durationDays: duration.days,
+                        durationUnit: duration.years > 0 ? "YEAR" : duration.months > 0 ? "MONTH" : "DAY",
+                      }));
+                    } else {
+                      setFormData((p) => ({ ...p, startDate: selectedDate }));
+                    }
                   }}
-                  className="rounded"
+                  required
+                  className="mt-1 h-9 md:h-10 text-sm"
                 />
-                العمل الطوعي مستمر
-              </Label>
+                <p className="text-[10px] md:text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
+              </div>
+              <div className="min-w-0 flex items-end pb-5">
+                <Label className="flex items-center gap-2 text-xs md:text-sm">
+                  <input
+                    type="checkbox"
+                    checked={formData.isOngoing}
+                    onChange={(e) => {
+                      setFormData((p) => ({
+                        ...p,
+                        isOngoing: e.target.checked,
+                        endDate: e.target.checked ? null : p.endDate,
+                      }));
+                    }}
+                    className="rounded"
+                  />
+                  العمل الطوعي مستمر
+                </Label>
+              </div>
             </div>
             {!formData.isOngoing && (
               <>
                 <div>
-                  <Label htmlFor="endDate">تاريخ النهاية *</Label>
+                  <Label htmlFor="endDate" className="text-xs md:text-sm">تاريخ النهاية *</Label>
                   <Input
                     id="endDate"
                     type="date"
@@ -1235,15 +1366,15 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
                       }));
                     }}
                     required={!formData.isOngoing}
-                    className="mt-1"
+                    className="mt-1 h-9 md:h-10 text-sm"
                   />
-                  <p className="text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
+                  <p className="text-[10px] md:text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
                 </div>
                 {formData.endDate && (
                   <div>
-                    <Label>المدة المحسوبة تلقائياً</Label>
-                    <div className="mt-1 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                      <div className="flex items-center gap-4 text-sm">
+                    <Label className="text-xs md:text-sm">المدة المحسوبة تلقائياً</Label>
+                    <div className="mt-1 p-2.5 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="flex flex-wrap items-center gap-3 md:gap-4 text-xs md:text-sm">
                         <div className="flex items-center gap-2">
                           <span className="text-slate-600">السنوات:</span>
                           <span className="font-semibold text-slate-900">{formData.durationYears}</span>
@@ -1263,7 +1394,7 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
                           </Badge>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">
+                      <p className="text-[10px] md:text-xs text-slate-500 mt-2">
                         تم حساب المدة تلقائياً من الفرق بين تاريخ البداية وتاريخ النهاية
                       </p>
                     </div>
@@ -1271,52 +1402,54 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
                 )}
               </>
             )}
-            <div>
-              <Label htmlFor="location">الموقع (اختياري)</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))}
-                placeholder="الموقع"
-                className="mt-1"
-              />
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label htmlFor="location" className="text-xs md:text-sm">الموقع (اختياري)</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))}
+                  placeholder="الموقع"
+                  className="mt-1 h-9 md:h-10 text-sm"
+                />
+              </div>
+              <div className="min-w-0">
+                <Label htmlFor="beneficiaries" className="text-xs md:text-sm">المستفيدون (اختياري)</Label>
+                <Input
+                  id="beneficiaries"
+                  value={formData.beneficiaries}
+                  onChange={(e) => setFormData((p) => ({ ...p, beneficiaries: e.target.value }))}
+                  placeholder="المستفيدون"
+                  className="mt-1 h-9 md:h-10 text-sm"
+                />
+              </div>
             </div>
             <div>
-              <Label htmlFor="beneficiaries">المستفيدون (اختياري)</Label>
-              <Input
-                id="beneficiaries"
-                value={formData.beneficiaries}
-                onChange={(e) => setFormData((p) => ({ ...p, beneficiaries: e.target.value }))}
-                placeholder="المستفيدون"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="certificates">الشهادات أو الوثائق (اختياري)</Label>
+              <Label htmlFor="certificates" className="text-xs md:text-sm">الشهادات أو الوثائق (اختياري)</Label>
               <Input
                 id="certificates"
                 value={formData.certificates}
                 onChange={(e) => setFormData((p) => ({ ...p, certificates: e.target.value }))}
                 placeholder="الشهادات أو الوثائق"
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
             <div>
-              <Label htmlFor="description">الوصف الإضافي (اختياري)</Label>
+              <Label htmlFor="description" className="text-xs md:text-sm">الوصف الإضافي (اختياري)</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                 placeholder="وصف إضافي عن العمل الطوعي..."
                 rows={3}
-                className="mt-1"
+                className="mt-1 min-h-[72px] md:min-h-[80px] text-sm"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleCloseAdd}>
+              <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleCloseAdd}>
                 إلغاء
               </Button>
-              <Button type="submit" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+              <Button type="submit" size="sm" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8] h-9">
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : editingVolunteering ? (
@@ -1335,104 +1468,211 @@ export function VolunteeringPageClient({ initialVolunteerings }: VolunteeringPag
         open={isDetailsOpen}
         onOpenChange={(open) => !open && (setIsDetailsOpen(false), setViewingVolunteering(null))}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-right" dir="rtl">
+            <DialogTitle className="text-right text-base md:text-lg" dir="rtl">
               تفاصيل الأعمال الطوعية
             </DialogTitle>
             <DialogDescription className="sr-only">عرض تفاصيل الأعمال الطوعية المحددة</DialogDescription>
           </DialogHeader>
           {viewingVolunteering && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-sm md:text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
                 {viewingVolunteering.title}
               </h3>
-              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
-                <span className="text-slate-500">نوع العمل</span>
-                <span className="font-medium text-slate-900">{typeLabels[viewingVolunteering.type]}</span>
-                <span className="text-slate-500">الدور</span>
-                <span className="font-medium text-slate-900">{roleLabels[viewingVolunteering.role]}</span>
-                <span className="text-slate-500">الجهة المنظمة</span>
-                <span className="font-medium text-slate-900" dir="rtl">{viewingVolunteering.organizationName}</span>
-                <span className="text-slate-500">تاريخ البداية</span>
-                <span className="font-medium text-slate-900">{formatDate(viewingVolunteering.startDate)}</span>
-                {viewingVolunteering.endDate && (
-                  <>
-                    <span className="text-slate-500">تاريخ النهاية</span>
-                    <span className="font-medium text-slate-900">{formatDate(viewingVolunteering.endDate)}</span>
-                  </>
-                )}
-                <span className="text-slate-500">الحالة</span>
-                <span className="font-medium text-slate-900">
-                  <Badge variant={viewingVolunteering.isOngoing ? "default" : "secondary"} className={viewingVolunteering.isOngoing ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-800"}>
+              <p className="text-[11px] md:text-xs text-slate-500 line-clamp-2" dir="rtl">
+                {[
+                  typeLabels[viewingVolunteering.type],
+                  roleLabels[viewingVolunteering.role],
+                  viewingVolunteering.isOngoing ? "مستمر" : "مكتمل",
+                  formatDate(viewingVolunteering.startDate),
+                ].join(" · ")}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 md:hidden">
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">نوع العمل</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {typeLabels[viewingVolunteering.type]}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">الدور</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {roleLabels[viewingVolunteering.role]}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">الجهة المنظمة</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate" dir="rtl">
+                    {viewingVolunteering.organizationName}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">الحالة</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
                     {viewingVolunteering.isOngoing ? "مستمر" : "مكتمل"}
-                  </Badge>
-                </span>
-                <span className="text-slate-500">المدة</span>
-                <span className="font-medium text-slate-900">
-                  {viewingVolunteering.durationYears > 0 && `${viewingVolunteering.durationYears} سنة `}
-                  {viewingVolunteering.durationMonths > 0 && `${viewingVolunteering.durationMonths} شهر `}
-                  {viewingVolunteering.durationDays > 0 && `${viewingVolunteering.durationDays} يوم `}
-                  ({durationUnitLabels[viewingVolunteering.durationUnit]})
-                </span>
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">تاريخ البداية</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {formatDate(viewingVolunteering.startDate)}
+                  </p>
+                </div>
+                {viewingVolunteering.endDate ? (
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">تاريخ النهاية</p>
+                    <p className="text-xs font-semibold text-slate-900 truncate">
+                      {formatDate(viewingVolunteering.endDate)}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">المدة</p>
+                    <p className="text-xs font-semibold text-slate-900 truncate">
+                      {viewingVolunteering.durationYears > 0 && `${viewingVolunteering.durationYears} سنة `}
+                      {viewingVolunteering.durationMonths > 0 && `${viewingVolunteering.durationMonths} شهر `}
+                      {viewingVolunteering.durationDays > 0 && `${viewingVolunteering.durationDays} يوم`}
+                      {viewingVolunteering.durationYears === 0 &&
+                        viewingVolunteering.durationMonths === 0 &&
+                        viewingVolunteering.durationDays === 0 &&
+                        "—"}
+                    </p>
+                  </div>
+                )}
                 {viewingVolunteering.location && (
-                  <>
-                    <span className="text-slate-500">الموقع</span>
-                    <span className="font-medium text-slate-900" dir="rtl">{viewingVolunteering.location}</span>
-                  </>
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">الموقع</p>
+                    <p className="text-xs font-semibold text-slate-900 truncate" dir="rtl">
+                      {viewingVolunteering.location}
+                    </p>
+                  </div>
                 )}
                 {viewingVolunteering.beneficiaries && (
-                  <>
-                    <span className="text-slate-500">المستفيدون</span>
-                    <span className="font-medium text-slate-900" dir="rtl">{viewingVolunteering.beneficiaries}</span>
-                  </>
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">المستفيدون</p>
+                    <p className="text-xs font-semibold text-slate-900 truncate" dir="rtl">
+                      {viewingVolunteering.beneficiaries}
+                    </p>
+                  </div>
                 )}
                 {viewingVolunteering.certificates && (
-                  <>
-                    <span className="text-slate-500">الشهادات أو الوثائق</span>
-                    <span className="font-medium text-slate-900" dir="rtl">{viewingVolunteering.certificates}</span>
-                  </>
+                  <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">الشهادات أو الوثائق</p>
+                    <p className="text-xs font-medium text-slate-900" dir="rtl">
+                      {viewingVolunteering.certificates}
+                    </p>
+                  </div>
                 )}
                 {viewingVolunteering.description && (
-                  <>
-                    <span className="text-slate-500">الوصف الإضافي</span>
-                    <span className="font-medium text-slate-900" dir="rtl">
+                  <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">الوصف الإضافي</p>
+                    <p className="text-xs font-medium text-slate-900 whitespace-pre-wrap" dir="rtl">
                       {viewingVolunteering.description}
-                    </span>
-                  </>
+                    </p>
+                  </div>
                 )}
               </div>
-              <div className="flex flex-wrap justify-end gap-2 pt-4">
+              <div className="hidden md:block">
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
+                  <span className="text-slate-500">نوع العمل</span>
+                  <span className="font-medium text-slate-900">{typeLabels[viewingVolunteering.type]}</span>
+                  <span className="text-slate-500">الدور</span>
+                  <span className="font-medium text-slate-900">{roleLabels[viewingVolunteering.role]}</span>
+                  <span className="text-slate-500">الجهة المنظمة</span>
+                  <span className="font-medium text-slate-900" dir="rtl">{viewingVolunteering.organizationName}</span>
+                  <span className="text-slate-500">تاريخ البداية</span>
+                  <span className="font-medium text-slate-900">{formatDate(viewingVolunteering.startDate)}</span>
+                  {viewingVolunteering.endDate && (
+                    <>
+                      <span className="text-slate-500">تاريخ النهاية</span>
+                      <span className="font-medium text-slate-900">{formatDate(viewingVolunteering.endDate)}</span>
+                    </>
+                  )}
+                  <span className="text-slate-500">الحالة</span>
+                  <span className="font-medium text-slate-900">
+                    <Badge variant={viewingVolunteering.isOngoing ? "default" : "secondary"} className={viewingVolunteering.isOngoing ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-800"}>
+                      {viewingVolunteering.isOngoing ? "مستمر" : "مكتمل"}
+                    </Badge>
+                  </span>
+                  <span className="text-slate-500">المدة</span>
+                  <span className="font-medium text-slate-900">
+                    {viewingVolunteering.durationYears > 0 && `${viewingVolunteering.durationYears} سنة `}
+                    {viewingVolunteering.durationMonths > 0 && `${viewingVolunteering.durationMonths} شهر `}
+                    {viewingVolunteering.durationDays > 0 && `${viewingVolunteering.durationDays} يوم `}
+                    ({durationUnitLabels[viewingVolunteering.durationUnit]})
+                  </span>
+                  {viewingVolunteering.location && (
+                    <>
+                      <span className="text-slate-500">الموقع</span>
+                      <span className="font-medium text-slate-900" dir="rtl">{viewingVolunteering.location}</span>
+                    </>
+                  )}
+                  {viewingVolunteering.beneficiaries && (
+                    <>
+                      <span className="text-slate-500">المستفيدون</span>
+                      <span className="font-medium text-slate-900" dir="rtl">{viewingVolunteering.beneficiaries}</span>
+                    </>
+                  )}
+                  {viewingVolunteering.certificates && (
+                    <>
+                      <span className="text-slate-500">الشهادات أو الوثائق</span>
+                      <span className="font-medium text-slate-900" dir="rtl">{viewingVolunteering.certificates}</span>
+                    </>
+                  )}
+                  {viewingVolunteering.description && (
+                    <>
+                      <span className="text-slate-500">الوصف الإضافي</span>
+                      <span className="font-medium text-slate-900" dir="rtl">
+                        {viewingVolunteering.description}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row md:flex-wrap md:justify-end gap-2 pt-2 md:pt-4">
                 <Button
                   variant="outline"
-                  className="text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800"
+                  size="sm"
+                  className="h-9 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 justify-center"
                   onClick={() => shareVolunteeringViaWhatsApp(viewingVolunteering)}
                 >
                   <MessageCircle className="h-4 w-4 ml-2" />
-                  إرسال عبر واتساب
+                  <span className="md:hidden">واتساب</span>
+                  <span className="hidden md:inline">إرسال عبر واتساب</span>
                 </Button>
-                <Button variant="outline" onClick={() => (setIsDetailsOpen(false), setViewingVolunteering(null))}>
-                  إغلاق
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDetailsOpen(false);
-                    handleOpenAdd(viewingVolunteering);
-                    setViewingVolunteering(null);
-                  }}
-                >
-                  <Pencil className="h-4 w-4 ml-2" />
-                  تعديل
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(viewingVolunteering.id)}
-                  disabled={isPending}
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
-                </Button>
+                <div className="grid grid-cols-3 gap-2 md:contents">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => (setIsDetailsOpen(false), setViewingVolunteering(null))}
+                  >
+                    إغلاق
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => {
+                      setIsDetailsOpen(false);
+                      handleOpenAdd(viewingVolunteering);
+                      setViewingVolunteering(null);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 ml-1 md:ml-2" />
+                    تعديل
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-red-600 hover:bg-red-50"
+                    onClick={() => handleDelete(viewingVolunteering.id)}
+                    disabled={isPending}
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

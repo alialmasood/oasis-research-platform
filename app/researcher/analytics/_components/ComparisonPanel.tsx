@@ -29,7 +29,12 @@ export function ComparisonPanel({ compare }: ComparisonPanelProps) {
 
   if (!compare) return null;
   if (!mounted) {
-    return <div className="rounded-2xl border border-slate-100 bg-white shadow-lg h-[280px]" />;
+    return (
+      <>
+        <div className="md:hidden rounded-xl border border-slate-100 bg-white shadow-sm h-[168px]" />
+        <div className="hidden md:block rounded-2xl border border-slate-100 bg-white shadow-lg h-[280px]" />
+      </>
+    );
   }
 
   const merged = compare.timeline.current.map((point, index) => ({
@@ -69,7 +74,7 @@ export function ComparisonPanel({ compare }: ComparisonPanelProps) {
 
   return (
     <SectionCard title="مقارنة الفترات" description="الفرق بين الفترة الحالية والسابقة">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-1.5 md:gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
           { label: "إجمالي النشاط", value: compare.delta.total },
           { label: "البحوث", value: compare.delta.research },
@@ -84,9 +89,12 @@ export function ComparisonPanel({ compare }: ComparisonPanelProps) {
                 ? "border-rose-200 bg-rose-50/50 text-rose-700"
                 : "border-slate-200 bg-slate-50 text-slate-600";
           return (
-            <div key={item.label} className={`rounded-xl border px-3 py-2.5 ${tone}`}>
-              <p className="text-[11px] text-slate-500">{item.label}</p>
-              <p className="text-sm font-bold tabular-nums mt-1">
+            <div
+              key={item.label}
+              className={`rounded-xl border px-2 py-2 md:px-3 md:py-2.5 min-h-[56px] md:min-h-0 h-full ${tone}`}
+            >
+              <p className="text-[10px] md:text-[11px] text-slate-500 truncate">{item.label}</p>
+              <p className="text-xs md:text-sm font-bold tabular-nums mt-0.5 md:mt-1">
                 {item.value > 0 ? "+" : ""}
                 {item.value}%
               </p>
@@ -94,9 +102,9 @@ export function ComparisonPanel({ compare }: ComparisonPanelProps) {
           );
         })}
       </div>
-      <div className="grid gap-4 mt-4 lg:grid-cols-[2fr_1fr]">
-        <div className="h-[240px]">
-          <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+      <div className="grid gap-2 md:gap-4 mt-2 md:mt-4 lg:grid-cols-[2fr_1fr]">
+        <div className="h-[132px] md:h-[240px]">
+          <ResponsiveContainer width="100%" height="100%" minHeight={120}>
             <LineChart data={merged} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.15} />
               <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 12 }} />
@@ -114,8 +122,8 @@ export function ComparisonPanel({ compare }: ComparisonPanelProps) {
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="h-[240px]">
-          <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+        <div className="h-[132px] md:h-[240px]">
+          <ResponsiveContainer width="100%" height="100%" minHeight={120}>
             <BarChart data={totalsData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.15} />
               <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} interval={0} />

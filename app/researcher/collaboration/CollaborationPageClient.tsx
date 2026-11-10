@@ -173,6 +173,42 @@ function KpiCard({
   );
 }
 
+function MobileKpiCard({
+  title,
+  value,
+  loading,
+  icon: Icon,
+  softBg,
+  softText,
+}: {
+  title: string;
+  value: number;
+  loading?: boolean;
+  icon: React.ElementType;
+  softBg: string;
+  softText: string;
+}) {
+  return (
+    <div className="h-[64px] rounded-xl border border-slate-100 bg-white px-2.5 py-2 min-w-0 shadow-sm flex items-center">
+      <div className="flex items-center gap-2 min-w-0 w-full">
+        <div className={`h-8 w-8 rounded-lg ${softBg} flex items-center justify-center shrink-0`}>
+          <Icon className={`h-3.5 w-3.5 ${softText}`} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-bold tabular-nums text-gray-900 leading-none truncate">
+            {loading ? (
+              <span className="inline-block h-4 w-8 bg-slate-200 rounded animate-pulse" />
+            ) : (
+              <AnimatedNumber value={value} loading={loading} />
+            )}
+          </div>
+          <p className="mt-1 text-[10px] text-slate-500 leading-tight truncate">{title}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const TAB_ITEMS = [
   { value: "discover", label: "استكشاف المشاريع", icon: Search },
   { value: "my", label: "مشاريعي", icon: FolderOpen },
@@ -566,11 +602,39 @@ export function CollaborationPageClient() {
   }, [filteredDiscover, filters.sort]);
 
   return (
-    <div className="space-y-4" dir="rtl">
+    <div className="space-y-3 md:space-y-4 min-w-0" dir="rtl">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* (1) Header + Actions */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* (1) Header — موبايل مضغوط */}
+      <div className="md:hidden flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base font-semibold text-slate-900 tracking-tight truncate leading-snug">
+            التعاون الأكاديمي
+          </h1>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            onClick={() => { setCreateOpen(true); setCreateForm(createFormInit); setTagInput(""); setRoleInput(""); setCreateFormErrors({}); }}
+            className="h-8 rounded-lg px-2.5 text-[10px] bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="h-3.5 w-3.5 ml-1" />
+            إنشاء
+          </Button>
+          <Button variant="outline" onClick={() => setActiveTab("my")} className="h-8 rounded-lg px-2.5 text-[10px] border-slate-200">
+            <FolderOpen className="h-3.5 w-3.5 ml-1" />
+            مشاريعي
+          </Button>
+          <Button variant="outline" onClick={() => setActiveTab("requests")} className="h-8 rounded-lg px-2 text-[10px] border-slate-200 relative">
+            <Inbox className="h-3.5 w-3.5" />
+            {stats && stats.pendingRequests > 0 && (
+              <Badge className="absolute -top-1.5 -left-1.5 h-4 min-w-4 px-1 text-[9px] bg-amber-500">{stats.pendingRequests}</Badge>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* (1) Header — سطح المكتب كما هو */}
+      <div className="hidden md:flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">التعاون الأكاديمي المشترك</h1>
           <p className="text-sm text-slate-500 mt-1">اعرض مشاريع البحث، انضم أو أنشئ مشروعك وادعُ باحثين للتعاون</p>
@@ -594,8 +658,20 @@ export function CollaborationPageClient() {
         </div>
       </div>
 
-      {/* (2) KPI Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+      {/* (2) KPI موبايل 2×2 */}
+      <div className="grid grid-cols-2 gap-2 md:hidden">
+        <MobileKpiCard title="مشاريع نشطة" value={stats?.activeProjects ?? 0} loading={statsLoading} icon={Play} softBg="bg-blue-50" softText="text-blue-600" />
+        <MobileKpiCard title="مشاريع مكتملة" value={stats?.completedProjects ?? 0} loading={statsLoading} icon={CheckCircle2} softBg="bg-emerald-50" softText="text-emerald-600" />
+        <MobileKpiCard title="مشاريع مفتوحة" value={stats?.openProjects ?? 0} loading={statsLoading} icon={Unlock} softBg="bg-sky-50" softText="text-sky-600" />
+        <MobileKpiCard title="طلبات معلقة" value={stats?.pendingRequests ?? 0} loading={statsLoading} icon={Inbox} softBg="bg-amber-50" softText="text-amber-600" />
+        <MobileKpiCard title="إجمالي الباحثين" value={stats?.totalResearchers ?? 0} loading={statsLoading} icon={Users} softBg="bg-slate-100" softText="text-slate-600" />
+        <MobileKpiCard title="باحثون متاحون" value={stats?.availableResearchers ?? 0} loading={statsLoading} icon={User} softBg="bg-teal-50" softText="text-teal-600" />
+        <MobileKpiCard title="إجمالي التوصيات" value={stats?.totalRecommendations ?? 0} loading={statsLoading} icon={Sparkles} softBg="bg-violet-50" softText="text-violet-600" />
+        <MobileKpiCard title="أولوية عالية" value={stats?.highPriorityRecommendations ?? 0} loading={statsLoading} icon={Sparkles} softBg="bg-amber-50" softText="text-amber-600" />
+      </div>
+
+      {/* (2) KPI سطح المكتب كما هو */}
+      <div className="hidden md:grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
         <KpiCard title="مشاريع نشطة" value={stats?.activeProjects ?? 0} loading={statsLoading} icon={Play} />
         <KpiCard title="مشاريع مكتملة" value={stats?.completedProjects ?? 0} loading={statsLoading} icon={CheckCircle2} />
         <KpiCard title="مشاريع مفتوحة" value={stats?.openProjects ?? 0} loading={statsLoading} icon={Unlock} />
@@ -606,27 +682,28 @@ export function CollaborationPageClient() {
         <KpiCard title="توصيات عالية الأولوية" value={stats?.highPriorityRecommendations ?? 0} loading={statsLoading} icon={Sparkles} />
       </div>
 
-      {/* (2.5) التوصيات الذكية لك — Compact: empty min-h-[160px]، زر عرض الكل بجانب العنوان، Grid بحد أقصى صفين */}
-      <Card className="border-slate-200">
-        <CardHeader className="pb-2">
+      {/* (2.5) التوصيات الذكية لك */}
+      <Card className="border-slate-200 gap-0 overflow-hidden">
+        <CardHeader className="pb-2 px-3 py-2.5 md:px-6 md:py-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Sparkles className="h-4 w-4 text-amber-500" />
-                التوصيات الذكية لك
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-1.5 md:gap-2 text-sm md:text-base">
+                <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500 shrink-0" />
+                <span className="truncate">التوصيات الذكية لك</span>
               </CardTitle>
-              <CardDescription className="text-xs mt-0.5">مشاريع مناسبة لاهتماماتك ومهاراتك</CardDescription>
+              <CardDescription className="hidden md:block text-xs mt-0.5">مشاريع مناسبة لاهتماماتك ومهاراتك</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" className="text-primary" onClick={() => setActiveTab("recommendations")}>
-              عرض كل التوصيات
+            <Button variant="ghost" size="sm" className="text-primary h-7 md:h-8 px-2 text-[10px] md:text-sm shrink-0" onClick={() => setActiveTab("recommendations")}>
+              <span className="md:hidden">الكل</span>
+              <span className="hidden md:inline">عرض كل التوصيات</span>
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-3 pb-3 md:px-6 md:pb-6">
           {recsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[88px] rounded-lg bg-slate-100 animate-pulse" />
+                <div key={i} className="h-[72px] md:h-[88px] rounded-lg bg-slate-100 animate-pulse" />
               ))}
             </div>
           ) : (() => {
@@ -636,28 +713,28 @@ export function CollaborationPageClient() {
             ].slice(0, 6);
             if (topRecs.length === 0) {
               return (
-                <div className="min-h-[160px] rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6 flex flex-col items-center justify-center text-center">
-                  <Sparkles className="h-8 w-8 text-slate-400 mb-2" />
-                  <p className="text-sm font-medium text-slate-700">لا توجد توصيات بعد</p>
-                  <p className="text-xs text-slate-500 mt-0.5 max-w-xs">أكمل اهتماماتك ومهاراتك في الملف الشخصي</p>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={() => (window.location.href = "/researcher/profile")}>
-                    أكمل ملفك للحصول على توصيات
+                <div className="min-h-[100px] md:min-h-[160px] rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 md:px-4 py-4 md:py-6 flex flex-col items-center justify-center text-center">
+                  <Sparkles className="h-6 w-6 md:h-8 md:w-8 text-slate-400 mb-1.5 md:mb-2" />
+                  <p className="text-xs md:text-sm font-medium text-slate-700">لا توجد توصيات بعد</p>
+                  <p className="text-[10px] md:text-xs text-slate-500 mt-0.5 max-w-xs">أكمل اهتماماتك ومهاراتك في الملف الشخصي</p>
+                  <Button variant="outline" size="sm" className="mt-2 md:mt-3 h-7 md:h-8 text-[10px] md:text-sm" onClick={() => (window.location.href = "/researcher/profile")}>
+                    أكمل ملفك
                   </Button>
                 </div>
               );
             }
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[inherit]">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 max-h-[inherit]">
                 {topRecs.slice(0, 6).map((item: any, idx: number) => {
                   const isHigh = (recommendations.highPriority ?? []).some((h: any) => h.project?.id === item.project?.id);
                   return (
-                    <Card key={item.project?.id ?? idx} className={`overflow-hidden ${isHigh ? "border-amber-200/80 bg-amber-50/30" : "border-slate-100"}`}>
-                      <CardContent className="p-3">
-                        {isHigh && <Badge className="mb-1.5 text-[10px] bg-amber-500">أولوية عالية</Badge>}
-                        <h3 className="font-semibold text-slate-800 text-sm line-clamp-1">{item.project?.title ?? "—"}</h3>
-                        <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">{item.project?.summary ?? "—"}</p>
-                        <Button size="sm" className="mt-2 w-full h-8 text-xs" variant={isHigh ? "default" : "outline"} onClick={() => openDetail(item.project?.id)}>
-                          عرض التفاصيل
+                    <Card key={item.project?.id ?? idx} className={`overflow-hidden h-full min-h-[96px] md:min-h-0 ${isHigh ? "border-amber-200/80 bg-amber-50/30" : "border-slate-100"}`}>
+                      <CardContent className="p-2 md:p-3 h-full flex flex-col justify-between gap-1.5">
+                        {isHigh && <Badge className="mb-0.5 md:mb-1.5 text-[9px] md:text-[10px] bg-amber-500 w-fit">أولوية عالية</Badge>}
+                        <h3 className="font-semibold text-slate-800 text-[11px] md:text-sm line-clamp-1">{item.project?.title ?? "—"}</h3>
+                        <p className="text-[10px] md:text-xs text-slate-600 mt-0.5 line-clamp-1 hidden md:block">{item.project?.summary ?? "—"}</p>
+                        <Button size="sm" className="mt-auto w-full h-7 md:h-8 text-[10px] md:text-xs" variant={isHigh ? "default" : "outline"} onClick={() => openDetail(item.project?.id)}>
+                          التفاصيل
                         </Button>
                       </CardContent>
                     </Card>
@@ -669,10 +746,10 @@ export function CollaborationPageClient() {
         </CardContent>
       </Card>
 
-      {/* (3) Tabs — تبويبات مع لون نشط + خط سفلي متحرك + أيقونات + عداد (TabsList مطلوب لـ RovingFocusGroup) */}
+      {/* (3) Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="relative border-b border-slate-200 mt-4">
-          <TabsList className="flex h-auto w-full flex-wrap gap-1 rounded-none border-0 bg-transparent p-0 shadow-none">
+        <div className="relative border-b border-slate-200 mt-2 md:mt-4">
+          <TabsList className="flex h-auto w-full flex-nowrap md:flex-wrap gap-0.5 md:gap-1 rounded-none border-0 bg-transparent p-0 shadow-none overflow-x-auto">
             {TAB_ITEMS.map(({ value, label, icon: Icon }, idx) => {
               const count =
                 value === "discover"
@@ -682,6 +759,8 @@ export function CollaborationPageClient() {
                     : value === "requests"
                       ? incomingRequests.length + outgoingRequests.length
                       : (recommendations.highPriority?.length ?? 0) + (recommendations.recommended?.length ?? 0);
+              const shortLabel =
+                value === "discover" ? "استكشاف" : value === "recommendations" ? "توصيات" : label;
               return (
                 <TabsTrigger
                   key={value}
@@ -690,13 +769,14 @@ export function CollaborationPageClient() {
                     if (!tabRefs.current) tabRefs.current = [];
                     tabRefs.current[idx] = el as HTMLButtonElement | null;
                   }}
-                  className="relative z-[1] flex-1 rounded-t-md border-0 border-b-2 border-transparent bg-transparent px-4 py-3 text-slate-600 shadow-none outline-none transition-colors data-[state=active]:border-primary data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-none hover:text-slate-900 hover:data-[state=active]:text-primary lg:flex-none"
+                  className="relative z-[1] flex-1 rounded-t-md border-0 border-b-2 border-transparent bg-transparent px-2 py-2 md:px-4 md:py-3 text-[10px] md:text-sm text-slate-600 shadow-none outline-none transition-colors data-[state=active]:border-primary data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-none hover:text-slate-900 hover:data-[state=active]:text-primary lg:flex-none shrink-0"
                 >
-                  <Icon className="h-4 w-4 ml-2 shrink-0" />
-                  <span>{label}</span>
+                  <Icon className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2 shrink-0" />
+                  <span className="md:hidden">{shortLabel}</span>
+                  <span className="hidden md:inline">{label}</span>
                   <Badge
                     variant={activeTab === value ? "default" : "secondary"}
-                    className="mr-2 h-5 min-w-5 rounded-full px-1.5 text-xs font-medium"
+                    className="mr-1 md:mr-2 h-4 md:h-5 min-w-4 md:min-w-5 rounded-full px-1 md:px-1.5 text-[9px] md:text-xs font-medium"
                   >
                     {count}
                   </Badge>
@@ -707,12 +787,94 @@ export function CollaborationPageClient() {
           <AnimatedTabUnderline activeTab={activeTab} tabRefs={tabRefs} />
         </div>
 
-        {/* Discover: FiltersBar — Grid lg:grid-cols-12، سطر واحد على الشاشات الكبيرة */}
-        <TabsContent value="discover" className="mt-4 space-y-4">
-          <Card className="border-slate-200">
+        {/* Discover */}
+        <TabsContent value="discover" className="mt-3 md:mt-4 space-y-3 md:space-y-4">
+          {/* فلاتر موبايل: سطر واحد */}
+          <div className="md:hidden rounded-xl bg-slate-50 p-1.5">
+            <div className="flex items-center gap-1 flex-nowrap min-w-0">
+              <Input
+                placeholder="بحث..."
+                value={filters.search}
+                onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+                className="h-8 flex-1 min-w-0 rounded-lg border-slate-200 text-[10px] px-2"
+              />
+              <Select value={filters.status} onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}>
+                <SelectTrigger className="h-8 w-[72px] shrink-0 rounded-lg bg-white text-[10px] px-1.5">
+                  <SelectValue placeholder="حالة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">الكل</SelectItem>
+                  {Object.entries(STATUS_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filters.departmentId} onValueChange={(v) => setFilters((f) => ({ ...f, departmentId: v }))}>
+                <SelectTrigger className="h-8 w-[72px] shrink-0 rounded-lg bg-white text-[10px] px-1.5">
+                  <SelectValue placeholder="قسم" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">الكل</SelectItem>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-8 w-[56px] shrink-0 rounded-lg bg-white text-[10px] px-1.5 justify-between">
+                    <span className="truncate">{(filters.tags?.length ?? 0) > 0 ? `${filters.tags!.length}` : "وسم"}</span>
+                    <ChevronDown className="h-3 w-3 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                  {availableTags.length === 0 ? (
+                    <div className="px-2 py-2 text-sm text-slate-500">لا وسوم متاحة</div>
+                  ) : (
+                    availableTags.map((tag) => (
+                      <DropdownMenuCheckboxItem
+                        key={tag}
+                        checked={(filters.tags ?? []).includes(tag)}
+                        onCheckedChange={(checked) => {
+                          setFilters((f) => ({
+                            ...f,
+                            tags: checked ? [...(f.tags ?? []), tag] : (f.tags ?? []).filter((t) => t !== tag),
+                          }));
+                        }}
+                      >
+                        {tag}
+                      </DropdownMenuCheckboxItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Select value={filters.sort} onValueChange={(v) => setFilters((f) => ({ ...f, sort: v }))}>
+                <SelectTrigger className="h-8 w-[64px] shrink-0 rounded-lg bg-white text-[10px] px-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">الأحدث</SelectItem>
+                  <SelectItem value="relevant">صلة</SelectItem>
+                  <SelectItem value="closing">إغلاق</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" className="h-8 px-2 text-[10px] shrink-0 bg-[#2563EB] hover:bg-[#1D4ED8]" onClick={() => { setFiltersApplied(true); fetchProjects(); }}>
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+              <Button size="sm" variant="outline" className="h-8 px-2 text-[10px] shrink-0 bg-white" onClick={() => { setFilters({ search: "", status: "__all__", sort: "newest", tags: [], departmentId: "__all__", slotsLeftMin: "" }); setFiltersApplied(false); fetchProjects(); }}>
+                <RotateCcw className="h-3.5 w-3.5" />
+              </Button>
+              <div className="flex border rounded-md overflow-hidden shrink-0 h-8 bg-white">
+                <Button size="sm" variant={discoverViewMode === "grid" ? "secondary" : "ghost"} className="rounded-none h-8 w-7 px-0" onClick={() => setDiscoverViewMode("grid")} title="شبكة"><LayoutGrid className="h-3.5 w-3.5" /></Button>
+                <Button size="sm" variant={discoverViewMode === "list" ? "secondary" : "ghost"} className="rounded-none h-8 w-7 px-0" onClick={() => setDiscoverViewMode("list")} title="قائمة"><List className="h-3.5 w-3.5" /></Button>
+              </div>
+            </div>
+          </div>
+
+          {/* فلاتر سطح المكتب كما هي */}
+          <Card className="hidden md:block border-slate-200">
             <CardContent className="pt-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-                {/* بحث: يمتد */}
                 <div className="md:col-span-2 lg:col-span-4">
                   <Label className="text-xs">بحث</Label>
                   <Input
@@ -722,7 +884,6 @@ export function CollaborationPageClient() {
                     className="mt-1"
                   />
                 </div>
-                {/* الحالة */}
                 <div className="lg:col-span-2">
                   <Label className="text-xs">الحالة</Label>
                   <Select value={filters.status} onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}>
@@ -737,7 +898,6 @@ export function CollaborationPageClient() {
                     </SelectContent>
                   </Select>
                 </div>
-                {/* الكلية / القسم */}
                 <div className="lg:col-span-2">
                   <Label className="text-xs">الكلية / القسم</Label>
                   <Select value={filters.departmentId} onValueChange={(v) => setFilters((f) => ({ ...f, departmentId: v }))}>
@@ -752,7 +912,6 @@ export function CollaborationPageClient() {
                     </SelectContent>
                   </Select>
                 </div>
-                {/* الوسوم */}
                 <div className="lg:col-span-2">
                   <Label className="text-xs">الوسوم</Label>
                   <DropdownMenu>
@@ -784,7 +943,6 @@ export function CollaborationPageClient() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                {/* الترتيب */}
                 <div className="lg:col-span-2">
                   <Label className="text-xs">الترتيب</Label>
                   <Select value={filters.sort} onValueChange={(v) => setFilters((f) => ({ ...f, sort: v }))}>
@@ -798,7 +956,6 @@ export function CollaborationPageClient() {
                     </SelectContent>
                   </Select>
                 </div>
-                {/* سطر الأزرار: تطبيق + إعادة تعيين + Grid/List */}
                 <div className="flex flex-wrap gap-2 justify-end items-center md:col-span-2 lg:col-span-12 pt-1">
                   <Button size="sm" onClick={() => { setFiltersApplied(true); fetchProjects(); }}>
                     <Filter className="h-4 w-4 ml-2" /> تطبيق
@@ -816,14 +973,14 @@ export function CollaborationPageClient() {
           </Card>
 
           {projectsLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="overflow-hidden">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="h-5 bg-slate-200 rounded animate-pulse w-3/4" />
-                    <div className="h-4 bg-slate-100 rounded animate-pulse w-full" />
-                    <div className="h-4 bg-slate-100 rounded animate-pulse w-2/3" />
-                    <div className="h-9 bg-slate-100 rounded animate-pulse w-full" />
+                <Card key={i} className="overflow-hidden min-h-[96px] md:min-h-0">
+                  <CardContent className="p-3 md:p-4 space-y-2 md:space-y-3">
+                    <div className="h-4 md:h-5 bg-slate-200 rounded animate-pulse w-3/4" />
+                    <div className="h-3 md:h-4 bg-slate-100 rounded animate-pulse w-full" />
+                    <div className="h-3 md:h-4 bg-slate-100 rounded animate-pulse w-2/3 hidden md:block" />
+                    <div className="h-7 md:h-9 bg-slate-100 rounded animate-pulse w-full" />
                   </CardContent>
                 </Card>
               ))}
@@ -831,30 +988,30 @@ export function CollaborationPageClient() {
           ) : discoverViewMode === "list" ? (
             <div className="space-y-2">
               {sortedDiscover.map((p) => (
-                <Card key={p.id} className="border-slate-100 hover:shadow-md transition-shadow overflow-hidden">
-                  <CardContent className="p-3 flex flex-wrap items-center gap-3">
+                <Card key={p.id} className="border-slate-100 hover:shadow-md transition-shadow overflow-hidden min-h-[96px] md:min-h-0">
+                  <CardContent className="p-2.5 md:p-3 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 md:gap-3 h-full">
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-slate-800">{p.title}</h3>
-                        {recommendedProjectIds.has(p.id) && <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-xs">موصى لك</Badge>}
+                      <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                        <h3 className="font-semibold text-slate-800 text-sm md:text-base line-clamp-1">{p.title}</h3>
+                        {recommendedProjectIds.has(p.id) && <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] md:text-xs">موصى لك</Badge>}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{p.summary}</p>
+                      <p className="text-[10px] md:text-xs text-slate-500 mt-0.5 line-clamp-1">{p.summary}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        <Badge variant="outline" className="text-xs">{STATUS_LABELS[p.status] ?? p.status}</Badge>
-                        <span className="text-xs text-slate-400">• {p.owner?.fullNameAr || p.owner?.fullNameEn || "—"}</span>
-                        <span className="text-xs text-slate-400">• {p._count?.members ?? 0}/{p.capacity}</span>
+                        <Badge variant="outline" className="text-[9px] md:text-xs px-1.5 py-0">{STATUS_LABELS[p.status] ?? p.status}</Badge>
+                        <span className="text-[10px] md:text-xs text-slate-400">• {p.owner?.fullNameAr || p.owner?.fullNameEn || "—"}</span>
+                        <span className="text-[10px] md:text-xs text-slate-400">• {p._count?.members ?? 0}/{p.capacity}</span>
                       </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Button size="sm" variant="outline" onClick={() => openDetail(p.id)}>عرض التفاصيل</Button>
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => { setJoinModalProjectId(p.id); setJoinMessage(""); }}>طلب انضمام</Button>
+                    <div className="flex gap-1.5 md:gap-2 shrink-0">
+                      <Button size="sm" variant="outline" className="h-7 md:h-8 flex-1 sm:flex-none text-[10px] md:text-sm px-2" onClick={() => openDetail(p.id)}>التفاصيل</Button>
+                      <Button size="sm" className="h-7 md:h-8 flex-1 sm:flex-none text-[10px] md:text-sm px-2 bg-blue-600 hover:bg-blue-700" onClick={() => { setJoinModalProjectId(p.id); setJoinMessage(""); }}>انضمام</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {sortedDiscover.map((p) => {
                 const members = p._count?.members ?? (p as any).members?.length ?? 0;
                 const capacity = p.capacity || 1;
@@ -867,40 +1024,37 @@ export function CollaborationPageClient() {
                 return (
                   <Card
                     key={p.id}
-                    className="border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow ring-1 ring-transparent hover:ring-slate-200/80"
+                    className="border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow ring-1 ring-transparent hover:ring-slate-200/80 min-h-[96px] md:min-h-0"
                   >
-                    {/* A) Header صغير: شريط لون + عنوان + Badges */}
                     <div className={`h-1 shrink-0 ${statusBarClass}`} />
-                    <div className="h-20 shrink-0 bg-slate-50/80 relative overflow-hidden">
+                    <div className="hidden md:block h-20 shrink-0 bg-slate-50/80 relative overflow-hidden">
                       <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5' stroke='%2394a3b8' stroke-width='0.4'/%3E%3C/svg%3E\")" }} />
                       {isRecommended && (
                         <Badge className="absolute top-2 right-2 text-[10px] bg-amber-500/90 text-white border-0">موصى به</Badge>
                       )}
                     </div>
-                    <CardContent className="p-3">
-                      {/* عنوان + حالة + رؤية */}
+                    <CardContent className="p-2.5 md:p-3">
                       <div className="flex flex-wrap items-center gap-1.5 gap-y-1">
-                        <h3 className="font-semibold text-slate-900 text-sm line-clamp-1 flex-1 min-w-0">{p.title}</h3>
-                        <Badge variant="secondary" className="text-[10px] shrink-0">{STATUS_LABELS[p.status] ?? p.status}</Badge>
-                        <Badge variant="outline" className="text-[10px] shrink-0">{VISIBILITY_LABELS[p.visibility]}</Badge>
+                        <h3 className="font-semibold text-slate-900 text-xs md:text-sm line-clamp-1 flex-1 min-w-0">{p.title}</h3>
+                        {isRecommended && <Badge className="md:hidden text-[9px] bg-amber-500/90 text-white border-0 shrink-0">موصى</Badge>}
+                        <Badge variant="secondary" className="text-[9px] md:text-[10px] shrink-0">{STATUS_LABELS[p.status] ?? p.status}</Badge>
+                        <Badge variant="outline" className="text-[9px] md:text-[10px] shrink-0 hidden sm:inline-flex">{VISIBILITY_LABELS[p.visibility]}</Badge>
                       </div>
-                      {/* B) Body: Summary + Tags + صف معلومات */}
-                      <p className="text-xs text-slate-600 mt-1.5 line-clamp-2">{p.summary ?? "—"}</p>
-                      <div className="flex flex-wrap gap-1 mt-2 items-center">
+                      <p className="text-[10px] md:text-xs text-slate-600 mt-1 md:mt-1.5 line-clamp-1 md:line-clamp-2">{p.summary ?? "—"}</p>
+                      <div className="hidden md:flex flex-wrap gap-1 mt-2 items-center">
                         {tagsShow.map((t) => (
                           <span key={t.tag} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md">{t.tag}</span>
                         ))}
                         {tagsExtra > 0 && <span className="text-[10px] text-slate-400">+{tagsExtra}</span>}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-500">
-                        <span className="flex items-center gap-0.5"><User className="h-3.5 w-3.5" /> {p.owner?.fullNameAr || p.owner?.fullNameEn || "—"}</span>
-                        <span className="flex items-center gap-0.5"><Users className="h-3.5 w-3.5" /> {members}/{capacity}</span>
-                        {joinRequests > 0 && <span className="flex items-center gap-0.5"><Inbox className="h-3.5 w-3.5" /> الطلبات {joinRequests}</span>}
+                      <div className="flex flex-wrap items-center gap-x-2 md:gap-x-3 gap-y-1 mt-1.5 md:mt-2 text-[10px] md:text-[11px] text-slate-500">
+                        <span className="flex items-center gap-0.5 truncate"><User className="h-3 w-3 md:h-3.5 md:w-3.5 shrink-0" /> {p.owner?.fullNameAr || p.owner?.fullNameEn || "—"}</span>
+                        <span className="flex items-center gap-0.5"><Users className="h-3 w-3 md:h-3.5 md:w-3.5" /> {members}/{capacity}</span>
+                        {joinRequests > 0 && <span className="flex items-center gap-0.5"><Inbox className="h-3 w-3 md:h-3.5 md:w-3.5" /> {joinRequests}</span>}
                       </div>
-                      {/* C) Footer: أزرار */}
-                      <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                        <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={() => openDetail(p.id)}>عرض التفاصيل</Button>
-                        <Button size="sm" className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700" onClick={() => { setJoinModalProjectId(p.id); setJoinMessage(""); }}>طلب انضمام</Button>
+                      <div className="flex gap-1.5 md:gap-2 mt-2 md:mt-3 pt-2 md:pt-3 border-t border-slate-100">
+                        <Button size="sm" variant="outline" className="flex-1 h-7 md:h-8 text-[10px] md:text-xs" onClick={() => openDetail(p.id)}>التفاصيل</Button>
+                        <Button size="sm" className="flex-1 h-7 md:h-8 text-[10px] md:text-xs bg-blue-600 hover:bg-blue-700" onClick={() => { setJoinModalProjectId(p.id); setJoinMessage(""); }}>انضمام</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -909,64 +1063,64 @@ export function CollaborationPageClient() {
             </div>
           )}
           {!projectsLoading && sortedDiscover.length === 0 && (
-            <Card className="border-slate-200"><CardContent className="py-12 text-center text-slate-500">لا توجد مشاريع تطابق البحث</CardContent></Card>
+            <Card className="border-slate-200"><CardContent className="py-8 md:py-12 text-center text-[10px] md:text-base text-slate-500">لا توجد مشاريع تطابق البحث</CardContent></Card>
           )}
 
-          {/* باحثون متاحون حالياً — Grid بطاقات صغيرة 3–4 بالسطر + عرض الكل */}
-          <Card className="mt-6 border-slate-200">
-            <CardHeader className="pb-2">
+          {/* باحثون متاحون حالياً */}
+          <Card className="mt-4 md:mt-6 border-slate-200 gap-0 overflow-hidden">
+            <CardHeader className="pb-2 px-3 py-2.5 md:px-6 md:py-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-slate-600" />
-                    باحثون متاحون حالياً
+                <div className="min-w-0">
+                  <CardTitle className="flex items-center gap-1.5 md:gap-2 text-sm md:text-base">
+                    <User className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-600 shrink-0" />
+                    <span className="truncate">باحثون متاحون حالياً</span>
                   </CardTitle>
-                  <CardDescription className="text-xs mt-0.5">اعرض الملف أو ادعُهم لمشروعك</CardDescription>
+                  <CardDescription className="hidden md:block text-xs mt-0.5">اعرض الملف أو ادعُهم لمشروعك</CardDescription>
                 </div>
                 {availableResearchers.length > 0 && (
-                  <Button variant="ghost" size="sm" className="text-primary" onClick={() => setAllResearchersOpen(true)}>
+                  <Button variant="ghost" size="sm" className="text-primary h-7 md:h-8 px-2 text-[10px] md:text-sm shrink-0" onClick={() => setAllResearchersOpen(true)}>
                     عرض الكل
                   </Button>
                 )}
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
               {availableResearchersLoading ? (
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid gap-2 md:gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-32 rounded-lg bg-slate-100 animate-pulse" />
+                    <div key={i} className="h-24 md:h-32 rounded-lg bg-slate-100 animate-pulse" />
                   ))}
                 </div>
               ) : availableResearchers.length === 0 ? (
-                <p className="text-slate-500 text-center py-6 text-sm">لا يوجد باحثون متاحون لعرضهم حالياً</p>
+                <p className="text-slate-500 text-center py-4 md:py-6 text-[10px] md:text-sm">لا يوجد باحثون متاحون لعرضهم حالياً</p>
               ) : (
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid gap-2 md:gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                   {availableResearchers.slice(0, 8).map((r: any) => (
-                    <Card key={r.id} className="border-slate-100 overflow-hidden hover:shadow-sm transition-shadow">
-                      <CardContent className="p-2.5">
-                        <div className="flex items-center gap-2">
+                    <Card key={r.id} className="border-slate-100 overflow-hidden hover:shadow-sm transition-shadow h-full min-h-[96px] md:min-h-0">
+                      <CardContent className="p-2 md:p-2.5 h-full flex flex-col">
+                        <div className="flex items-center gap-1.5 md:gap-2">
                           {r.avatarUrl ? (
-                            <img src={r.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                            <img src={r.avatarUrl} alt="" className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover shrink-0" />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-semibold shrink-0">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs md:text-sm font-semibold shrink-0">
                               {(r.fullNameAr || r.fullNameEn || "?")[0]}
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <h4 className="font-medium text-slate-800 text-xs truncate">{r.fullNameAr || r.fullNameEn || "—"}</h4>
-                            {r.college && <p className="text-[10px] text-slate-500 truncate">{r.college}</p>}
+                            <h4 className="font-medium text-slate-800 text-[10px] md:text-xs truncate">{r.fullNameAr || r.fullNameEn || "—"}</h4>
+                            {r.college && <p className="text-[9px] md:text-[10px] text-slate-500 truncate">{r.college}</p>}
                           </div>
                         </div>
-                        {r.specialization && <p className="text-[10px] text-slate-600 mt-1 line-clamp-1">{r.specialization}</p>}
-                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                          <span className="text-[10px] text-slate-500">{r.researchCount ?? 0} بحث</span>
+                        {r.specialization && <p className="text-[9px] md:text-[10px] text-slate-600 mt-1 line-clamp-1">{r.specialization}</p>}
+                        <div className="flex items-center gap-1.5 mt-1 md:mt-1.5 flex-wrap">
+                          <span className="text-[9px] md:text-[10px] text-slate-500">{r.researchCount ?? 0} بحث</span>
                           {r.availabilityStatus && (
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{AVAILABILITY_LABELS[r.availabilityStatus] ?? r.availabilityStatus}</Badge>
+                            <Badge variant="secondary" className="text-[9px] md:text-[10px] px-1 md:px-1.5 py-0">{AVAILABILITY_LABELS[r.availabilityStatus] ?? r.availabilityStatus}</Badge>
                           )}
                         </div>
-                        <div className="flex gap-1.5 mt-2">
-                          <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px] px-1.5" onClick={() => { setSelectedResearcher(r); setResearcherDetailOpen(true); }}>عرض الملف</Button>
-                          <Button size="sm" className="flex-1 h-7 text-[10px] px-1.5 bg-blue-600 hover:bg-blue-700" onClick={() => showToast("دعوة للمشروع قريباً", "success")}>دعوة</Button>
+                        <div className="flex gap-1 md:gap-1.5 mt-auto pt-1.5 md:pt-2">
+                          <Button size="sm" variant="outline" className="flex-1 h-6 md:h-7 text-[9px] md:text-[10px] px-1 md:px-1.5" onClick={() => { setSelectedResearcher(r); setResearcherDetailOpen(true); }}>الملف</Button>
+                          <Button size="sm" className="flex-1 h-6 md:h-7 text-[9px] md:text-[10px] px-1 md:px-1.5 bg-blue-600 hover:bg-blue-700" onClick={() => showToast("دعوة للمشروع قريباً", "success")}>دعوة</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -977,55 +1131,56 @@ export function CollaborationPageClient() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="my" className="mt-4">
+        <TabsContent value="my" className="mt-3 md:mt-4">
           {myProjectsLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <Card key={i}><CardContent className="p-4"><div className="h-20 bg-slate-100 rounded animate-pulse" /></CardContent></Card>
+                <Card key={i} className="min-h-[96px] md:min-h-0"><CardContent className="p-3 md:p-4"><div className="h-16 md:h-20 bg-slate-100 rounded animate-pulse" /></CardContent></Card>
               ))}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {myProjects.map((p) => (
                 <div key={p.id}>
-                  <Card className="border-slate-100 hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-slate-800">{p.title}</h3>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{p.summary}</p>
-                      <Badge variant="outline" className="mt-2">{STATUS_LABELS[p.status]}</Badge>
-                      <div className="flex items-center gap-1 text-xs text-slate-500 mt-2"><Users className="h-4 w-4" /><span>{p._count?.members ?? 0} / {p.capacity}</span></div>
-                      <Button size="sm" variant="outline" className="w-full mt-3" onClick={() => openDetail(p.id)}>عرض / إدارة</Button>
+                  <Card className="border-slate-100 hover:shadow-md transition-shadow min-h-[96px] md:min-h-0">
+                    <CardContent className="p-2.5 md:p-4">
+                      <h3 className="font-semibold text-slate-800 text-sm md:text-base line-clamp-1">{p.title}</h3>
+                      <p className="text-[10px] md:text-xs text-slate-500 mt-1 line-clamp-1 md:line-clamp-2">{p.summary}</p>
+                      <div className="flex items-center gap-2 mt-1.5 md:mt-2 flex-wrap">
+                        <Badge variant="outline" className="text-[9px] md:text-xs">{STATUS_LABELS[p.status]}</Badge>
+                        <div className="flex items-center gap-1 text-[10px] md:text-xs text-slate-500"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span>{p._count?.members ?? 0} / {p.capacity}</span></div>
+                      </div>
+                      <Button size="sm" variant="outline" className="w-full mt-2 md:mt-3 h-7 md:h-8 text-[10px] md:text-sm" onClick={() => openDetail(p.id)}>عرض / إدارة</Button>
                     </CardContent>
                   </Card>
-                  {/* باحثون مناسبون لهذا المشروع (Top 5) */}
-                  <div className="mt-3 pr-2 border-r-2 border-slate-200">
-                    <h4 className="text-sm font-medium text-slate-700 mb-2">باحثون مناسبون لهذا المشروع</h4>
+                  <div className="mt-2 md:mt-3 pr-2 border-r-2 border-slate-200">
+                    <h4 className="text-[11px] md:text-sm font-medium text-slate-700 mb-1.5 md:mb-2">باحثون مناسبون لهذا المشروع</h4>
                     {suggestedLoadingByProject[p.id] ? (
                       <div className="flex gap-2 overflow-x-auto pb-2">
                         {[1, 2, 3, 4, 5].map((i) => (
-                          <div key={i} className="w-36 shrink-0 h-28 rounded-lg bg-slate-100 animate-pulse" />
+                          <div key={i} className="w-28 md:w-36 shrink-0 h-20 md:h-28 rounded-lg bg-slate-100 animate-pulse" />
                         ))}
                       </div>
                     ) : (suggestedResearchersByProject[p.id] ?? []).length === 0 ? (
-                      <p className="text-xs text-slate-500 py-2">لا توجد توصيات حالياً</p>
+                      <p className="text-[10px] md:text-xs text-slate-500 py-2">لا توجد توصيات حالياً</p>
                     ) : (
-                      <div className="flex gap-3 flex-wrap">
+                      <div className="flex gap-2 md:gap-3 overflow-x-auto md:flex-wrap pb-1">
                         {(suggestedResearchersByProject[p.id] ?? []).map((r: any) => (
-                          <Card key={r.id} className="w-40 shrink-0 border-slate-100">
-                            <CardContent className="p-2">
-                              <div className="flex items-center gap-2">
-                                <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-semibold">
+                          <Card key={r.id} className="w-32 md:w-40 shrink-0 border-slate-100 min-h-[96px] md:min-h-0">
+                            <CardContent className="p-1.5 md:p-2 h-full flex flex-col">
+                              <div className="flex items-center gap-1.5 md:gap-2">
+                                <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs md:text-sm font-semibold shrink-0">
                                   {(r.fullNameAr || r.fullNameEn || "?")[0]}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="font-medium text-slate-800 text-xs truncate">{r.fullNameAr || r.fullNameEn || "—"}</p>
-                                  <Badge className="mt-0.5 text-[10px] bg-emerald-100 text-emerald-800">متوافق {r.scorePercent}%</Badge>
+                                  <p className="font-medium text-slate-800 text-[10px] md:text-xs truncate">{r.fullNameAr || r.fullNameEn || "—"}</p>
+                                  <Badge className="mt-0.5 text-[8px] md:text-[10px] bg-emerald-100 text-emerald-800">{r.scorePercent}%</Badge>
                                 </div>
                               </div>
-                              {r.college && <p className="text-[10px] text-slate-500 mt-1 truncate">{r.college}</p>}
-                              <div className="flex gap-1 mt-2">
-                                <Button size="sm" variant="ghost" className="h-7 text-xs flex-1" onClick={() => { setSelectedResearcher(r); setResearcherDetailOpen(true); }}>عرض الملف</Button>
-                                <Button size="sm" className="h-7 text-xs flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => showToast("دعوة قريباً", "success")}>دعوة</Button>
+                              {r.college && <p className="text-[9px] md:text-[10px] text-slate-500 mt-1 truncate">{r.college}</p>}
+                              <div className="flex gap-1 mt-auto pt-1.5 md:pt-2">
+                                <Button size="sm" variant="ghost" className="h-6 md:h-7 text-[9px] md:text-xs flex-1 px-1" onClick={() => { setSelectedResearcher(r); setResearcherDetailOpen(true); }}>الملف</Button>
+                                <Button size="sm" className="h-6 md:h-7 text-[9px] md:text-xs flex-1 px-1 bg-blue-600 hover:bg-blue-700" onClick={() => showToast("دعوة قريباً", "success")}>دعوة</Button>
                               </div>
                             </CardContent>
                           </Card>
@@ -1038,64 +1193,70 @@ export function CollaborationPageClient() {
             </div>
           )}
           {!myProjectsLoading && myProjects.length === 0 && (
-            <Card className="border-slate-200"><CardContent className="py-12 text-center text-slate-500">لا توجد مشاريع خاصة بك بعد</CardContent></Card>
+            <Card className="border-slate-200"><CardContent className="py-8 md:py-12 text-center text-[10px] md:text-base text-slate-500">لا توجد مشاريع خاصة بك بعد</CardContent></Card>
           )}
         </TabsContent>
 
-        <TabsContent value="requests" className="mt-4">
+        <TabsContent value="requests" className="mt-3 md:mt-4">
           {requestsLoading ? (
-            <Card><CardContent className="p-6"><div className="h-32 bg-slate-100 rounded animate-pulse" /></CardContent></Card>
+            <Card><CardContent className="p-4 md:p-6"><div className="h-24 md:h-32 bg-slate-100 rounded animate-pulse" /></CardContent></Card>
           ) : (
-            <Card className="border-slate-200">
-              <CardHeader>
-                <CardTitle>إدارة الطلبات</CardTitle>
-                <CardDescription>طلبات واردة لمشاريعي أو صادرة منك للمشاريع الأخرى</CardDescription>
+            <Card className="border-slate-200 gap-0 overflow-hidden">
+              <CardHeader className="px-3 py-2.5 md:px-6 md:py-4">
+                <CardTitle className="text-sm md:text-base">إدارة الطلبات</CardTitle>
+                <CardDescription className="hidden md:block">طلبات واردة لمشاريعي أو صادرة منك للمشاريع الأخرى</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
                 <Tabs value={requestsSubTab} onValueChange={(v) => setRequestsSubTab(v as "incoming" | "outgoing")} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 max-w-xs">
-                    <TabsTrigger value="incoming">الواردة (لمشاريعي)</TabsTrigger>
-                    <TabsTrigger value="outgoing">الصادرة (طلباتي)</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 max-w-full md:max-w-xs h-8 md:h-10">
+                    <TabsTrigger value="incoming" className="text-[10px] md:text-sm px-1.5">
+                      <span className="md:hidden">واردة</span>
+                      <span className="hidden md:inline">الواردة (لمشاريعي)</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="outgoing" className="text-[10px] md:text-sm px-1.5">
+                      <span className="md:hidden">صادرة</span>
+                      <span className="hidden md:inline">الصادرة (طلباتي)</span>
+                    </TabsTrigger>
                   </TabsList>
-                  <TabsContent value="incoming" className="mt-4 space-y-3">
+                  <TabsContent value="incoming" className="mt-3 md:mt-4 space-y-2 md:space-y-3">
                     {incomingRequests.length === 0 ? (
-                      <p className="text-slate-500 text-center py-8">لا توجد طلبات واردة</p>
+                      <p className="text-slate-500 text-center py-6 md:py-8 text-[10px] md:text-base">لا توجد طلبات واردة</p>
                     ) : (
                       incomingRequests.map((r: any) => (
-                        <div key={r.id} className="border rounded-lg p-4 space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium">{r.requester?.fullNameAr || r.requester?.fullNameEn || "—"}</span>
-                            <Badge variant={r.status === "PENDING" ? "secondary" : r.status === "APPROVED" ? "default" : "destructive"}>{r.status === "PENDING" ? "معلق" : r.status === "APPROVED" ? "مقبول" : r.status === "REJECTED" ? "مرفوض" : "ملغى"}</Badge>
+                        <div key={r.id} className="border rounded-lg p-2.5 md:p-4 space-y-1.5 md:space-y-2 min-h-[96px] md:min-h-0">
+                          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                            <span className="font-medium text-sm md:text-base">{r.requester?.fullNameAr || r.requester?.fullNameEn || "—"}</span>
+                            <Badge className="text-[9px] md:text-xs" variant={r.status === "PENDING" ? "secondary" : r.status === "APPROVED" ? "default" : "destructive"}>{r.status === "PENDING" ? "معلق" : r.status === "APPROVED" ? "مقبول" : r.status === "REJECTED" ? "مرفوض" : "ملغى"}</Badge>
                           </div>
-                          {r.requester?.departmentRelation?.name && <p className="text-xs text-slate-500">القسم: {r.requester.departmentRelation.name}</p>}
+                          {r.requester?.departmentRelation?.name && <p className="text-[10px] md:text-xs text-slate-500">القسم: {r.requester.departmentRelation.name}</p>}
                           {(r.requesterSkills?.length ?? 0) > 0 && (
-                            <p className="text-xs text-slate-600">مهارات: {(r.requesterSkills ?? []).map((s: any) => s.skill).join("، ").slice(0, 80)}{(r.requesterSkills?.length > 2 ? "…" : "")}</p>
+                            <p className="text-[10px] md:text-xs text-slate-600 line-clamp-1 md:line-clamp-none">مهارات: {(r.requesterSkills ?? []).map((s: any) => s.skill).join("، ").slice(0, 80)}{(r.requesterSkills?.length > 2 ? "…" : "")}</p>
                           )}
-                          <p className="text-sm text-slate-700">المشروع: {r.project?.title}</p>
-                          {r.message && <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded">"{r.message}"</p>}
+                          <p className="text-xs md:text-sm text-slate-700">المشروع: {r.project?.title}</p>
+                          {r.message && <p className="text-[10px] md:text-sm text-slate-600 bg-slate-50 p-1.5 md:p-2 rounded line-clamp-2">"{r.message}"</p>}
                           {r.status === "PENDING" && (
-                            <div className="flex gap-2 pt-2">
-                              <Button size="sm" onClick={() => handleRequestDecision(r.id, "APPROVED")}><Check className="h-4 w-4 ml-1" /> قبول</Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleRequestDecision(r.id, "REJECTED")}><X className="h-4 w-4 ml-1" /> رفض</Button>
+                            <div className="flex gap-1.5 md:gap-2 pt-1.5 md:pt-2">
+                              <Button size="sm" className="h-7 md:h-8 text-[10px] md:text-sm flex-1 md:flex-none" onClick={() => handleRequestDecision(r.id, "APPROVED")}><Check className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1" /> قبول</Button>
+                              <Button size="sm" variant="destructive" className="h-7 md:h-8 text-[10px] md:text-sm flex-1 md:flex-none" onClick={() => handleRequestDecision(r.id, "REJECTED")}><X className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1" /> رفض</Button>
                             </div>
                           )}
                         </div>
                       ))
                     )}
                   </TabsContent>
-                  <TabsContent value="outgoing" className="mt-4 space-y-3">
+                  <TabsContent value="outgoing" className="mt-3 md:mt-4 space-y-2 md:space-y-3">
                     {outgoingRequests.length === 0 ? (
-                      <p className="text-slate-500 text-center py-8">لا توجد طلبات صادرة</p>
+                      <p className="text-slate-500 text-center py-6 md:py-8 text-[10px] md:text-base">لا توجد طلبات صادرة</p>
                     ) : (
                       outgoingRequests.map((r: any) => (
-                        <div key={r.id} className="border rounded-lg p-4 space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium">{r.project?.title}</span>
-                            <Badge variant={r.status === "PENDING" ? "secondary" : r.status === "APPROVED" ? "default" : r.status === "REJECTED" ? "destructive" : "outline"}>{r.status === "PENDING" ? "معلق" : r.status === "APPROVED" ? "مقبول" : r.status === "REJECTED" ? "مرفوض" : "ملغى"}</Badge>
+                        <div key={r.id} className="border rounded-lg p-2.5 md:p-4 space-y-1.5 md:space-y-2 min-h-[96px] md:min-h-0">
+                          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                            <span className="font-medium text-sm md:text-base line-clamp-1">{r.project?.title}</span>
+                            <Badge className="text-[9px] md:text-xs" variant={r.status === "PENDING" ? "secondary" : r.status === "APPROVED" ? "default" : r.status === "REJECTED" ? "destructive" : "outline"}>{r.status === "PENDING" ? "معلق" : r.status === "APPROVED" ? "مقبول" : r.status === "REJECTED" ? "مرفوض" : "ملغى"}</Badge>
                           </div>
-                          {r.message && <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded">"{r.message}"</p>}
+                          {r.message && <p className="text-[10px] md:text-sm text-slate-600 bg-slate-50 p-1.5 md:p-2 rounded line-clamp-2">"{r.message}"</p>}
                           {r.status === "PENDING" && (
-                            <Button size="sm" variant="outline" onClick={() => handleRequestDecision(r.id, "CANCELED")}>إلغاء الطلب</Button>
+                            <Button size="sm" variant="outline" className="h-7 md:h-8 text-[10px] md:text-sm" onClick={() => handleRequestDecision(r.id, "CANCELED")}>إلغاء الطلب</Button>
                           )}
                         </div>
                       ))
@@ -1107,22 +1268,22 @@ export function CollaborationPageClient() {
           )}
         </TabsContent>
 
-        <TabsContent value="recommendations" className="mt-4">
+        <TabsContent value="recommendations" className="mt-3 md:mt-4">
           {recsLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Card><CardContent className="p-6"><div className="h-24 bg-slate-100 rounded animate-pulse" /></CardContent></Card></div>
+            <div className="grid gap-2 md:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"><Card className="min-h-[96px]"><CardContent className="p-3 md:p-6"><div className="h-16 md:h-24 bg-slate-100 rounded animate-pulse" /></CardContent></Card></div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {((recommendations.highPriority ?? []).length > 0) && (
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-3">أولوية عالية</h3>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <h3 className="text-[11px] md:text-sm font-semibold text-slate-700 mb-2 md:mb-3">أولوية عالية</h3>
+                  <div className="grid gap-2 md:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
                     {(recommendations.highPriority ?? []).map((item: any) => (
-                      <Card key={item.project?.id} className="border-amber-200/80 bg-amber-50/30">
-                        <CardContent className="p-4">
-                          <Badge className="mb-2 bg-amber-500">موصى لك</Badge>
-                          <h3 className="font-semibold text-slate-800">{item.project?.title}</h3>
-                          <p className="text-xs text-slate-600 mt-1 line-clamp-2">{item.project?.summary}</p>
-                          <Button size="sm" className="mt-3 w-full" onClick={() => openDetail(item.project?.id)}>عرض التفاصيل</Button>
+                      <Card key={item.project?.id} className="border-amber-200/80 bg-amber-50/30 min-h-[96px] md:min-h-0 h-full">
+                        <CardContent className="p-2.5 md:p-4 h-full flex flex-col">
+                          <Badge className="mb-1.5 md:mb-2 bg-amber-500 text-[9px] md:text-xs w-fit">موصى لك</Badge>
+                          <h3 className="font-semibold text-slate-800 text-xs md:text-base line-clamp-1">{item.project?.title}</h3>
+                          <p className="text-[10px] md:text-xs text-slate-600 mt-1 line-clamp-1 md:line-clamp-2">{item.project?.summary}</p>
+                          <Button size="sm" className="mt-auto pt-2 md:mt-3 w-full h-7 md:h-8 text-[10px] md:text-sm" onClick={() => openDetail(item.project?.id)}>التفاصيل</Button>
                         </CardContent>
                       </Card>
                     ))}
@@ -1130,21 +1291,21 @@ export function CollaborationPageClient() {
                 </div>
               )}
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">موصى به</h3>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <h3 className="text-[11px] md:text-sm font-semibold text-slate-700 mb-2 md:mb-3">موصى به</h3>
+                <div className="grid gap-2 md:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
                   {(recommendations.recommended ?? []).map((item: any) => (
-                    <Card key={item.project?.id} className="border-slate-100">
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold text-slate-800">{item.project?.title}</h3>
-                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.project?.summary}</p>
-                        <Button size="sm" variant="outline" className="mt-3 w-full" onClick={() => openDetail(item.project?.id)}>عرض التفاصيل</Button>
+                    <Card key={item.project?.id} className="border-slate-100 min-h-[96px] md:min-h-0 h-full">
+                      <CardContent className="p-2.5 md:p-4 h-full flex flex-col">
+                        <h3 className="font-semibold text-slate-800 text-xs md:text-base line-clamp-1">{item.project?.title}</h3>
+                        <p className="text-[10px] md:text-xs text-slate-500 mt-1 line-clamp-1 md:line-clamp-2">{item.project?.summary}</p>
+                        <Button size="sm" variant="outline" className="mt-auto pt-2 md:mt-3 w-full h-7 md:h-8 text-[10px] md:text-sm" onClick={() => openDetail(item.project?.id)}>التفاصيل</Button>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
               </div>
               {(recommendations.highPriority ?? []).length === 0 && (recommendations.recommended ?? []).length === 0 && (
-                <Card className="border-slate-200"><CardContent className="py-12 text-center text-slate-500">لا توجد توصيات حالياً. أضف اهتماماتك ومهاراتك في الملف الشخصي</CardContent></Card>
+                <Card className="border-slate-200"><CardContent className="py-8 md:py-12 text-center text-[10px] md:text-base text-slate-500">لا توجد توصيات حالياً. أضف اهتماماتك ومهاراتك في الملف الشخصي</CardContent></Card>
               )}
             </div>
           )}
@@ -1153,81 +1314,83 @@ export function CollaborationPageClient() {
 
       {/* Create Project Modal */}
       <Dialog open={createOpen} onOpenChange={(open) => { if (!open) setCreateFormErrors({}); setCreateOpen(open); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto p-4 md:p-6" dir="rtl">
           <DialogHeader>
-            <DialogTitle>إنشاء مشروع جديد</DialogTitle>
-            <DialogDescription>العنوان والملخص والوصف مطلوبة. الوسوم حد أقصى 12.</DialogDescription>
+            <DialogTitle className="text-base md:text-lg">إنشاء مشروع جديد</DialogTitle>
+            <DialogDescription className="text-[10px] md:text-sm">العنوان والملخص والوصف مطلوبة. الوسوم حد أقصى 12.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
+          <form onSubmit={handleCreate} className="space-y-3 md:space-y-4">
             <div>
-              <Label>العنوان * (5 أحرف على الأقل)</Label>
+              <Label className="text-xs md:text-sm">العنوان * (5 أحرف على الأقل)</Label>
               <Input
                 value={createForm.title}
                 onChange={(e) => { setCreateForm((f) => ({ ...f, title: e.target.value })); setCreateFormErrors((er) => ({ ...er, title: undefined })); }}
                 placeholder="عنوان المشروع"
-                className={createFormErrors.title ? "border-red-500" : ""}
+                className={`mt-1 h-8 md:h-10 text-[10px] md:text-sm ${createFormErrors.title ? "border-red-500" : ""}`}
               />
-              {createFormErrors.title && <p className="text-xs text-red-600 mt-1">{createFormErrors.title}</p>}
+              {createFormErrors.title && <p className="text-[10px] md:text-xs text-red-600 mt-1">{createFormErrors.title}</p>}
             </div>
             <div>
-              <Label>ملخص * (20 حرفاً على الأقل)</Label>
+              <Label className="text-xs md:text-sm">ملخص * (20 حرفاً على الأقل)</Label>
               <Input
                 value={createForm.summary}
                 onChange={(e) => { setCreateForm((f) => ({ ...f, summary: e.target.value })); setCreateFormErrors((er) => ({ ...er, summary: undefined })); }}
                 placeholder="ملخص قصير عن المشروع"
-                className={createFormErrors.summary ? "border-red-500" : ""}
+                className={`mt-1 h-8 md:h-10 text-[10px] md:text-sm ${createFormErrors.summary ? "border-red-500" : ""}`}
               />
-              {createFormErrors.summary && <p className="text-xs text-red-600 mt-1">{createFormErrors.summary}</p>}
+              {createFormErrors.summary && <p className="text-[10px] md:text-xs text-red-600 mt-1">{createFormErrors.summary}</p>}
             </div>
             <div>
-              <Label>الوصف *</Label>
+              <Label className="text-xs md:text-sm">الوصف *</Label>
               <textarea
-                className={`w-full min-h-[88px] border rounded-md px-3 py-2 text-sm ${createFormErrors.description ? "border-red-500" : ""}`}
+                className={`w-full min-h-[64px] md:min-h-[88px] border rounded-md px-3 py-2 text-[10px] md:text-sm mt-1 ${createFormErrors.description ? "border-red-500" : ""}`}
                 value={createForm.description}
                 onChange={(e) => { setCreateForm((f) => ({ ...f, description: e.target.value })); setCreateFormErrors((er) => ({ ...er, description: undefined })); }}
                 placeholder="وصف تفصيلي للمشروع"
               />
-              {createFormErrors.description && <p className="text-xs text-red-600 mt-1">{createFormErrors.description}</p>}
+              {createFormErrors.description && <p className="text-[10px] md:text-xs text-red-600 mt-1">{createFormErrors.description}</p>}
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2 md:gap-4">
               <div>
-                <Label>الحالة</Label>
-                <select className="w-full border rounded-md px-3 py-2 text-sm mt-1" value={createForm.status} onChange={(e) => setCreateForm((f) => ({ ...f, status: e.target.value }))}>
+                <Label className="text-xs md:text-sm">الحالة</Label>
+                <select className="w-full border rounded-md px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-sm mt-1 h-8 md:h-auto" value={createForm.status} onChange={(e) => setCreateForm((f) => ({ ...f, status: e.target.value }))}>
                   <option value="DRAFT">مسودة</option>
                   <option value="OPEN">مفتوح</option>
                   <option value="IN_PROGRESS">قيد التنفيذ</option>
                 </select>
               </div>
               <div>
-                <Label>الظهور</Label>
-                <select className="w-full border rounded-md px-3 py-2 text-sm mt-1" value={createForm.visibility} onChange={(e) => setCreateForm((f) => ({ ...f, visibility: e.target.value }))}>
+                <Label className="text-xs md:text-sm">الظهور</Label>
+                <select className="w-full border rounded-md px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-sm mt-1 h-8 md:h-auto" value={createForm.visibility} onChange={(e) => setCreateForm((f) => ({ ...f, visibility: e.target.value }))}>
                   {Object.entries(VISIBILITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
             </div>
-            <div>
-              <Label>السعة (عدد الأعضاء الأقصى)</Label>
-              <Input type="number" min={1} max={50} value={createForm.capacity} onChange={(e) => setCreateForm((f) => ({ ...f, capacity: Number(e.target.value) || 5 }))} />
-            </div>
-            {departments.length > 0 && (
+            <div className={`grid gap-2 md:gap-4 ${departments.length > 0 ? "grid-cols-2" : "grid-cols-1"}`}>
               <div>
-                <Label>القسم / الكلية</Label>
-                <Select value={createForm.departmentId} onValueChange={(v) => setCreateForm((f) => ({ ...f, departmentId: v }))}>
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder="اختر القسم" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">— لا شيء —</SelectItem>
-                    {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs md:text-sm">السعة</Label>
+                <Input type="number" min={1} max={50} value={createForm.capacity} onChange={(e) => setCreateForm((f) => ({ ...f, capacity: Number(e.target.value) || 5 }))} className="mt-1 h-8 md:h-10 text-[10px] md:text-sm" />
               </div>
-            )}
+              {departments.length > 0 && (
+                <div>
+                  <Label className="text-xs md:text-sm">القسم / الكلية</Label>
+                  <Select value={createForm.departmentId} onValueChange={(v) => setCreateForm((f) => ({ ...f, departmentId: v }))}>
+                    <SelectTrigger className="mt-1 w-full h-8 md:h-10 text-[10px] md:text-sm">
+                      <SelectValue placeholder="اختر القسم" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— لا شيء —</SelectItem>
+                      {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
             <div>
-              <Label>وسوم (حد أقصى 12)</Label>
-              <div className="flex flex-wrap gap-2 mt-1 p-2 border rounded-md bg-slate-50/50 min-h-[44px]">
+              <Label className="text-xs md:text-sm">وسوم (حد أقصى 12)</Label>
+              <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1 p-1.5 md:p-2 border rounded-md bg-slate-50/50 min-h-[36px] md:min-h-[44px]">
                 {createForm.tags.map((t) => (
-                  <Badge key={t} variant="secondary" className="gap-1">
+                  <Badge key={t} variant="secondary" className="gap-1 text-[9px] md:text-xs">
                     {t}
                     <button type="button" onClick={() => setCreateForm((f) => ({ ...f, tags: f.tags.filter((x) => x !== t) }))} className="hover:bg-slate-300 rounded-full p-0.5"><X className="h-3 w-3" /></button>
                   </Badge>
@@ -1248,18 +1411,18 @@ export function CollaborationPageClient() {
                         }
                       }
                     }}
-                    className="flex-1 min-w-[120px] border-0 bg-transparent shadow-none focus-visible:ring-0 h-8"
+                    className="flex-1 min-w-[100px] md:min-w-[120px] border-0 bg-transparent shadow-none focus-visible:ring-0 h-7 md:h-8 text-[10px] md:text-sm"
                   />
                 )}
               </div>
-              {(createFormErrors.tags || createForm.tags.length > 0) && <p className="text-xs text-slate-500 mt-1">{createForm.tags.length} / 12</p>}
-              {createFormErrors.tags && <p className="text-xs text-red-600">{createFormErrors.tags}</p>}
+              {(createFormErrors.tags || createForm.tags.length > 0) && <p className="text-[10px] md:text-xs text-slate-500 mt-1">{createForm.tags.length} / 12</p>}
+              {createFormErrors.tags && <p className="text-[10px] md:text-xs text-red-600">{createFormErrors.tags}</p>}
             </div>
             <div>
-              <Label>الأدوار المطلوبة</Label>
-              <div className="flex flex-wrap gap-2 mt-1 p-2 border rounded-md bg-slate-50/50 min-h-[44px]">
+              <Label className="text-xs md:text-sm">الأدوار المطلوبة</Label>
+              <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1 p-1.5 md:p-2 border rounded-md bg-slate-50/50 min-h-[36px] md:min-h-[44px]">
                 {createForm.requiredRoles.map((r) => (
-                  <Badge key={r} variant="secondary" className="gap-1">
+                  <Badge key={r} variant="secondary" className="gap-1 text-[9px] md:text-xs">
                     {r}
                     <button type="button" onClick={() => setCreateForm((f) => ({ ...f, requiredRoles: f.requiredRoles.filter((x) => x !== r) }))} className="hover:bg-slate-300 rounded-full p-0.5"><X className="h-3 w-3" /></button>
                   </Badge>
@@ -1278,13 +1441,13 @@ export function CollaborationPageClient() {
                       }
                     }
                   }}
-                  className="flex-1 min-w-[140px] border-0 bg-transparent shadow-none focus-visible:ring-0 h-8"
+                  className="flex-1 min-w-[120px] md:min-w-[140px] border-0 bg-transparent shadow-none focus-visible:ring-0 h-7 md:h-8 text-[10px] md:text-sm"
                 />
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-2">
-              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>إلغاء</Button>
-              <Button type="submit" disabled={createSaving}>{createSaving ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null} إنشاء</Button>
+              <Button type="button" variant="outline" className="h-8 md:h-10 text-[10px] md:text-sm" onClick={() => setCreateOpen(false)}>إلغاء</Button>
+              <Button type="submit" disabled={createSaving} className="h-8 md:h-10 text-[10px] md:text-sm">{createSaving ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null} إنشاء</Button>
             </div>
           </form>
         </DialogContent>
@@ -1292,67 +1455,70 @@ export function CollaborationPageClient() {
 
       {/* Join Request Modal */}
       <Dialog open={!!joinModalProjectId} onOpenChange={(open) => !open && setJoinModalProjectId(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>طلب انضمام</DialogTitle><DialogDescription>أضف رسالة قصيرة (اختياري)</DialogDescription></DialogHeader>
-          <Input value={joinMessage} onChange={(e) => setJoinMessage(e.target.value)} placeholder="لماذا تريد الانضمام؟" className="mt-2" />
-          <div className="flex gap-2 justify-end mt-4">
-            <Button variant="outline" onClick={() => setJoinModalProjectId(null)}>إلغاء</Button>
-            <Button disabled={!!joiningId} onClick={() => joinModalProjectId && handleJoinRequest(joinModalProjectId)}>{joiningId ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Send className="h-4 w-4 ml-2" />} إرسال</Button>
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-sm p-4 md:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base md:text-lg">طلب انضمام</DialogTitle>
+            <DialogDescription className="text-[10px] md:text-sm">أضف رسالة قصيرة (اختياري)</DialogDescription>
+          </DialogHeader>
+          <Input value={joinMessage} onChange={(e) => setJoinMessage(e.target.value)} placeholder="لماذا تريد الانضمام؟" className="mt-2 h-8 md:h-10 text-[10px] md:text-sm" />
+          <div className="flex gap-2 justify-end mt-3 md:mt-4">
+            <Button variant="outline" className="h-8 md:h-10 text-[10px] md:text-sm" onClick={() => setJoinModalProjectId(null)}>إلغاء</Button>
+            <Button className="h-8 md:h-10 text-[10px] md:text-sm" disabled={!!joiningId} onClick={() => joinModalProjectId && handleJoinRequest(joinModalProjectId)}>{joiningId ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Send className="h-4 w-4 ml-2" />} إرسال</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Project Details Drawer (Sheet from right) */}
+      {/* Project Details Drawer */}
       <Sheet open={detailOpen} onOpenChange={(open) => !open && closeDetail()}>
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-4 md:p-6">
           {detailProject && (
             <>
               <SheetHeader className="text-right">
-                <SheetTitle>{detailProject.title}</SheetTitle>
-                <SheetDescription>{detailProject.summary}</SheetDescription>
+                <SheetTitle className="text-base md:text-lg leading-snug">{detailProject.title}</SheetTitle>
+                <SheetDescription className="text-[10px] md:text-sm line-clamp-2 md:line-clamp-none">{detailProject.summary}</SheetDescription>
               </SheetHeader>
-              <div className="space-y-4 mt-4 pr-4">
-                {detailProject.description && <p className="text-sm text-slate-600">{detailProject.description}</p>}
-                <div className="flex flex-wrap gap-2">
-                  <Badge>{STATUS_LABELS[detailProject.status]}</Badge>
-                  <Badge variant="outline">{VISIBILITY_LABELS[detailProject.visibility]}</Badge>
-                  <span className="text-sm text-slate-500">{detailProject._count?.members ?? detailProject.members?.length ?? 0} / {detailProject.capacity ?? 0} عضو</span>
+              <div className="space-y-3 md:space-y-4 mt-3 md:mt-4 pr-2 md:pr-4">
+                {detailProject.description && <p className="text-xs md:text-sm text-slate-600">{detailProject.description}</p>}
+                <div className="flex flex-wrap gap-1.5 md:gap-2">
+                  <Badge className="text-[9px] md:text-xs">{STATUS_LABELS[detailProject.status]}</Badge>
+                  <Badge variant="outline" className="text-[9px] md:text-xs">{VISIBILITY_LABELS[detailProject.visibility]}</Badge>
+                  <span className="text-[10px] md:text-sm text-slate-500">{detailProject._count?.members ?? detailProject.members?.length ?? 0} / {detailProject.capacity ?? 0} عضو</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {(detailProject.tags ?? []).map((t: { tag: string }) => (
-                    <span key={t.tag} className="text-xs bg-slate-100 px-2 py-0.5 rounded">{t.tag}</span>
+                    <span key={t.tag} className="text-[9px] md:text-xs bg-slate-100 px-1.5 md:px-2 py-0.5 rounded">{t.tag}</span>
                   ))}
                 </div>
                 {(detailProject.requiredRoles ?? []).length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-slate-700 flex items-center gap-1"><Briefcase className="h-4 w-4" /> الأدوار المطلوبة</h4>
-                    <p className="text-sm text-slate-600 mt-1">{(detailProject.requiredRoles ?? []).join("، ")}</p>
+                    <h4 className="text-xs md:text-sm font-medium text-slate-700 flex items-center gap-1"><Briefcase className="h-3.5 w-3.5 md:h-4 md:w-4" /> الأدوار المطلوبة</h4>
+                    <p className="text-xs md:text-sm text-slate-600 mt-1">{(detailProject.requiredRoles ?? []).join("، ")}</p>
                   </div>
                 )}
                 <div>
-                  <h4 className="text-sm font-medium text-slate-700 flex items-center gap-1"><Users className="h-4 w-4" /> الأعضاء</h4>
-                  <ul className="mt-2 space-y-1">
+                  <h4 className="text-xs md:text-sm font-medium text-slate-700 flex items-center gap-1"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /> الأعضاء</h4>
+                  <ul className="mt-1.5 md:mt-2 space-y-1">
                     {(detailProject.members ?? []).map((m: any) => (
-                      <li key={m.researcherId} className="flex items-center gap-2 text-sm">
-                        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-600">
+                      <li key={m.researcherId} className="flex items-center gap-2 text-xs md:text-sm">
+                        <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] md:text-xs font-medium text-slate-600">
                           {(m.researcher?.fullNameAr || m.researcher?.fullNameEn || "?").slice(0, 1)}
                         </div>
-                        <span>{m.researcher?.fullNameAr || m.researcher?.fullNameEn}</span>
-                        <Badge variant="secondary" className="text-xs">{m.role === "OWNER" ? "مالك" : m.role === "CO_LEAD" ? "قائد مشارك" : "عضو"}</Badge>
+                        <span className="truncate">{m.researcher?.fullNameAr || m.researcher?.fullNameEn}</span>
+                        <Badge variant="secondary" className="text-[9px] md:text-xs shrink-0">{m.role === "OWNER" ? "مالك" : m.role === "CO_LEAD" ? "قائد مشارك" : "عضو"}</Badge>
                       </li>
                     ))}
                   </ul>
                 </div>
                 {(detailProject.joinRequests ?? []).length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-slate-700">طلبات الانضمام</h4>
-                    <ul className="mt-2 space-y-2">
+                    <h4 className="text-xs md:text-sm font-medium text-slate-700">طلبات الانضمام</h4>
+                    <ul className="mt-1.5 md:mt-2 space-y-1.5 md:space-y-2">
                       {(detailProject.joinRequests ?? []).map((r: any) => (
-                        <li key={r.id} className="flex items-center justify-between gap-2 text-sm border rounded p-2">
-                          <span>{r.requester?.fullNameAr || r.requester?.fullNameEn}</span>
-                          <div className="flex gap-1">
-                            <Button size="sm" onClick={() => handleRequestDecision(r.id, "APPROVED")}><Check className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleRequestDecision(r.id, "REJECTED")}><X className="h-4 w-4" /></Button>
+                        <li key={r.id} className="flex items-center justify-between gap-2 text-xs md:text-sm border rounded p-1.5 md:p-2">
+                          <span className="truncate">{r.requester?.fullNameAr || r.requester?.fullNameEn}</span>
+                          <div className="flex gap-1 shrink-0">
+                            <Button size="sm" className="h-7 w-7 p-0" onClick={() => handleRequestDecision(r.id, "APPROVED")}><Check className="h-3.5 w-3.5 md:h-4 md:w-4" /></Button>
+                            <Button size="sm" variant="destructive" className="h-7 w-7 p-0" onClick={() => handleRequestDecision(r.id, "REJECTED")}><X className="h-3.5 w-3.5 md:h-4 md:w-4" /></Button>
                           </div>
                         </li>
                       ))}
@@ -1361,16 +1527,16 @@ export function CollaborationPageClient() {
                 )}
                 {((detailProject._count?.members ?? detailProject.members?.length ?? 0) < (detailProject.capacity ?? 0)) && (
                   <div>
-                    <Label>طلب انضمام</Label>
-                    <Input value={joinMessage} onChange={(e) => setJoinMessage(e.target.value)} placeholder="رسالة (اختياري)" className="mt-1" />
-                    <Button className="w-full mt-2" disabled={!!joiningId} onClick={() => handleJoinRequest(detailProject.id)}>{joiningId ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Send className="h-4 w-4 ml-2" />} طلب الانضمام</Button>
+                    <Label className="text-xs md:text-sm">طلب انضمام</Label>
+                    <Input value={joinMessage} onChange={(e) => setJoinMessage(e.target.value)} placeholder="رسالة (اختياري)" className="mt-1 h-8 md:h-10 text-[10px] md:text-sm" />
+                    <Button className="w-full mt-2 h-8 md:h-10 text-[10px] md:text-sm" disabled={!!joiningId} onClick={() => handleJoinRequest(detailProject.id)}>{joiningId ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Send className="h-4 w-4 ml-2" />} طلب الانضمام</Button>
                   </div>
                 )}
                 {(detailProject as any).ownerId === currentUserId && (
-                  <div className="flex flex-wrap gap-2 pt-4 border-t">
-                    {detailProject.status === "OPEN" && <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(detailProject.id, "IN_PROGRESS")}><Play className="h-4 w-4 ml-2" /> بدء التنفيذ</Button>}
-                    {detailProject.status === "IN_PROGRESS" && <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(detailProject.id, "COMPLETED")}><CheckCircle2 className="h-4 w-4 ml-2" /> تحديد مكتمل</Button>}
-                    {(detailProject.status === "OPEN" || detailProject.status === "IN_PROGRESS") && <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(detailProject.id, "ARCHIVED")}><Lock className="h-4 w-4 ml-2" /> أرشفة</Button>}
+                  <div className="flex flex-wrap gap-1.5 md:gap-2 pt-3 md:pt-4 border-t">
+                    {detailProject.status === "OPEN" && <Button size="sm" variant="outline" className="h-7 md:h-8 text-[10px] md:text-sm" onClick={() => handleUpdateStatus(detailProject.id, "IN_PROGRESS")}><Play className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" /> بدء التنفيذ</Button>}
+                    {detailProject.status === "IN_PROGRESS" && <Button size="sm" variant="outline" className="h-7 md:h-8 text-[10px] md:text-sm" onClick={() => handleUpdateStatus(detailProject.id, "COMPLETED")}><CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" /> تحديد مكتمل</Button>}
+                    {(detailProject.status === "OPEN" || detailProject.status === "IN_PROGRESS") && <Button size="sm" variant="outline" className="h-7 md:h-8 text-[10px] md:text-sm" onClick={() => handleUpdateStatus(detailProject.id, "ARCHIVED")}><Lock className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" /> أرشفة</Button>}
                   </div>
                 )}
               </div>
@@ -1379,40 +1545,44 @@ export function CollaborationPageClient() {
         </SheetContent>
       </Sheet>
 
-      {/* عرض ملف الباحث (من باحثون متاحون / باحثون مناسبون) */}
+      {/* عرض ملف الباحث */}
       <Sheet open={researcherDetailOpen} onOpenChange={(open) => { if (!open) setSelectedResearcher(null); setResearcherDetailOpen(open); }}>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-4 md:p-6">
           {selectedResearcher && (
             <>
               <SheetHeader className="text-right">
-                <SheetTitle>ملف الباحث</SheetTitle>
-                <SheetDescription>معلومات عامة للتعاون</SheetDescription>
+                <SheetTitle className="text-base md:text-lg">ملف الباحث</SheetTitle>
+                <SheetDescription className="text-[10px] md:text-sm">معلومات عامة للتعاون</SheetDescription>
               </SheetHeader>
-              <div className="mt-6 space-y-4 pr-2">
+              <div className="mt-4 md:mt-6 space-y-3 md:space-y-4 pr-2">
                 <div className="flex justify-center">
                   {selectedResearcher.avatarUrl ? (
-                    <img src={selectedResearcher.avatarUrl} alt="" className="w-24 h-24 rounded-full object-cover" />
+                    <img src={selectedResearcher.avatarUrl} alt="" className="w-16 h-16 md:w-24 md:h-24 rounded-full object-cover" />
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center text-3xl font-semibold text-slate-500">
+                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-slate-200 flex items-center justify-center text-2xl md:text-3xl font-semibold text-slate-500">
                       {(selectedResearcher.fullNameAr || selectedResearcher.fullNameEn || "?")[0]}
                     </div>
                   )}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 text-center">{selectedResearcher.fullNameAr || selectedResearcher.fullNameEn || "—"}</h3>
-                {selectedResearcher.college && <p className="text-sm text-slate-600"><span className="font-medium">الكلية / القسم:</span> {selectedResearcher.college}</p>}
-                {(selectedResearcher.specialization || selectedResearcher.headline) && (
-                  <p className="text-sm text-slate-600"><span className="font-medium">التخصص / الاهتمام:</span> {selectedResearcher.headline || selectedResearcher.specialization}</p>
-                )}
-                <p className="text-sm text-slate-600"><span className="font-medium">عدد البحوث:</span> {selectedResearcher.researchCount ?? 0}</p>
-                {selectedResearcher.availabilityStatus && (
-                  <Badge variant="secondary">{AVAILABILITY_LABELS[selectedResearcher.availabilityStatus] ?? selectedResearcher.availabilityStatus}</Badge>
-                )}
-                {selectedResearcher.scorePercent != null && (
-                  <Badge className="bg-emerald-100 text-emerald-800">متوافق بنسبة {selectedResearcher.scorePercent}%</Badge>
-                )}
-                <div className="flex gap-2 pt-4">
-                  <Button variant="outline" className="flex-1" onClick={() => setResearcherDetailOpen(false)}>إغلاق</Button>
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => { showToast("دعوة للمشروع قريباً", "success"); setResearcherDetailOpen(false); }}>دعوة لمشروع</Button>
+                <h3 className="text-base md:text-lg font-semibold text-slate-900 text-center">{selectedResearcher.fullNameAr || selectedResearcher.fullNameEn || "—"}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-2 text-xs md:text-sm text-slate-600">
+                  {selectedResearcher.college && <p><span className="font-medium">الكلية / القسم:</span> {selectedResearcher.college}</p>}
+                  {(selectedResearcher.specialization || selectedResearcher.headline) && (
+                    <p><span className="font-medium">التخصص / الاهتمام:</span> {selectedResearcher.headline || selectedResearcher.specialization}</p>
+                  )}
+                  <p><span className="font-medium">عدد البحوث:</span> {selectedResearcher.researchCount ?? 0}</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedResearcher.availabilityStatus && (
+                    <Badge variant="secondary" className="text-[9px] md:text-xs">{AVAILABILITY_LABELS[selectedResearcher.availabilityStatus] ?? selectedResearcher.availabilityStatus}</Badge>
+                  )}
+                  {selectedResearcher.scorePercent != null && (
+                    <Badge className="bg-emerald-100 text-emerald-800 text-[9px] md:text-xs">متوافق بنسبة {selectedResearcher.scorePercent}%</Badge>
+                  )}
+                </div>
+                <div className="flex gap-2 pt-3 md:pt-4">
+                  <Button variant="outline" className="flex-1 h-8 md:h-10 text-[10px] md:text-sm" onClick={() => setResearcherDetailOpen(false)}>إغلاق</Button>
+                  <Button className="flex-1 h-8 md:h-10 text-[10px] md:text-sm bg-blue-600 hover:bg-blue-700" onClick={() => { showToast("دعوة للمشروع قريباً", "success"); setResearcherDetailOpen(false); }}>دعوة لمشروع</Button>
                 </div>
               </div>
             </>
@@ -1422,38 +1592,38 @@ export function CollaborationPageClient() {
 
       {/* عرض الكل — باحثون متاحون */}
       <Sheet open={allResearchersOpen} onOpenChange={setAllResearchersOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-4 md:p-6">
           <SheetHeader className="text-right">
-            <SheetTitle>باحثون متاحون للتعاون</SheetTitle>
-            <SheetDescription>اعرض الملف أو ادعُ أي باحث لمشروعك</SheetDescription>
+            <SheetTitle className="text-base md:text-lg">باحثون متاحون للتعاون</SheetTitle>
+            <SheetDescription className="text-[10px] md:text-sm">اعرض الملف أو ادعُ أي باحث لمشروعك</SheetDescription>
           </SheetHeader>
-          <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 mt-4 pr-2">
+          <div className="grid gap-2 md:gap-3 grid-cols-2 mt-3 md:mt-4 pr-1 md:pr-2">
             {availableResearchers.map((r: any) => (
-              <Card key={r.id} className="border-slate-100 overflow-hidden hover:shadow-sm transition-shadow">
-                <CardContent className="p-2.5">
-                  <div className="flex items-center gap-2">
+              <Card key={r.id} className="border-slate-100 overflow-hidden hover:shadow-sm transition-shadow min-h-[96px] md:min-h-0 h-full">
+                <CardContent className="p-2 md:p-2.5 h-full flex flex-col">
+                  <div className="flex items-center gap-1.5 md:gap-2">
                     {r.avatarUrl ? (
-                      <img src={r.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                      <img src={r.avatarUrl} alt="" className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover shrink-0" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-semibold shrink-0">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs md:text-sm font-semibold shrink-0">
                         {(r.fullNameAr || r.fullNameEn || "?")[0]}
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-medium text-slate-800 text-xs truncate">{r.fullNameAr || r.fullNameEn || "—"}</h4>
-                      {r.college && <p className="text-[10px] text-slate-500 truncate">{r.college}</p>}
+                      <h4 className="font-medium text-slate-800 text-[10px] md:text-xs truncate">{r.fullNameAr || r.fullNameEn || "—"}</h4>
+                      {r.college && <p className="text-[9px] md:text-[10px] text-slate-500 truncate">{r.college}</p>}
                     </div>
                   </div>
-                  {r.specialization && <p className="text-[10px] text-slate-600 mt-1 line-clamp-1">{r.specialization}</p>}
-                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    <span className="text-[10px] text-slate-500">{r.researchCount ?? 0} بحث</span>
+                  {r.specialization && <p className="text-[9px] md:text-[10px] text-slate-600 mt-1 line-clamp-1">{r.specialization}</p>}
+                  <div className="flex items-center gap-1.5 mt-1 md:mt-1.5 flex-wrap">
+                    <span className="text-[9px] md:text-[10px] text-slate-500">{r.researchCount ?? 0} بحث</span>
                     {r.availabilityStatus && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{AVAILABILITY_LABELS[r.availabilityStatus] ?? r.availabilityStatus}</Badge>
+                      <Badge variant="secondary" className="text-[9px] md:text-[10px] px-1 md:px-1.5 py-0">{AVAILABILITY_LABELS[r.availabilityStatus] ?? r.availabilityStatus}</Badge>
                     )}
                   </div>
-                  <div className="flex gap-1.5 mt-2">
-                    <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px] px-1.5" onClick={() => { setSelectedResearcher(r); setResearcherDetailOpen(true); setAllResearchersOpen(false); }}>عرض الملف</Button>
-                    <Button size="sm" className="flex-1 h-7 text-[10px] px-1.5 bg-blue-600 hover:bg-blue-700" onClick={() => showToast("دعوة للمشروع قريباً", "success")}>دعوة</Button>
+                  <div className="flex gap-1 md:gap-1.5 mt-auto pt-1.5 md:pt-2">
+                    <Button size="sm" variant="outline" className="flex-1 h-6 md:h-7 text-[9px] md:text-[10px] px-1 md:px-1.5" onClick={() => { setSelectedResearcher(r); setResearcherDetailOpen(true); setAllResearchersOpen(false); }}>الملف</Button>
+                    <Button size="sm" className="flex-1 h-6 md:h-7 text-[9px] md:text-[10px] px-1 md:px-1.5 bg-blue-600 hover:bg-blue-700" onClick={() => showToast("دعوة للمشروع قريباً", "success")}>دعوة</Button>
                   </div>
                 </CardContent>
               </Card>

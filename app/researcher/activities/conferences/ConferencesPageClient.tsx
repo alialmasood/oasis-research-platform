@@ -420,26 +420,97 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
 
+  const conferenceActionsMenu = (c: ResearcherConference) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => handleView(c)}>
+          <Eye className="h-4 w-4 ml-2" />
+          عرض التفاصيل
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenAdd(c)}>
+          <Pencil className="h-4 w-4 ml-2" />
+          تعديل
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-red-600"
+          onClick={() => {
+            if (confirm("هل أنت متأكد من حذف هذا المؤتمر؟")) {
+              startTransition(async () => {
+                const res = await removeConference(c.id);
+                if (res.error) showToast(res.error, "error");
+                else {
+                  showToast("✅ تم حذف المؤتمر بنجاح");
+                  loadConferences();
+                  notifyDashboardUpdate("activities");
+                }
+              });
+            }
+          }}
+        >
+          <Trash2 className="h-4 w-4 ml-2" />
+          حذف
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 min-w-0">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">المؤتمرات</h1>
-          <p className="text-sm text-slate-500 mt-1">سجّل مشاركاتك في المؤتمرات المحلية والعالمية</p>
-          <p className="text-sm text-slate-600 mt-1.5 font-medium" aria-live="polite">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-base md:text-2xl font-semibold text-gray-900 truncate">المؤتمرات</h1>
+          <p className="hidden md:block text-sm text-slate-500 mt-1">
+            سجّل مشاركاتك في المؤتمرات المحلية والعالمية
+          </p>
+          <p className="text-[11px] md:text-sm text-slate-500 md:text-slate-600 mt-0.5 md:mt-1.5 md:font-medium line-clamp-2 md:line-clamp-none" aria-live="polite">
             {getContextSummary(filteredForDisplay, stats)}
           </p>
         </div>
-        <Button onClick={() => handleOpenAdd()} className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white">
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة مؤتمر
+        <Button
+          onClick={() => handleOpenAdd()}
+          size="sm"
+          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
+        >
+          <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+          <span className="md:hidden">إضافة</span>
+          <span className="hidden md:inline">إضافة مؤتمر</span>
         </Button>
       </div>
 
-      <div className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-4">
-        {/* إجمالي المؤتمرات — أزرق */}
+      {/* موبايل: مؤشرات متساوية الحجم */}
+      <div className="grid grid-cols-2 gap-2 md:hidden auto-rows-fr">
+        {[
+          { label: "الإجمالي", value: String(stats.total), icon: Calendar, softBg: "bg-blue-50", softText: "text-blue-600" },
+          { label: "عالمي / محلي", value: `${stats.global} / ${stats.local}`, icon: MapPin, softBg: "bg-teal-50", softText: "text-teal-600" },
+          { label: "مشاركة كباحث", value: String(stats.asResearcher), icon: Building2, softBg: "bg-purple-50", softText: "text-purple-600" },
+          { label: "عضو لجنة", value: String(stats.committeeMember), icon: Eye, softBg: "bg-orange-50", softText: "text-orange-600" },
+        ].map(({ label, value, icon: Icon, softBg, softText }) => (
+          <div
+            key={label}
+            className="h-[64px] rounded-xl border border-slate-100 bg-white px-2.5 py-2 min-w-0 shadow-sm flex items-center"
+          >
+            <div className="flex items-center gap-2 min-w-0 w-full">
+              <div className={`h-8 w-8 rounded-lg ${softBg} flex items-center justify-center shrink-0`}>
+                <Icon className={`h-3.5 w-3.5 ${softText}`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold tabular-nums text-gray-900 leading-none truncate">{value}</div>
+                <p className="mt-1 text-[10px] text-slate-500 leading-tight truncate">{label}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* حاسوب: المؤشرات كما كانت */}
+      <div className="hidden md:grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-4">
         <Card className="border border-slate-100 border-r-4 border-r-blue-500 bg-white shadow-lg">
           <CardContent className="p-2.5 sm:p-3">
             <div className="flex items-center justify-between gap-2 mb-1">
@@ -451,7 +522,6 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
             <p className="text-[11px] sm:text-xs text-slate-500 leading-tight">إجمالي المؤتمرات</p>
           </CardContent>
         </Card>
-        {/* عالمي / محلي — أخضر (محلي) + أزرق غامق (عالمي) accent */}
         <Card className="border border-slate-100 border-t-2 border-t-green-400 border-r-2 border-r-blue-700 bg-white shadow-lg">
           <CardContent className="p-2.5 sm:p-3">
             <div className="flex items-center justify-between gap-2 mb-1">
@@ -465,7 +535,6 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
             <p className="text-[11px] sm:text-xs text-slate-500 leading-tight">عالمي / محلي</p>
           </CardContent>
         </Card>
-        {/* مشاركة كباحث — بنفسجي (علمي) */}
         <Card className="border border-slate-100 border-r-4 border-r-purple-500 bg-white shadow-lg">
           <CardContent className="p-2.5 sm:p-3">
             <div className="flex items-center justify-between gap-2 mb-1">
@@ -477,7 +546,6 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
             <p className="text-[11px] sm:text-xs text-slate-500 leading-tight">مشاركة كباحث</p>
           </CardContent>
         </Card>
-        {/* عضو لجنة — برتقالي (مسؤولية) */}
         <Card className="border border-slate-100 border-r-4 border-r-orange-500 bg-white shadow-lg">
           <CardContent className="p-2.5 sm:p-3">
             <div className="flex items-center justify-between gap-2 mb-1">
@@ -492,8 +560,104 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">الرسوم البيانية</h3>
-        <div className="grid gap-4 md:grid-cols-2">
+        <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-2.5 md:mb-4">الرسوم البيانية</h3>
+
+        {/* موبايل: تخطيط متناسق — شريطيان بعرض كامل وارتفاع موحّد + دائرتان متجاورتان */}
+        <div className="md:hidden space-y-2">
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">حسب السنة</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {stats.byYearData.length > 0 ? (
+                  <BarChart
+                    data={stats.byYearData}
+                    dataKeys={["عدد المؤتمرات"]}
+                    colors={["#2563EB"]}
+                    tooltipLabel={(year, count) => `عدد المؤتمرات في ${year}: ${count}`}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  النطاق
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {stats.scopePieData.length > 0 ? (
+                    <PieChart
+                      data={stats.scopePieData}
+                      outerRadius={42}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      legendWrapperStyle={{ fontSize: 10, paddingTop: 0 }}
+                      tooltipLabel={(name, value) =>
+                        `عدد المؤتمرات ${name === "عالمي" ? "العالمية" : "المحلية"}: ${value}`
+                      }
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  المشاركة
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {stats.participationPieData.length > 0 ? (
+                    <PieChart
+                      data={stats.participationPieData}
+                      outerRadius={42}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      legendWrapperStyle={{ fontSize: 10, paddingTop: 0 }}
+                      tooltipLabel={(name, value) => `عدد المشاركات كـ${name}: ${value}`}
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">المشاركة عبر الزمن</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {stats.participationByYearData.length > 0 ? (
+                  <BarChart
+                    data={stats.participationByYearData}
+                    dataKeys={["باحث", "حضور"]}
+                    colors={["#8b5cf6", "#f59e0b"]}
+                    stackId="participation"
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* حاسوب: التخطيط السابق بدون تغيير */}
+        <div className="hidden md:grid gap-4 grid-cols-2">
           <Card className="border-slate-100 bg-white shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold text-gray-900">حسب السنة</CardTitle>
@@ -545,7 +709,7 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
               )}
             </CardContent>
           </Card>
-          <Card className="border-slate-100 bg-white shadow-lg md:col-span-2">
+          <Card className="border-slate-100 bg-white shadow-lg col-span-2">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold text-gray-900">نوع المشاركة عبر الزمن</CardTitle>
               <p className="text-xs text-slate-500 mt-1">باحث vs حضور — مفيد للتقييم العلمي وملف الترقيات</p>
@@ -573,296 +737,369 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
         </div>
       </div>
 
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="text-base font-semibold text-slate-800">جدول المؤتمرات</div>
-            <div className="flex items-center gap-2">
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl">
+        <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
+          <div className="flex items-center justify-between gap-2 mb-3 md:mb-4">
+            <div className="text-sm md:text-base font-semibold text-slate-800 truncate">جدول المؤتمرات</div>
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportExcel}
                 disabled={isExporting}
               >
-                تصدير Excel
+                <span className="md:hidden">Excel</span>
+                <span className="hidden md:inline">تصدير Excel</span>
               </Button>
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportPDF}
                 disabled={isExporting}
               >
-                تصدير PDF
+                <span className="md:hidden">PDF</span>
+                <span className="hidden md:inline">تصدير PDF</span>
               </Button>
             </div>
           </div>
-          <h3 className="text-base font-semibold text-slate-800 mb-3">بحث في المؤتمرات</h3>
-          <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
-            <div className="flex flex-wrap items-end gap-3" dir="rtl">
-              {/* شريط البحث + زر البحث مجموعة واحدة على اليمين */}
-              <div className="flex flex-1 min-w-[200px] max-w-[360px] items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                <Input
-                  placeholder="العنوان، الراعي، المكان..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="h-9 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                />
-                <Button type="submit" variant="secondary" size="sm" className="h-9 rounded-lg px-4 flex-shrink-0">
-                  بحث
-                </Button>
-              </div>
-              <div className="w-[130px]">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">النطاق</label>
-                <Select
-                  value={scopeFilter}
-                  onValueChange={(v) => {
-                    setScopeFilter(v);
-                    loadConferences({ scope: v });
-                  }}
-                >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    <SelectItem value="GLOBAL">عالمي</SelectItem>
-                    <SelectItem value="LOCAL">محلي</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-[140px]">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">نوع المشاركة</label>
-                <Select
-                  value={participationFilter}
-                  onValueChange={(v) => {
-                    setParticipationFilter(v);
-                    loadConferences({ participationType: v });
-                  }}
-                >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    <SelectItem value="RESEARCHER">باحث</SelectItem>
-                    <SelectItem value="ATTENDEE">حضور</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
+          {/* فلاتر موبايل: سطران */}
+          <form onSubmit={handleSearchSubmit} className="md:hidden rounded-xl bg-slate-50 p-2 space-y-1.5 mb-3">
+            <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-0.5">
+              <Input
+                placeholder="بحث..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-8 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0 text-[11px] px-2"
+              />
+              <Button type="submit" variant="secondary" size="sm" className="h-7 rounded-md px-2.5 text-[11px] shrink-0">
+                بحث
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <Select
+                value={scopeFilter}
+                onValueChange={(v) => {
+                  setScopeFilter(v);
+                  loadConferences({ scope: v });
+                }}
+              >
+                <SelectTrigger className="h-8 rounded-lg bg-white text-[11px] px-2" aria-label="النطاق">
+                  <SelectValue placeholder="النطاق" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">كل النطاق</SelectItem>
+                  <SelectItem value="GLOBAL">عالمي</SelectItem>
+                  <SelectItem value="LOCAL">محلي</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={participationFilter}
+                onValueChange={(v) => {
+                  setParticipationFilter(v);
+                  loadConferences({ participationType: v });
+                }}
+              >
+                <SelectTrigger className="h-8 rounded-lg bg-white text-[11px] px-2" aria-label="نوع المشاركة">
+                  <SelectValue placeholder="المشاركة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">كل المشاركة</SelectItem>
+                  <SelectItem value="RESEARCHER">باحث</SelectItem>
+                  <SelectItem value="ATTENDEE">حضور</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </form>
 
-          {filteredForDisplay.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-              <div className="rounded-full bg-white border border-slate-200 p-6 mb-5 shadow-sm">
-                <Calendar className="h-14 w-14 text-slate-400" />
+          {/* فلاتر حاسوب */}
+          <div className="hidden md:block">
+            <h3 className="text-base font-semibold text-slate-800 mb-3">بحث في المؤتمرات</h3>
+            <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
+              <div className="flex flex-wrap items-end gap-3" dir="rtl">
+                <div className="flex flex-1 min-w-[200px] max-w-[360px] items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                  <Input
+                    placeholder="العنوان، الراعي، المكان..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-9 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
+                  />
+                  <Button type="submit" variant="secondary" size="sm" className="h-9 rounded-lg px-4 flex-shrink-0">
+                    بحث
+                  </Button>
+                </div>
+                <div className="w-[130px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">النطاق</label>
+                  <Select
+                    value={scopeFilter}
+                    onValueChange={(v) => {
+                      setScopeFilter(v);
+                      loadConferences({ scope: v });
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                      <SelectValue placeholder="الكل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">الكل</SelectItem>
+                      <SelectItem value="GLOBAL">عالمي</SelectItem>
+                      <SelectItem value="LOCAL">محلي</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-[140px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">نوع المشاركة</label>
+                  <Select
+                    value={participationFilter}
+                    onValueChange={(v) => {
+                      setParticipationFilter(v);
+                      loadConferences({ participationType: v });
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                      <SelectValue placeholder="الكل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">الكل</SelectItem>
+                      <SelectItem value="RESEARCHER">باحث</SelectItem>
+                      <SelectItem value="ATTENDEE">حضور</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            </form>
+          </div>
+
+          {filteredForDisplay.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 md:py-20 px-4 md:px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+              <div className="rounded-full bg-white border border-slate-200 p-4 md:p-6 mb-3 md:mb-5 shadow-sm">
+                <Calendar className="h-8 w-8 md:h-14 md:w-14 text-slate-400" />
+              </div>
+              <h3 className="text-sm md:text-xl font-semibold text-slate-800 mb-1 md:mb-2 text-center">
                 {search || scopeFilter !== "__all__" || participationFilter !== "__all__"
                   ? "لا توجد نتائج"
                   : "لم يتم تسجيل أي مشاركة بعد"}
               </h3>
-              <p className="text-sm text-slate-600 text-center max-w-md mb-6">
+              <p className="text-xs md:text-sm text-slate-600 text-center max-w-md mb-4 md:mb-6">
                 {search || scopeFilter !== "__all__" || participationFilter !== "__all__"
                   ? "لا توجد مؤتمرات تطابق الفلاتر. جرّب تغيير البحث أو الفلاتر."
                   : "ابدأ بإضافة أول مؤتمر لك."}
               </p>
               {!search && scopeFilter === "__all__" && participationFilter === "__all__" && (
-                <Button onClick={() => handleOpenAdd()} size="lg" className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm">
-                  <Plus className="h-5 w-5 ml-2" />
+                <Button onClick={() => handleOpenAdd()} size="sm" className="md:h-11 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm">
+                  <Plus className="h-4 w-4 md:h-5 md:w-5 ml-1 md:ml-2" />
                   إضافة أول مؤتمر
                 </Button>
               )}
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-100 overflow-hidden">
-              <Table className="table-fixed w-full">
-                <colgroup>
-                  <col style={{ width: "8%" }} />
-                  <col style={{ width: "22%" }} />
-                  <col style={{ width: "14%" }} />
-                  <col style={{ width: "14%" }} />
-                  <col style={{ width: "8%" }} />
-                  <col style={{ width: "8%" }} />
-                  <col style={{ width: "12%" }} />
-                  <col style={{ width: "14%" }} />
-                </colgroup>
-                <TableHeader>
-                  <TableRow className="bg-slate-50 hover:bg-slate-50">
-                    <TableHead className="text-right font-medium text-slate-600">العمليات</TableHead>
-                    <TableHead className="text-right font-medium text-slate-600">العنوان</TableHead>
-                    <TableHead className="text-right font-medium text-slate-600">الجهة الراعية</TableHead>
-                    <TableHead className="text-right font-medium text-slate-600">المكان</TableHead>
-                    <TableHead className="text-right font-medium text-slate-600">النطاق</TableHead>
-                    <TableHead className="text-right font-medium text-slate-600">عضو لجنة</TableHead>
-                    <TableHead className="text-right font-medium text-slate-600">نوع المشاركة</TableHead>
-                    <TableHead className="text-right font-medium text-slate-600">التاريخ</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredForDisplay.map((c) => (
-                    <TableRow key={c.id} className="hover:bg-slate-50/50">
-                      <TableCell className="align-middle whitespace-nowrap">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handleView(c)}>
-                              <Eye className="h-4 w-4 ml-2" />
-                              عرض التفاصيل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenAdd(c)}>
-                              <Pencil className="h-4 w-4 ml-2" />
-                              تعديل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => {
-                                if (confirm("هل أنت متأكد من حذف هذا المؤتمر؟")) {
-                                  startTransition(async () => {
-                                    const res = await removeConference(c.id);
-                                    if (res.error) showToast(res.error, "error");
-                                    else {
-                                      showToast("✅ تم حذف المؤتمر بنجاح");
-                                      loadConferences();
-                                      notifyDashboardUpdate("activities");
-                                    }
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 ml-2" />
-                              حذف
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                      <TableCell className="align-middle max-w-[200px]">
-                        <span className="font-medium text-slate-900 truncate block" dir="rtl">
+            <>
+              {/* بطاقات موبايل — ارتفاع موحّد تقريباً */}
+              <div className="md:hidden space-y-2">
+                {filteredForDisplay.map((c) => (
+                  <div
+                    key={c.id}
+                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm min-h-[96px]"
+                  >
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleView(c)}
+                        className="min-w-0 flex-1 text-right space-y-0.5"
+                      >
+                        <p className="text-[12px] font-semibold text-slate-900 line-clamp-1 leading-snug">
                           {c.title}
-                        </span>
-                      </TableCell>
-                      <TableCell className="align-middle text-slate-700 truncate max-w-[140px]" dir="rtl">
-                        {c.sponsor}
-                      </TableCell>
-                      <TableCell className="align-middle text-slate-700 truncate max-w-[140px]" dir="rtl">
-                        {c.location}
-                      </TableCell>
-                      <TableCell className="align-middle whitespace-nowrap">
-                        <Badge variant="outline" className="text-xs">
-                          {scopeLabels[c.scope]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="align-middle whitespace-nowrap">
-                        {c.isCommitteeMember ? (
-                          <Badge className="bg-amber-100 text-amber-800 text-xs">نعم</Badge>
-                        ) : (
-                          <span className="text-slate-400 text-xs">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="align-middle whitespace-nowrap text-sm text-slate-700">
-                        {participationLabels[c.participationType]}
-                      </TableCell>
-                      <TableCell className="align-middle whitespace-nowrap text-sm text-slate-700">
-                        {formatDate(c.date)}
-                      </TableCell>
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {[
+                            formatDate(c.date),
+                            scopeLabels[c.scope],
+                            participationLabels[c.participationType],
+                            c.isCommitteeMember ? "عضو لجنة" : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </button>
+                      {conferenceActionsMenu(c)}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">الراعي</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate">{c.sponsor || "—"}</p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">المكان</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate">{c.location || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* جدول حاسوب */}
+              <div className="hidden md:block rounded-2xl border border-slate-100 overflow-hidden">
+                <Table className="table-fixed w-full">
+                  <colgroup>
+                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "22%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "14%" }} />
+                  </colgroup>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 hover:bg-slate-50">
+                      <TableHead className="text-right font-medium text-slate-600">العمليات</TableHead>
+                      <TableHead className="text-right font-medium text-slate-600">العنوان</TableHead>
+                      <TableHead className="text-right font-medium text-slate-600">الجهة الراعية</TableHead>
+                      <TableHead className="text-right font-medium text-slate-600">المكان</TableHead>
+                      <TableHead className="text-right font-medium text-slate-600">النطاق</TableHead>
+                      <TableHead className="text-right font-medium text-slate-600">عضو لجنة</TableHead>
+                      <TableHead className="text-right font-medium text-slate-600">نوع المشاركة</TableHead>
+                      <TableHead className="text-right font-medium text-slate-600">التاريخ</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredForDisplay.map((c) => (
+                      <TableRow key={c.id} className="hover:bg-slate-50/50">
+                        <TableCell className="align-middle whitespace-nowrap">
+                          {conferenceActionsMenu(c)}
+                        </TableCell>
+                        <TableCell className="align-middle max-w-[200px]">
+                          <span className="font-medium text-slate-900 truncate block" dir="rtl">
+                            {c.title}
+                          </span>
+                        </TableCell>
+                        <TableCell className="align-middle text-slate-700 truncate max-w-[140px]" dir="rtl">
+                          {c.sponsor}
+                        </TableCell>
+                        <TableCell className="align-middle text-slate-700 truncate max-w-[140px]" dir="rtl">
+                          {c.location}
+                        </TableCell>
+                        <TableCell className="align-middle whitespace-nowrap">
+                          <Badge variant="outline" className="text-xs">
+                            {scopeLabels[c.scope]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="align-middle whitespace-nowrap">
+                          {c.isCommitteeMember ? (
+                            <Badge className="bg-amber-100 text-amber-800 text-xs">نعم</Badge>
+                          ) : (
+                            <span className="text-slate-400 text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="align-middle whitespace-nowrap text-sm text-slate-700">
+                          {participationLabels[c.participationType]}
+                        </TableCell>
+                        <TableCell className="align-middle whitespace-nowrap text-sm text-slate-700">
+                          {formatDate(c.date)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={isAddOpen} onOpenChange={(open) => !open && handleCloseAdd()}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle>{editingConference ? "تعديل المؤتمر" : "إضافة مؤتمر"}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-base md:text-lg">
+              {editingConference ? "تعديل المؤتمر" : "إضافة مؤتمر"}
+            </DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
               {editingConference ? "تعديل بيانات المؤتمر." : "أدخل بيانات المؤتمر. التاريخ لا يقبل أي تاريخ في المستقبل."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddSubmit} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-3 md:space-y-4">
             <div>
-              <Label htmlFor="title">عنوان المؤتمر *</Label>
+              <Label htmlFor="title" className="text-xs md:text-sm">عنوان المؤتمر *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
                 placeholder="عنوان المؤتمر"
                 required
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
-            <div>
-              <Label htmlFor="sponsor">الجهة الراعية *</Label>
-              <Input
-                id="sponsor"
-                value={formData.sponsor}
-                onChange={(e) => setFormData((p) => ({ ...p, sponsor: e.target.value }))}
-                placeholder="الجهة الراعية"
-                required
-                className="mt-1"
-              />
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label htmlFor="sponsor" className="text-xs md:text-sm">الجهة الراعية *</Label>
+                <Input
+                  id="sponsor"
+                  value={formData.sponsor}
+                  onChange={(e) => setFormData((p) => ({ ...p, sponsor: e.target.value }))}
+                  placeholder="الجهة الراعية"
+                  required
+                  className="mt-1 h-9 md:h-10 text-sm"
+                />
+              </div>
+              <div className="min-w-0">
+                <Label htmlFor="date" className="text-xs md:text-sm">التاريخ *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  max={getTodayISO()}
+                  onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))}
+                  required
+                  className="mt-1 h-9 md:h-10 text-sm"
+                />
+              </div>
             </div>
             <div>
-              <Label htmlFor="date">التاريخ *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                max={getTodayISO()}
-                onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))}
-                required
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="location">مكان الانعقاد *</Label>
+              <Label htmlFor="location" className="text-xs md:text-sm">مكان الانعقاد *</Label>
               <Input
                 id="location"
                 value={formData.location}
                 onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))}
                 placeholder="المدينة أو الدولة"
                 required
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
-            <div>
-              <Label>النطاق</Label>
-              <Select
-                value={formData.scope}
-                onValueChange={(v: "GLOBAL" | "LOCAL") => setFormData((p) => ({ ...p, scope: v }))}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="GLOBAL">عالمي</SelectItem>
-                  <SelectItem value="LOCAL">محلي</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>نوع المشاركة</Label>
-              <Select
-                value={formData.participationType}
-                onValueChange={(v: "ATTENDEE" | "RESEARCHER") =>
-                  setFormData((p) => ({ ...p, participationType: v }))
-                }
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ATTENDEE">حضور</SelectItem>
-                  <SelectItem value="RESEARCHER">باحث</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label className="text-xs md:text-sm">النطاق</Label>
+                <Select
+                  value={formData.scope}
+                  onValueChange={(v: "GLOBAL" | "LOCAL") => setFormData((p) => ({ ...p, scope: v }))}
+                >
+                  <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GLOBAL">عالمي</SelectItem>
+                    <SelectItem value="LOCAL">محلي</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-0">
+                <Label className="text-xs md:text-sm">نوع المشاركة</Label>
+                <Select
+                  value={formData.participationType}
+                  onValueChange={(v: "ATTENDEE" | "RESEARCHER") =>
+                    setFormData((p) => ({ ...p, participationType: v }))
+                  }
+                >
+                  <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ATTENDEE">حضور</SelectItem>
+                    <SelectItem value="RESEARCHER">باحث</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -872,13 +1109,13 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
                 onChange={(e) => setFormData((p) => ({ ...p, isCommitteeMember: e.target.checked }))}
                 className="rounded border-slate-300"
               />
-              <Label htmlFor="isCommitteeMember">عضو لجنة</Label>
+              <Label htmlFor="isCommitteeMember" className="text-xs md:text-sm">عضو لجنة</Label>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleCloseAdd}>
+              <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleCloseAdd}>
                 إلغاء
               </Button>
-              <Button type="submit" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+              <Button type="submit" size="sm" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8] h-9">
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : editingConference ? "حفظ التعديلات" : "إضافة المؤتمر"}
               </Button>
             </div>
@@ -887,9 +1124,9 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
       </Dialog>
 
       <Dialog open={isDetailsOpen} onOpenChange={(open) => !open && (setIsDetailsOpen(false), setViewingConference(null))}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-right" dir="rtl">
+            <DialogTitle className="text-right text-base md:text-lg" dir="rtl">
               تفاصيل المؤتمر
             </DialogTitle>
             <DialogDescription className="sr-only">
@@ -897,18 +1134,34 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
             </DialogDescription>
           </DialogHeader>
           {viewingConference && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-sm md:text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
                 {viewingConference.title}
               </h3>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">{scopeLabels[viewingConference.scope]}</Badge>
-                <Badge variant="secondary">{participationLabels[viewingConference.participationType]}</Badge>
-                {viewingConference.isCommitteeMember && (
-                  <Badge className="bg-amber-100 text-amber-800">عضو لجنة</Badge>
-                )}
+              <p className="text-[11px] md:text-xs text-slate-500">
+                {[
+                  scopeLabels[viewingConference.scope],
+                  participationLabels[viewingConference.participationType],
+                  viewingConference.isCommitteeMember ? "عضو لجنة" : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 md:hidden">
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">التاريخ</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">{formatDate(viewingConference.date)}</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">المكان</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate" dir="rtl">{viewingConference.location}</p>
+                </div>
+                <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">الجهة الراعية</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate" dir="rtl">{viewingConference.sponsor}</p>
+                </div>
               </div>
-              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+              <div className="hidden md:grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
                 <span className="text-slate-500">التاريخ</span>
                 <span className="font-medium text-slate-900">{formatDate(viewingConference.date)}</span>
                 <span className="text-slate-500">المكان</span>
@@ -916,37 +1169,44 @@ export function ConferencesPageClient({ initialConferences }: ConferencesPageCli
                 <span className="text-slate-500">الجهة الراعية</span>
                 <span className="font-medium text-slate-900" dir="rtl">{viewingConference.sponsor}</span>
               </div>
-              <div className="flex flex-wrap justify-end gap-2 pt-4">
+              <div className="flex flex-col md:flex-row md:flex-wrap md:justify-end gap-2 pt-2 md:pt-4">
                 <Button
                   variant="outline"
-                  className="text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800"
+                  size="sm"
+                  className="h-9 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 justify-center"
                   onClick={() => shareConferenceViaWhatsApp(viewingConference)}
                 >
                   <MessageCircle className="h-4 w-4 ml-2" />
-                  إرسال البطاقة عبر واتساب
+                  <span className="md:hidden">واتساب</span>
+                  <span className="hidden md:inline">إرسال البطاقة عبر واتساب</span>
                 </Button>
-                <Button variant="outline" onClick={() => (setIsDetailsOpen(false), setViewingConference(null))}>
-                  إغلاق
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDetailsOpen(false);
-                    handleOpenAdd(viewingConference);
-                    setViewingConference(null);
-                  }}
-                >
-                  <Pencil className="h-4 w-4 ml-2" />
-                  تعديل
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(viewingConference.id)}
-                  disabled={isPending}
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
-                </Button>
+                <div className="grid grid-cols-3 gap-2 md:contents">
+                  <Button variant="outline" size="sm" className="h-9" onClick={() => (setIsDetailsOpen(false), setViewingConference(null))}>
+                    إغلاق
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => {
+                      setIsDetailsOpen(false);
+                      handleOpenAdd(viewingConference);
+                      setViewingConference(null);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 ml-1 md:ml-2" />
+                    تعديل
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-red-600 hover:bg-red-50"
+                    onClick={() => handleDelete(viewingConference.id)}
+                    disabled={isPending}
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

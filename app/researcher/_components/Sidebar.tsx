@@ -290,9 +290,12 @@ export function Sidebar({ user, onActivitiesToggle, isActivitiesOpen = false }: 
           variant="outline"
           className="w-full border-gray-200 text-gray-700 hover:bg-gray-50"
           size="sm"
+          asChild
         >
-          <Download className="h-4 w-4 ml-2" />
-          تصدير CV
+          <Link href="/researcher/cv/export" target="_blank" rel="noopener noreferrer">
+            <Download className="h-4 w-4 ml-2" />
+            تصدير CV
+          </Link>
         </Button>
       </div>
     </aside>

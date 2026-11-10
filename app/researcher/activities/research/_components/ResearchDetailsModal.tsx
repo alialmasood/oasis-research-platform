@@ -10,9 +10,18 @@ import { RESEARCH_CATEGORY_LABELS, RESEARCH_STATUS_LABELS } from "@/lib/research
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-3 gap-y-0.5 py-2 border-b border-slate-100 last:border-b-0 items-baseline">
-      <span className="text-xs text-slate-500 truncate">{label}</span>
-      <span className="text-sm font-semibold text-slate-900 break-words">{value}</span>
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-2 sm:gap-x-3 gap-y-0.5 py-1.5 sm:py-2 border-b border-slate-100 last:border-b-0 items-baseline">
+      <span className="text-[11px] sm:text-xs text-slate-500 truncate">{label}</span>
+      <span className="text-xs sm:text-sm font-semibold text-slate-900 break-words">{value}</span>
+    </div>
+  );
+}
+
+function CompactField({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="min-w-0 rounded-lg bg-white/80 border border-slate-100 px-2.5 py-2">
+      <p className="text-[10px] text-slate-400 mb-0.5">{label}</p>
+      <p className="text-xs font-semibold text-slate-900 truncate">{value}</p>
     </div>
   );
 }
@@ -118,69 +127,88 @@ export function ResearchDetailsModal({
       <SheetContent
         side="right"
         overlayClassName="bg-black/20"
-        className="flex flex-col w-full max-w-[520px] min-w-[420px] sm:min-w-[420px] p-0 gap-0 border-r border-slate-200 rounded-tl-2xl rounded-bl-2xl overflow-hidden"
+        className="flex flex-col w-full max-w-full sm:max-w-[520px] min-w-0 sm:min-w-[420px] p-0 gap-0 border-r border-slate-200 rounded-tl-2xl rounded-bl-2xl overflow-hidden"
       >
         <SheetTitle className="sr-only">تفاصيل البحث: {research.title}</SheetTitle>
         {/* (A) Header ثابت */}
-        <header className="flex-shrink-0 border-b border-slate-100 bg-white px-5 pt-5 pb-4 pr-12">
-          <div className="flex items-start justify-between gap-3">
+        <header className="flex-shrink-0 border-b border-slate-100 bg-white px-3.5 sm:px-5 pt-4 sm:pt-5 pb-3 sm:pb-4 pr-11 sm:pr-12">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-slate-900 line-clamp-2 leading-snug" dir="rtl">
+              <h2 className="text-sm sm:text-base font-semibold text-slate-900 line-clamp-2 leading-snug" dir="rtl">
                 {research.title}
               </h2>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                <Badge variant="outline" className="text-xs font-medium text-slate-600">
-                  {research.year}
-                </Badge>
-                <Badge
-                  className={
-                    research.status === "COMPLETED"
-                      ? "bg-green-50 text-green-700 border-green-200 text-xs"
-                      : "bg-blue-50 text-blue-700 border-blue-200 text-xs"
-                  }
-                >
-                  {statusLabels[research.status]}
-                </Badge>
-                {research.status === "COMPLETED" && research.publishStatus && (
-                  <Badge
-                    className={
-                      research.publishStatus === "PUBLISHED"
-                        ? "bg-purple-50 text-purple-700 border-purple-200 text-xs"
-                        : "bg-amber-50 text-amber-700 border-amber-200 text-xs"
-                    }
-                  >
-                    {publishStatusLabels[research.publishStatus]}
-                  </Badge>
-                )}
-              </div>
+              <p className="mt-1.5 text-[11px] sm:text-xs text-slate-500 truncate">
+                {[
+                  String(research.year),
+                  statusLabels[research.status],
+                  research.status === "COMPLETED" && research.publishStatus
+                    ? publishStatusLabels[research.publishStatus]
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
               {onEdit && (
-                <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleEdit}>
-                  <Pencil className="h-4 w-4" />
+                <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={handleEdit}>
+                  <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               )}
               {onDelete && (
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="h-8 w-8 sm:h-9 sm:w-9 text-red-600 hover:bg-red-50 hover:text-red-700"
                   onClick={handleDelete}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               )}
             </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {/* (B) ملخص سريع - Grid Label + Value */}
-          <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+        <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 sm:py-4 space-y-3 sm:space-y-4">
+          {/* (B) ملخص سريع */}
+          <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 sm:p-4">
+            <h3 className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 sm:mb-3">
               ملخص سريع
             </h3>
-            <div className="space-y-0">
+            {/* موبايل: حقول مزدوجة مضغوطة */}
+            <div className="grid grid-cols-2 gap-1.5 sm:hidden">
+              <CompactField
+                label="نوع البحث"
+                value={researchTypeLabels[research.researchType]}
+              />
+              <CompactField
+                label="الملكية"
+                value={ownershipLabels[research.ownership]}
+              />
+              <div className="col-span-2 min-w-0 rounded-lg bg-white/80 border border-slate-100 px-2.5 py-2">
+                <p className="text-[10px] text-slate-400 mb-1">التصنيفات</p>
+                <div className="flex flex-wrap gap-1">
+                  {research.categories.length === 0 && !research.scopusQuartile ? (
+                    <span className="text-xs text-slate-400">—</span>
+                  ) : (
+                    <>
+                      {research.categories.map((cat) => (
+                        <Badge key={cat} variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+                          {categoryLabels[cat] ?? cat}
+                        </Badge>
+                      ))}
+                      {research.scopusQuartile && (
+                        <Badge className="bg-orange-50 text-orange-700 border-orange-200 text-[10px] px-1.5 py-0 h-5">
+                          {research.scopusQuartile}
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            {/* حاسوب: الصفوف السابقة */}
+            <div className="hidden sm:block space-y-0">
               <DetailRow label="نوع البحث" value={researchTypeLabels[research.researchType]} />
               <DetailRow label="الملكية" value={ownershipLabels[research.ownership]} />
               <div className="py-2 border-b border-slate-100 last:border-b-0">
@@ -218,8 +246,8 @@ export function ResearchDetailsModal({
           </section>
 
           {/* (C) حالة الإنجاز */}
-          <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+          <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 sm:p-4">
+            <h3 className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 sm:mb-3">
               الإنجاز
             </h3>
             {research.status === "IN_PROGRESS" && research.progressPercent != null ? (
@@ -252,38 +280,19 @@ export function ResearchDetailsModal({
           {/* (D) قسم النشر - يظهر فقط إذا البحث منشور؛ إخفاء سطر DOI إذا فارغ */}
           {research.status === "COMPLETED" &&
             research.publishStatus === "PUBLISHED" && (
-              <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+              <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 sm:p-4">
+                <h3 className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 sm:mb-3">
                   النشر
                 </h3>
-                <div className="space-y-0">
+                <div className="grid grid-cols-2 gap-1.5 sm:hidden mb-1.5">
                   {research.publishType && (
-                    <DetailRow label="نوع النشر" value={publishTypeLabels[research.publishType]} />
-                  )}
-                  {research.publisher && (
-                    <DetailRow label="الناشر" value={research.publisher} />
-                  )}
-                  {hasDoi && (
-                    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-3 gap-y-0.5 py-2 border-b border-slate-100 items-center">
-                      <span className="text-xs text-slate-500">DOI</span>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <code className="text-xs bg-white px-2 py-1 rounded border border-slate-200 truncate flex-1 min-w-0 text-slate-900 font-medium">
-                          {research.doi}
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 gap-1 flex-shrink-0"
-                          onClick={() => copyToClipboard(research.doi!, "doi")}
-                        >
-                          {copied === "doi" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                          نسخ
-                        </Button>
-                      </div>
-                    </div>
+                    <CompactField
+                      label="نوع النشر"
+                      value={publishTypeLabels[research.publishType]}
+                    />
                   )}
                   {(research.publishMonth || research.year) && (
-                    <DetailRow
+                    <CompactField
                       label="التاريخ"
                       value={
                         research.publishMonth
@@ -292,19 +301,65 @@ export function ResearchDetailsModal({
                       }
                     />
                   )}
+                  {research.publisher && (
+                    <div className="col-span-2">
+                      <CompactField label="الناشر" value={research.publisher} />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-0">
+                  <div className="hidden sm:block">
+                    {research.publishType && (
+                      <DetailRow label="نوع النشر" value={publishTypeLabels[research.publishType]} />
+                    )}
+                    {research.publisher && (
+                      <DetailRow label="الناشر" value={research.publisher} />
+                    )}
+                  </div>
+                  {hasDoi && (
+                    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-2 sm:gap-x-3 gap-y-0.5 py-1.5 sm:py-2 border-b border-slate-100 items-center">
+                      <span className="text-[11px] sm:text-xs text-slate-500">DOI</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        <code className="text-[11px] sm:text-xs bg-white px-2 py-1 rounded border border-slate-200 truncate flex-1 min-w-0 text-slate-900 font-medium">
+                          {research.doi}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 sm:h-8 gap-1 flex-shrink-0 px-2 text-xs"
+                          onClick={() => copyToClipboard(research.doi!, "doi")}
+                        >
+                          {copied === "doi" ? <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" /> : <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                          نسخ
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="hidden sm:block">
+                    {(research.publishMonth || research.year) && (
+                      <DetailRow
+                        label="التاريخ"
+                        value={
+                          research.publishMonth
+                            ? `${months[research.publishMonth]} ${research.year}`
+                            : String(research.year)
+                        }
+                      />
+                    )}
+                  </div>
                 </div>
               </section>
             )}
 
-          {/* (E) الروابط - إذا لا روابط: "لا توجد روابط"؛ نسخ سريع مع Toast "تم النسخ" */}
-          <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+          {/* (E) الروابط */}
+          <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 sm:p-4">
+            <h3 className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 sm:mb-3">
               إجراءات
             </h3>
             <div className="flex flex-col gap-2">
               <Button
                 variant="outline"
-                className="w-full justify-start gap-2 h-11 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800"
+                className="w-full justify-start gap-2 h-10 sm:h-11 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 text-sm"
                 onClick={shareViaWhatsApp}
               >
                 <MessageCircle className="h-4 w-4" />

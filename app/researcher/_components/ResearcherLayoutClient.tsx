@@ -85,8 +85,16 @@ export function ResearcherLayoutClient({
         </div>
 
         {/* Page Content - Container with max-width */}
+        {/* لوحة التحكم على الموبايل فقط: بدون حشو أفقي لضمان امتداد الأقسام من الجهتين */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[1200px] xl:max-w-[1400px] 2xl:max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-5">
+          <div
+            className={cn(
+              "max-w-[1200px] xl:max-w-[1400px] 2xl:max-w-[1500px] mx-auto py-4 lg:py-5",
+              pathname === "/researcher/dashboard"
+                ? "px-0 pt-0 md:px-6 md:pt-4 lg:px-8"
+                : "px-4 sm:px-6 lg:px-8"
+            )}
+          >
             {children}
           </div>
         </main>

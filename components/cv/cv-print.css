@@ -1,0 +1,20 @@
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .cv-no-print {
+    display: none !important;
+  }
+
+  .cv-sheet {
+    box-shadow: none !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+}

@@ -26,12 +26,12 @@ const degreeLabels: Record<string, string> = {
 };
 
 const degreeColors: Record<string, string> = {
-  BACHELORS: "#2563EB",      // أزرق
-  DIPLOMA: "#10b981",        // أخضر
-  HIGHER_DIPLOMA: "#f59e0b", // برتقالي
-  MASTERS: "#8b5cf6",        // بنفسجي
-  PHD: "#ef4444",            // أحمر
-  BOARD: "#06b6d4",          // سماوي
+  BACHELORS: "#2563EB",
+  DIPLOMA: "#10b981",
+  HIGHER_DIPLOMA: "#f59e0b",
+  MASTERS: "#8b5cf6",
+  PHD: "#ef4444",
+  BOARD: "#06b6d4",
 };
 
 export function DegreesDistributionChart({
@@ -43,18 +43,15 @@ export function DegreesDistributionChart({
     setMounted(true);
   }, []);
 
-  // حساب التوزيع
   const distribution = degrees.reduce((acc, degree) => {
     const label = degreeLabels[degree.degree] || degree.degree;
     acc[label] = (acc[label] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  // تحويل إلى مصفوفة للرسم البياني
   const chartData = Object.entries(distribution).map(([name, value]) => {
-    const degreeType = Object.keys(degreeLabels).find(
-      (key) => degreeLabels[key] === name
-    ) || name;
+    const degreeType =
+      Object.keys(degreeLabels).find((key) => degreeLabels[key] === name) || name;
     return {
       name,
       value,
@@ -66,13 +63,13 @@ export function DegreesDistributionChart({
 
   if (chartData.length === 0 || totalDegrees === 0) {
     return (
-      <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5 md:p-6">
-        <CardHeader className="pb-3 px-0">
-          <CardTitle className="text-base font-semibold text-gray-900">
+      <Card className="rounded-xl md:rounded-2xl border border-slate-200 bg-white shadow-sm p-3 md:p-5 md:p-6 gap-0 overflow-hidden">
+        <CardHeader className="pb-2 md:pb-3 px-0 pt-0">
+          <CardTitle className="text-sm md:text-base font-semibold text-gray-900">
             توزيع الشهادات حسب الدرجة
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="px-0 pb-0">
           <EmptyChartState type="pie" />
         </CardContent>
       </Card>
@@ -80,16 +77,15 @@ export function DegreesDistributionChart({
   }
 
   return (
-    <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5 md:p-6">
-      <CardHeader className="pb-4 px-0">
-        <CardTitle className="text-base font-semibold text-gray-900">
+    <Card className="rounded-xl md:rounded-2xl border border-slate-200 bg-white shadow-sm p-3 md:p-5 md:p-6 gap-0 overflow-hidden">
+      <CardHeader className="pb-2.5 md:pb-4 px-0 pt-0">
+        <CardTitle className="text-sm md:text-base font-semibold text-gray-900">
           توزيع الشهادات حسب الدرجة
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-          {/* الرسم البياني */}
-          <div style={{ height: "280px" }} className="relative">
+      <CardContent className="px-0 pb-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 items-center">
+          <div className="h-[200px] md:h-[280px] relative">
             {mounted ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={160}>
                 <RechartsPieChart>
@@ -97,8 +93,8 @@ export function DegreesDistributionChart({
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={70}
-                    outerRadius={100}
+                    innerRadius={58}
+                    outerRadius={84}
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -124,35 +120,33 @@ export function DegreesDistributionChart({
             ) : (
               <div className="w-full h-full" />
             )}
-            {/* رقم إجمالي الشهادات في الوسط */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">
+                <div className="text-2xl md:text-3xl font-bold text-gray-900">
                   {totalDegrees}
                 </div>
-                <div className="text-xs text-slate-500 mt-1">إجمالي الشهادات</div>
+                <div className="text-[10px] md:text-xs text-slate-500 mt-0.5 md:mt-1">
+                  إجمالي الشهادات
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Chips Legend */}
-          <div className="space-y-2.5">
+          <div className="flex flex-wrap gap-1.5 md:block md:space-y-2.5">
             {chartData.map((item, index) => {
               const percentage = ((item.value / totalDegrees) * 100).toFixed(1);
               return (
                 <div
                   key={index}
-                  className="inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50/50 text-sm"
+                  className="inline-flex items-center gap-1.5 md:gap-2.5 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-slate-200 bg-slate-50/50 text-[11px] md:text-sm"
                 >
                   <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
                   <span className="text-gray-700 font-medium">{item.name}</span>
-                  <span className="text-slate-600 font-semibold">
-                    {item.value}
-                  </span>
-                  <span className="text-slate-500 text-xs">
+                  <span className="text-slate-600 font-semibold">{item.value}</span>
+                  <span className="text-slate-500 text-[10px] md:text-xs">
                     ({percentage}%)
                   </span>
                 </div>

@@ -98,6 +98,14 @@ export async function register(formData: FormData) {
       },
     });
 
+    // إنشاء رابط السيرة العامة من الاسم الإنجليزي (للفهرسة والمشاركة)
+    try {
+      const { ensureUserProfileSlug } = await import("@/lib/cv/slug");
+      await ensureUserProfileSlug(newUser.id);
+    } catch (slugError) {
+      console.error("[Server Action] Failed to create profile slug:", slugError);
+    }
+
     // إرجاع success بدلاً من redirect مباشرة
     console.log("[Server Action] User created successfully:", newUser.id);
     return {

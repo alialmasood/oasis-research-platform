@@ -42,32 +42,37 @@ export function ChartsPublications({ data }: ChartsPublicationsProps) {
   }, []);
 
   if (!mounted) {
-    return <div className="rounded-2xl border border-slate-100 bg-white shadow-lg h-[280px]" />;
+    return (
+      <>
+        <div className="md:hidden rounded-xl border border-slate-100 bg-white shadow-sm h-[168px]" />
+        <div className="hidden md:block rounded-2xl border border-slate-100 bg-white shadow-lg h-[280px]" />
+      </>
+    );
   }
 
   return (
     <SectionCard title="تحليل النشر العلمي" description="النشر عبر السنوات والجهات والتصنيف">
       {data.yearly.length === 0 ? (
-        <div className="text-sm text-slate-500">لم يتم تسجيل مشاركات في هذه الفترة.</div>
+        <div className="text-xs md:text-sm text-slate-500">لم يتم تسجيل مشاركات في هذه الفترة.</div>
       ) : (
-        <div className="space-y-4">
-          <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        <div className="space-y-2 md:space-y-4">
+          <div className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 md:px-3 md:py-2 text-[10px] md:text-sm text-slate-600 line-clamp-2 md:line-clamp-none">
             نسبة النشر المحلي/العالمي: {localPct}% محلي — {internationalPct}% عالمي · أفضل جهة نشر: {topVenue}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
+          <div className="grid grid-cols-2 gap-1.5 md:gap-3 lg:grid-cols-4">
+            <div className="rounded-lg border border-slate-100 px-2 py-1.5 md:px-3 md:py-2 text-[10px] md:text-sm min-h-[48px] md:min-h-0">
               متوسط النشر بالسنة: {data.averagePerYear}
             </div>
-            <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
+            <div className="rounded-lg border border-slate-100 px-2 py-1.5 md:px-3 md:py-2 text-[10px] md:text-sm min-h-[48px] md:min-h-0">
               سنوات الذروة: {data.peakYears.length > 0 ? data.peakYears.join("، ") : "—"}
             </div>
-            <div className="rounded-lg border border-slate-100 px-3 py-2 text-sm">
+            <div className="rounded-lg border border-slate-100 px-2 py-1.5 md:px-3 md:py-2 text-[10px] md:text-sm min-h-[48px] md:min-h-0 col-span-2 lg:col-span-1">
               التصنيف: {data.scopeShares.map((s) => `${s.name}: ${s.value}`).join(" — ") || "—"}
             </div>
           </div>
 
-          <div className="h-[220px]">
-            <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+          <div className="h-[132px] md:h-[220px]">
+            <ResponsiveContainer width="100%" height="100%" minHeight={120}>
               <LineChart data={data.yearly} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.15} />
                 <XAxis dataKey="year" tick={{ fill: "#6b7280", fontSize: 12 }} />
@@ -85,9 +90,9 @@ export function ChartsPublications({ data }: ChartsPublicationsProps) {
             </ResponsiveContainer>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-            <div className="h-[240px]">
-              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+          <div className="grid gap-2 md:gap-4 lg:grid-cols-[2fr_1fr]">
+            <div className="h-[132px] md:h-[240px]">
+              <ResponsiveContainer width="100%" height="100%" minHeight={120}>
                 <BarChart data={data.topVenues} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.15} />
                   <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 10 }} interval={0} />
@@ -104,9 +109,9 @@ export function ChartsPublications({ data }: ChartsPublicationsProps) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="h-[240px]">
+            <div className="h-[120px] md:h-[240px]">
               {data.scopeShares.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={110}>
                   <PieChart>
                     <Pie
                       data={data.scopeShares}
@@ -123,7 +128,7 @@ export function ChartsPublications({ data }: ChartsPublicationsProps) {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="text-sm text-slate-500">لا يتوفر تصنيف محلي/إقليمي/عالمي.</div>
+                <div className="text-[10px] md:text-sm text-slate-500">لا يتوفر تصنيف محلي/إقليمي/عالمي.</div>
               )}
             </div>
           </div>

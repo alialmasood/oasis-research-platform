@@ -23,9 +23,9 @@ function safeParseDate(value?: string) {
 
 function SectionLabel({ title, description }: { title: string; description: string }) {
   return (
-    <div className="space-y-1">
-      <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
-      <p className="text-xs text-slate-500">{description}</p>
+    <div className="space-y-0.5 md:space-y-1">
+      <h2 className="text-xs md:text-sm font-semibold text-slate-900">{title}</h2>
+      <p className="hidden md:block text-xs text-slate-500">{description}</p>
     </div>
   );
 }
@@ -75,11 +75,13 @@ export default async function ResearcherAnalyticsPage({
   const payload = await getAnalyticsPayload(user.id, filters);
 
   return (
-    <div className="space-y-6 overflow-x-hidden">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1 min-w-0">
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">التحليلات الزمنية</h1>
-          <p className="text-sm text-slate-500">
+    <div className="space-y-3 md:space-y-6 overflow-x-hidden">
+      <div className="flex items-start justify-between gap-2 md:gap-4">
+        <div className="space-y-0.5 md:space-y-1 min-w-0">
+          <h1 className="text-base md:text-2xl font-semibold text-slate-900 leading-snug">
+            التحليلات الزمنية
+          </h1>
+          <p className="hidden md:block text-sm text-slate-500">
             ملخص ذكي أولًا، ثم مؤشرات رقمية، ثم تفاصيل الرسوم حسب نوع النشاط.
           </p>
         </div>
@@ -113,12 +115,12 @@ export default async function ResearcherAnalyticsPage({
         <InsightsPanel insights={payload.insights} />
       </div>
 
-      <div id="kpis" className="space-y-3">
+      <div id="kpis" className="space-y-2 md:space-y-3">
         <SectionLabel title="المؤشرات الرئيسية" description="أرقام سريعة تلخّص نشاطك في الفترة المحددة." />
         <KpiCards kpis={payload.kpis} />
       </div>
 
-      <div id="charts" className="space-y-5">
+      <div id="charts" className="space-y-3 md:space-y-5">
         <SectionLabel
           title="الرسوم والتفاصيل"
           description="ابدأ بالاتجاه العام، ثم وزّع النظر على أنواع النشاط والأداء الزمني."
@@ -126,12 +128,12 @@ export default async function ResearcherAnalyticsPage({
 
         <ChartsOverview timeline={payload.timeline} />
 
-        <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+        <div className="grid gap-2 md:gap-4 grid-cols-1 lg:grid-cols-2 lg:items-stretch">
           <ChartsActivities timeline={payload.timeline} />
           <ChartsPerformance data={payload.performance} />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+        <div className="grid gap-2 md:gap-4 grid-cols-1 lg:grid-cols-2 lg:items-stretch">
           <ChartsConferences data={payload.conferences} />
           <ChartsPublications data={payload.publications} />
         </div>

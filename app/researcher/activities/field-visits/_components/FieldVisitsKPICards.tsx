@@ -80,57 +80,115 @@ export function useFieldVisitsStats(items: FieldVisit[]): FieldVisitsStats {
 }
 
 export function FieldVisitsKPICards({ stats }: { stats: FieldVisitsStats }) {
+  const mobileItems = [
+    {
+      key: "total",
+      label: "الإجمالي",
+      value: String(stats.total),
+      icon: MapPin,
+      softBg: "bg-blue-50",
+      softText: "text-blue-600",
+    },
+    {
+      key: "points",
+      label: "الدرجة / 30",
+      value: String(stats.totalPoints),
+      icon: Award,
+      softBg: "bg-emerald-50",
+      softText: "text-emerald-600",
+    },
+    {
+      key: "last12",
+      label: "آخر 12 شهر",
+      value: String(stats.last12Months),
+      icon: Calendar,
+      softBg: "bg-purple-50",
+      softText: "text-purple-600",
+    },
+    {
+      key: "field",
+      label: "زيارات ميدانية",
+      value: String(stats.fieldVisitCount),
+      icon: Target,
+      softBg: "bg-amber-50",
+      softText: "text-amber-600",
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      <Card className="border border-slate-100 border-r-4 border-r-blue-500 bg-white shadow-lg min-h-[92px]">
-        <CardContent className="p-4 h-full flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="bg-blue-500/10 p-2 rounded-lg flex-shrink-0">
-              <MapPin className="h-4 w-4 text-blue-600" />
+    <>
+      <div className="grid grid-cols-2 gap-2 md:hidden">
+        {mobileItems.map(({ key, label, value, icon: Icon, softBg, softText }) => (
+          <div
+            key={key}
+            className="h-[64px] rounded-xl border border-slate-100 bg-white px-2.5 py-2 min-w-0 shadow-sm flex items-center"
+          >
+            <div className="flex items-center gap-2 min-w-0 w-full">
+              <div className={`h-8 w-8 rounded-lg ${softBg} flex items-center justify-center shrink-0`}>
+                <Icon className={`h-3.5 w-3.5 ${softText}`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold tabular-nums text-gray-900 leading-none truncate">
+                  {value}
+                </div>
+                <p className="mt-1 text-[10px] text-slate-500 leading-tight truncate">{label}</p>
+              </div>
             </div>
-            <div className="text-xl md:text-2xl font-black text-gray-900">{stats.total}</div>
           </div>
-          <p className="text-xs text-slate-500 leading-tight">إجمالي السجلات</p>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
 
-      <Card className="border border-slate-100 border-r-4 border-r-emerald-500 bg-white shadow-lg min-h-[92px]">
-        <CardContent className="p-4 h-full flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="bg-emerald-500/10 p-2 rounded-lg flex-shrink-0">
-              <Award className="h-4 w-4 text-emerald-600" />
+      <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <Card className="border border-slate-100 border-r-4 border-r-blue-500 bg-white shadow-lg min-h-[92px]">
+          <CardContent className="p-4 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="bg-blue-500/10 p-2 rounded-lg flex-shrink-0">
+                <MapPin className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="text-xl md:text-2xl font-black text-gray-900">{stats.total}</div>
             </div>
-            <div className="text-xl md:text-2xl font-black text-gray-900">
-              {stats.totalPoints} / {MAX_SECTION_POINTS}
-            </div>
-          </div>
-          <p className="text-xs text-slate-500 leading-tight">الدرجة المحسوبة (الحد الأقصى 30)</p>
-        </CardContent>
-      </Card>
+            <p className="text-xs text-slate-500 leading-tight">إجمالي السجلات</p>
+          </CardContent>
+        </Card>
 
-      <Card className="border border-slate-100 border-r-4 border-r-purple-500 bg-white shadow-lg min-h-[92px]">
-        <CardContent className="p-4 h-full flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="bg-purple-500/10 p-2 rounded-lg flex-shrink-0">
-              <Calendar className="h-4 w-4 text-purple-600" />
+        <Card className="border border-slate-100 border-r-4 border-r-emerald-500 bg-white shadow-lg min-h-[92px]">
+          <CardContent className="p-4 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="bg-emerald-500/10 p-2 rounded-lg flex-shrink-0">
+                <Award className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div className="text-xl md:text-2xl font-black text-gray-900">
+                {stats.totalPoints} / {MAX_SECTION_POINTS}
+              </div>
             </div>
-            <div className="text-xl md:text-2xl font-black text-gray-900">{stats.last12Months}</div>
-          </div>
-          <p className="text-xs text-slate-500 leading-tight">آخر 12 شهر</p>
-        </CardContent>
-      </Card>
+            <p className="text-xs text-slate-500 leading-tight">الدرجة المحسوبة (الحد الأقصى 30)</p>
+          </CardContent>
+        </Card>
 
-      <Card className="border border-slate-100 border-r-4 border-r-amber-500 bg-white shadow-lg min-h-[92px]">
-        <CardContent className="p-4 h-full flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="bg-amber-500/10 p-2 rounded-lg flex-shrink-0">
-              <Target className="h-4 w-4 text-amber-600" />
+        <Card className="border border-slate-100 border-r-4 border-r-purple-500 bg-white shadow-lg min-h-[92px]">
+          <CardContent className="p-4 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="bg-purple-500/10 p-2 rounded-lg flex-shrink-0">
+                <Calendar className="h-4 w-4 text-purple-600" />
+              </div>
+              <div className="text-xl md:text-2xl font-black text-gray-900">{stats.last12Months}</div>
             </div>
-            <div className="text-xl md:text-2xl font-black text-gray-900">{stats.fieldVisitCount}</div>
-          </div>
-          <p className="text-xs text-slate-500 leading-tight">زيارات ميدانية (12 درجة)</p>
-        </CardContent>
-      </Card>
-    </div>
+            <p className="text-xs text-slate-500 leading-tight">آخر 12 شهر</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-slate-100 border-r-4 border-r-amber-500 bg-white shadow-lg min-h-[92px]">
+          <CardContent className="p-4 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="bg-amber-500/10 p-2 rounded-lg flex-shrink-0">
+                <Target className="h-4 w-4 text-amber-600" />
+              </div>
+              <div className="text-xl md:text-2xl font-black text-gray-900">{stats.fieldVisitCount}</div>
+            </div>
+            <p className="text-xs text-slate-500 leading-tight">زيارات ميدانية (12 درجة)</p>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

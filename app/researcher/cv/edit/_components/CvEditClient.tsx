@@ -563,47 +563,101 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
   const totalSections = completionData.totalSections;
   const completionPercentage = completionData.percentage;
 
+  const fieldLabelClass =
+    "text-[11px] md:text-xs font-medium text-slate-600 mb-1 block text-right";
+  const fieldControlClass =
+    "h-9 md:h-11 w-full rounded-lg md:rounded-xl border border-slate-200 bg-white px-2.5 md:px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right";
+  const sectionCardClass = (sectionId: string) =>
+    `rounded-xl md:rounded-2xl border border-slate-200 bg-white p-3 md:p-5 relative gap-0 overflow-hidden ${
+      getSectionStatus(sectionId) === "completed" ? "border-t-2 border-green-400" : ""
+    }`;
+
   return (
-    <div className="min-h-screen bg-[#F5F7FB]">
-      <div className="max-w-7xl mx-auto px-6 py-6">
+    <div className="min-h-screen bg-[#F5F7FB] md:bg-[#F5F7FB]">
+      <div className="max-w-7xl mx-auto px-0 md:px-6 py-3 md:py-6 min-w-0">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">تحرير السيرة الذاتية</h1>
-              <p className="text-sm text-gray-500 mt-1">حدّث معلوماتك الشخصية والمهنية</p>
+        <div className="mb-3 md:mb-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base md:text-2xl font-bold text-gray-900 truncate">
+                تحرير السيرة الذاتية
+              </h1>
+              <p className="text-[11px] md:text-sm text-gray-500 mt-0.5 md:mt-1 line-clamp-1">
+                حدّث معلوماتك الشخصية والمهنية
+              </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => router.push("/researcher/cv")}
-                className="rounded-xl"
-              >
-                <ArrowRight className="h-4 w-4 ml-2" />
-                رجوع
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/researcher/cv")}
+              className="rounded-lg md:rounded-xl h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
+            >
+              <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+              رجوع
+            </Button>
           </div>
         </div>
 
         {/* Completion Card */}
-        <Card className="rounded-2xl bg-slate-50 border border-slate-200 p-4 mb-6">
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-900">اكتمال السيرة الذاتية</h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">
-                  {completedSections} من {totalSections} أقسام مكتملة
-                </span>
-                <span className="text-sm font-semibold text-blue-600">{completionPercentage}%</span>
-              </div>
+        <Card className="rounded-xl md:rounded-2xl bg-slate-50 border border-slate-200 p-3 md:p-4 mb-3 md:mb-6 gap-0">
+          <div className="space-y-2 md:space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-xs md:text-sm font-semibold text-slate-900">
+                اكتمال السيرة الذاتية
+              </h3>
+              <span className="text-sm md:text-sm font-bold tabular-nums text-blue-600">
+                {completionPercentage}%
+              </span>
+            </div>
+            <div className="space-y-1.5 md:space-y-2">
+              <p className="text-[11px] md:text-sm text-slate-600">
+                {completedSections} من {totalSections} أقسام مكتملة
+              </p>
               <Progress value={completionPercentage} className="h-2" />
             </div>
           </div>
         </Card>
 
         <form onSubmit={handleSubmit} dir="rtl">
-          <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
+          {/* موبايل: شريط أقسام أفقي */}
+          <div className="lg:hidden mb-3 -mx-0 overflow-x-auto">
+            <div className="flex gap-1.5 min-w-max pb-1">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const status = getSectionStatus(item.id);
+                const isActive = status === "active";
+                const isCompleted = status === "completed";
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveSection(item.id);
+                      document
+                        .getElementById(`cv-section-${item.id}`)
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-medium border transition-colors shrink-0 ${
+                      isActive
+                        ? "bg-blue-50 border-blue-200 text-blue-700"
+                        : isCompleted
+                          ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                          : "bg-white border-slate-200 text-slate-500"
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-3 w-3" />
+                    ) : (
+                      <Icon className="h-3 w-3" />
+                    )}
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3 md:gap-8">
             {/* Left Sidebar - Navigation */}
             <aside className="hidden lg:block">
               <div className="rounded-2xl border border-slate-200 bg-white p-3 space-y-1 sticky top-6">
@@ -612,7 +666,7 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                   const status = getSectionStatus(item.id);
                   const isActive = status === "active";
                   const isCompleted = status === "completed";
-                  
+
                   return (
                     <button
                       key={item.id}
@@ -622,15 +676,17 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                         isActive
                           ? "bg-blue-50 border border-blue-200 shadow-sm font-semibold text-blue-700"
                           : isCompleted
-                          ? "bg-green-50/50 border border-green-100 text-green-700 hover:bg-green-50"
-                          : "bg-transparent text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+                            ? "bg-green-50/50 border border-green-100 text-green-700 hover:bg-green-50"
+                            : "bg-transparent text-slate-400 hover:bg-slate-50 hover:text-slate-600"
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         {isCompleted ? (
                           <Check className="h-4 w-4 text-green-600" />
                         ) : (
-                          <Icon className={`h-4 w-4 ${isActive ? "text-blue-700" : "text-slate-400"}`} />
+                          <Icon
+                            className={`h-4 w-4 ${isActive ? "text-blue-700" : "text-slate-400"}`}
+                          />
                         )}
                         <span>{item.label}</span>
                       </div>
@@ -641,27 +697,31 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
             </aside>
 
             {/* Right Content - Form Sections */}
-            <div className="space-y-5">
+            <div className="space-y-3 md:space-y-5 min-w-0">
               {/* Card 1: معلومات شخصية */}
-              <Card className={`rounded-2xl border border-slate-200 bg-white p-5 relative ${getSectionStatus("personal") === "completed" ? "border-t-2 border-green-400" : ""}`}>
+              <Card
+                id="cv-section-personal"
+                className={sectionCardClass("personal")}
+              >
                 {getSectionStatus("personal") === "completed" && (
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-2.5 left-2.5 md:top-3 md:left-3">
                     <Check className="h-4 w-4 text-green-600" />
                   </div>
                 )}
-                <h3 className="text-sm font-semibold text-slate-900 mb-1">معلومات شخصية</h3>
-                <p className="text-xs text-slate-500 mt-1 mb-4">تُستخدم هذه المعلومات للأغراض الإحصائية فقط ولن تظهر للزوار.</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="gender" className="text-xs font-medium text-slate-600 mb-1 block text-right">
+                <h3 className="text-xs md:text-sm font-semibold text-slate-900 mb-0.5 md:mb-1">
+                  معلومات شخصية
+                </h3>
+                <p className="text-[11px] md:text-xs text-slate-500 mt-0.5 md:mt-1 mb-3 md:mb-4 leading-snug">
+                  تُستخدم هذه المعلومات للأغراض الإحصائية فقط ولن تظهر للزوار.
+                </p>
+
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-2.5 md:gap-4">
+                  <div className="space-y-1 md:space-y-2 min-w-0">
+                    <Label htmlFor="gender" className={fieldLabelClass}>
                       الجنس
                     </Label>
                     <Select value={gender} onValueChange={handleGenderChange}>
-                      <SelectTrigger
-                        id="gender"
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
-                      >
+                      <SelectTrigger id="gender" className={fieldControlClass}>
                         <SelectValue placeholder="اختر الجنس" />
                       </SelectTrigger>
                       <SelectContent>
@@ -674,15 +734,15 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="nationality" className="text-xs font-medium text-slate-600 mb-1 block text-right">
+                  <div className="space-y-1 md:space-y-2 min-w-0">
+                    <Label htmlFor="nationality" className={fieldLabelClass}>
                       القومية
                     </Label>
                     <Select value={nationality} onValueChange={handleNationalityChange}>
                       <SelectTrigger
                         id="nationality"
                         name="nationality"
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
+                        className={fieldControlClass}
                       >
                         <SelectValue placeholder="اختر القومية" />
                       </SelectTrigger>
@@ -696,27 +756,29 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                     </Select>
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="dateOfBirth" className="text-xs font-medium text-slate-600 mb-1 block text-right">
+                  <div className="space-y-1 md:space-y-2 col-span-2 min-w-0">
+                    <Label htmlFor="dateOfBirth" className={fieldLabelClass}>
                       تاريخ الميلاد
                     </Label>
-                      <Input
-                        id="dateOfBirth"
-                        name="dateOfBirth"
-                        type="date"
-                        max={new Date().toISOString().split("T")[0]}
-                        value={formValues.dateOfBirth}
-                        onChange={(e) => setFormValues((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
-                        dir="ltr"
-                      />
-                    <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      type="date"
+                      max={new Date().toISOString().split("T")[0]}
+                      value={formValues.dateOfBirth}
+                      onChange={(e) =>
+                        setFormValues((prev) => ({ ...prev, dateOfBirth: e.target.value }))
+                      }
+                      className={`${fieldControlClass} text-left`}
+                      dir="ltr"
+                    />
+                    <div className="flex items-center gap-2 mt-1.5 md:mt-2">
                       {age !== null && (
-                        <Badge className="inline-flex rounded-full bg-slate-100 text-slate-700 text-xs px-3 py-1">
+                        <Badge className="inline-flex rounded-full bg-slate-100 text-slate-700 text-[10px] md:text-xs px-2 md:px-3 py-0.5 md:py-1">
                           العمر: {age} سنة
                         </Badge>
                       )}
-                      <p className="text-[11px] text-slate-400 leading-4 text-right">
+                      <p className="text-[10px] md:text-[11px] text-slate-400 leading-4 text-right">
                         {age === null ? "سيتم حساب العمر تلقائياً" : ""}
                       </p>
                     </div>
@@ -725,94 +787,109 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
               </Card>
 
               {/* Card 2: عنوان السكن */}
-              <Card className={`rounded-2xl border border-slate-200 bg-white p-5 relative ${getSectionStatus("address") === "completed" ? "border-t-2 border-green-400" : ""}`}>
+              <Card id="cv-section-address" className={sectionCardClass("address")}>
                 {getSectionStatus("address") === "completed" && (
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-2.5 left-2.5 md:top-3 md:left-3">
                     <Check className="h-4 w-4 text-green-600" />
                   </div>
                 )}
-                <h3 className="text-sm font-semibold text-slate-900 mb-1">عنوان السكن</h3>
-                <p className="text-xs text-slate-500 mt-1 mb-4">تساعد هذه البيانات في التحليل الجغرافي للباحثين.</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="province" className="text-xs font-medium text-slate-600 mb-1 block text-right">
+                <h3 className="text-xs md:text-sm font-semibold text-slate-900 mb-0.5 md:mb-1">
+                  عنوان السكن
+                </h3>
+                <p className="text-[11px] md:text-xs text-slate-500 mt-0.5 md:mt-1 mb-3 md:mb-4 leading-snug">
+                  تساعد هذه البيانات في التحليل الجغرافي للباحثين.
+                </p>
+
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-2.5 md:gap-4">
+                  <div className="space-y-1 md:space-y-2 min-w-0">
+                    <Label htmlFor="province" className={fieldLabelClass}>
                       المحافظة
                     </Label>
-                      <Input
-                        id="province"
-                        name="province"
-                        defaultValue={profileCv?.province || ""}
-                        onChange={(e) => setFormValues((prev) => ({ ...prev, province: e.target.value }))}
-                        placeholder="مثال: البصرة"
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
-                      />
+                    <Input
+                      id="province"
+                      name="province"
+                      defaultValue={profileCv?.province || ""}
+                      onChange={(e) =>
+                        setFormValues((prev) => ({ ...prev, province: e.target.value }))
+                      }
+                      placeholder="مثال: البصرة"
+                      className={fieldControlClass}
+                    />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="district" className="text-xs font-medium text-slate-600 mb-1 block text-right">
+                  <div className="space-y-1 md:space-y-2 min-w-0">
+                    <Label htmlFor="district" className={fieldLabelClass}>
                       القضاء
                     </Label>
-                      <Input
-                        id="district"
-                        name="district"
-                        defaultValue={profileCv?.district || ""}
-                        onChange={(e) => setFormValues((prev) => ({ ...prev, district: e.target.value }))}
-                        placeholder="مثال: قضاء البصرة"
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
-                      />
+                    <Input
+                      id="district"
+                      name="district"
+                      defaultValue={profileCv?.district || ""}
+                      onChange={(e) =>
+                        setFormValues((prev) => ({ ...prev, district: e.target.value }))
+                      }
+                      placeholder="مثال: قضاء البصرة"
+                      className={fieldControlClass}
+                    />
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="area" className="text-xs font-medium text-slate-600 mb-1 block text-right">
+                  <div className="space-y-1 md:space-y-2 col-span-2 min-w-0">
+                    <Label htmlFor="area" className={fieldLabelClass}>
                       المنطقة
                     </Label>
-                      <Input
-                        id="area"
-                        name="area"
-                        defaultValue={profileCv?.area || ""}
-                        onChange={(e) => setFormValues((prev) => ({ ...prev, area: e.target.value }))}
-                        placeholder="مثال: منطقة كذا"
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
-                      />
+                    <Input
+                      id="area"
+                      name="area"
+                      defaultValue={profileCv?.area || ""}
+                      onChange={(e) =>
+                        setFormValues((prev) => ({ ...prev, area: e.target.value }))
+                      }
+                      placeholder="مثال: منطقة كذا"
+                      className={fieldControlClass}
+                    />
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="address" className="text-xs font-medium text-slate-600 mb-1 block text-right">
+                  <div className="space-y-1 md:space-y-2 col-span-2 min-w-0">
+                    <Label htmlFor="address" className={fieldLabelClass}>
                       تفاصيل العنوان
                     </Label>
-                      <Input
-                        id="address"
-                        name="address"
-                        defaultValue={profileCv?.address || ""}
-                        onChange={(e) => setFormValues((prev) => ({ ...prev, address: e.target.value }))}
-                        placeholder="مثال: شارع كذا، مجمع كذا"
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
-                      />
+                    <Input
+                      id="address"
+                      name="address"
+                      defaultValue={profileCv?.address || ""}
+                      onChange={(e) =>
+                        setFormValues((prev) => ({ ...prev, address: e.target.value }))
+                      }
+                      placeholder="مثال: شارع كذا، مجمع كذا"
+                      className={fieldControlClass}
+                    />
                   </div>
                 </div>
               </Card>
 
               {/* Card 3: اللغات */}
-              <Card className={`rounded-2xl border border-slate-200 bg-white p-5 relative ${getSectionStatus("languages") === "completed" ? "border-t-2 border-green-400" : ""}`}>
+              <Card id="cv-section-languages" className={sectionCardClass("languages")}>
                 {getSectionStatus("languages") === "completed" && (
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-2.5 left-2.5 md:top-3 md:left-3">
                     <Check className="h-4 w-4 text-green-600" />
                   </div>
                 )}
-                <h3 className="text-sm font-semibold text-slate-900 mb-1">اللغات</h3>
-                <p className="text-xs text-slate-500 mt-1 mb-4">أضف اللغات التي تتقنها مع تحديد المستوى.</p>
-                
-                {/* Add Language Form */}
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_140px_100px] gap-3 mb-4">
+                <h3 className="text-xs md:text-sm font-semibold text-slate-900 mb-0.5 md:mb-1">
+                  اللغات
+                </h3>
+                <p className="text-[11px] md:text-xs text-slate-500 mt-0.5 md:mt-1 mb-3 md:mb-4 leading-snug">
+                  أضف اللغات التي تتقنها مع تحديد المستوى.
+                </p>
+
+                <div className="grid grid-cols-2 md:grid-cols-[1fr_140px_100px] gap-2 md:gap-3 mb-3 md:mb-4">
                   <Input
                     placeholder="اسم اللغة"
                     value={languageName}
                     onChange={(e) => setLanguageName(e.target.value)}
-                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
+                    className={`${fieldControlClass} col-span-2 md:col-span-1`}
                   />
                   <Select value={languageLevel} onValueChange={setLanguageLevel}>
-                    <SelectTrigger className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right">
+                    <SelectTrigger className={fieldControlClass}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -827,30 +904,30 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                     type="button"
                     onClick={handleAddLanguage}
                     disabled={isPending || !languageName.trim()}
-                    className="h-11 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    className="h-9 md:h-11 rounded-lg md:rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs md:text-sm"
                   >
-                    <Plus className="h-4 w-4 ml-2" />
+                    <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
                     إضافة
                   </Button>
                 </div>
 
-                {/* Languages Chips */}
                 {profileCv?.languages && profileCv.languages.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 md:gap-2">
                     {profileCv.languages.map((lang) => (
                       <div
                         key={lang.id}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-sm group hover:bg-slate-100 transition-colors"
+                        className="inline-flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-slate-200 bg-slate-50 text-[11px] md:text-sm group hover:bg-slate-100 transition-colors max-w-full"
                       >
-                        <span className="font-medium text-gray-900">{lang.name}</span>
-                        <Badge variant="outline" className="text-xs bg-white">
+                        <span className="font-medium text-gray-900 truncate">{lang.name}</span>
+                        <Badge variant="outline" className="text-[10px] md:text-xs bg-white shrink-0">
                           {levelLabels[lang.level] || lang.level}
                         </Badge>
                         <button
                           type="button"
                           onClick={() => handleDeleteLanguage(lang.id)}
                           disabled={isPending}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 ml-1"
+                          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 ml-0.5 shrink-0"
+                          aria-label="حذف اللغة"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -858,34 +935,41 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                     ))}
                   </div>
                 ) : (
-                  <div className="border-dashed border-slate-200 rounded-xl text-center py-6">
-                    <Languages className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-slate-700 mb-1">لم تتم إضافة عناصر بعد</p>
-                    <p className="text-xs text-slate-500">ابدأ بإضافة البيانات لتحسين ملفك البحثي</p>
+                  <div className="border border-dashed border-slate-200 rounded-xl text-center py-4 md:py-6">
+                    <Languages className="h-6 w-6 md:h-8 md:w-8 text-slate-300 mx-auto mb-1.5 md:mb-2" />
+                    <p className="text-xs md:text-sm font-medium text-slate-700 mb-0.5 md:mb-1">
+                      لم تتم إضافة عناصر بعد
+                    </p>
+                    <p className="text-[11px] md:text-xs text-slate-500">
+                      ابدأ بإضافة البيانات لتحسين ملفك البحثي
+                    </p>
                   </div>
                 )}
               </Card>
 
               {/* Card 4: المهارات */}
-              <Card className={`rounded-2xl border border-slate-200 bg-white p-5 relative ${getSectionStatus("skills") === "completed" ? "border-t-2 border-green-400" : ""}`}>
+              <Card id="cv-section-skills" className={sectionCardClass("skills")}>
                 {getSectionStatus("skills") === "completed" && (
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-2.5 left-2.5 md:top-3 md:left-3">
                     <Check className="h-4 w-4 text-green-600" />
                   </div>
                 )}
-                <h3 className="text-sm font-semibold text-slate-900 mb-1">المهارات</h3>
-                <p className="text-xs text-slate-500 mt-1 mb-4">أضف مهاراتك العلمية أو التقنية مع مستوى الإتقان.</p>
-                
-                {/* Add Skill Form */}
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_140px_100px] gap-3 mb-4">
+                <h3 className="text-xs md:text-sm font-semibold text-slate-900 mb-0.5 md:mb-1">
+                  المهارات
+                </h3>
+                <p className="text-[11px] md:text-xs text-slate-500 mt-0.5 md:mt-1 mb-3 md:mb-4 leading-snug">
+                  أضف مهاراتك العلمية أو التقنية مع مستوى الإتقان.
+                </p>
+
+                <div className="grid grid-cols-2 md:grid-cols-[1fr_140px_100px] gap-2 md:gap-3 mb-3 md:mb-4">
                   <Input
                     placeholder="اسم المهارة"
                     value={skillName}
                     onChange={(e) => setSkillName(e.target.value)}
-                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
+                    className={`${fieldControlClass} col-span-2 md:col-span-1`}
                   />
                   <Select value={skillLevel} onValueChange={setSkillLevel}>
-                    <SelectTrigger className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right">
+                    <SelectTrigger className={fieldControlClass}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -900,30 +984,30 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                     type="button"
                     onClick={handleAddSkill}
                     disabled={isPending || !skillName.trim()}
-                    className="h-11 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    className="h-9 md:h-11 rounded-lg md:rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs md:text-sm"
                   >
-                    <Plus className="h-4 w-4 ml-2" />
+                    <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
                     إضافة
                   </Button>
                 </div>
 
-                {/* Skills Chips */}
                 {profileCv?.skills && profileCv.skills.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 md:gap-2">
                     {profileCv.skills.map((skill) => (
                       <div
                         key={skill.id}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-sm group hover:bg-slate-100 transition-colors"
+                        className="inline-flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-slate-200 bg-slate-50 text-[11px] md:text-sm group hover:bg-slate-100 transition-colors max-w-full"
                       >
-                        <span className="font-medium text-gray-900">{skill.name}</span>
-                        <Badge variant="outline" className="text-xs bg-white">
+                        <span className="font-medium text-gray-900 truncate">{skill.name}</span>
+                        <Badge variant="outline" className="text-[10px] md:text-xs bg-white shrink-0">
                           {skillLevelLabels[skill.level] || skill.level}
                         </Badge>
                         <button
                           type="button"
                           onClick={() => handleDeleteSkill(skill.id)}
                           disabled={isPending}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 ml-1"
+                          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 ml-0.5 shrink-0"
+                          aria-label="حذف المهارة"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -931,127 +1015,136 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                     ))}
                   </div>
                 ) : (
-                  <div className="border-dashed border-slate-200 rounded-xl text-center py-6">
-                    <Code className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-slate-700 mb-1">لم تتم إضافة عناصر بعد</p>
-                    <p className="text-xs text-slate-500">ابدأ بإضافة البيانات لتحسين ملفك البحثي</p>
+                  <div className="border border-dashed border-slate-200 rounded-xl text-center py-4 md:py-6">
+                    <Code className="h-6 w-6 md:h-8 md:w-8 text-slate-300 mx-auto mb-1.5 md:mb-2" />
+                    <p className="text-xs md:text-sm font-medium text-slate-700 mb-0.5 md:mb-1">
+                      لم تتم إضافة عناصر بعد
+                    </p>
+                    <p className="text-[11px] md:text-xs text-slate-500">
+                      ابدأ بإضافة البيانات لتحسين ملفك البحثي
+                    </p>
                   </div>
                 )}
               </Card>
 
               {/* Card 5: الخبرات */}
-              <Card className={`rounded-2xl border border-slate-200 bg-white p-5 relative ${getSectionStatus("experiences") === "completed" ? "border-t-2 border-green-400" : ""}`}>
+              <Card id="cv-section-experiences" className={sectionCardClass("experiences")}>
                 {getSectionStatus("experiences") === "completed" && (
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-2.5 left-2.5 md:top-3 md:left-3">
                     <Check className="h-4 w-4 text-green-600" />
                   </div>
                 )}
-                <h3 className="text-sm font-semibold text-slate-900 mb-1">الخبرات</h3>
-                <p className="text-xs text-slate-500 mt-1 mb-4">أدخل خبراتك المهنية أو الأكاديمية بالترتيب الزمني.</p>
-                
-                {/* Add Experience Form */}
-                <div className="space-y-4 mb-4 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-slate-600 mb-1 block text-right">
-                        المسمى الوظيفي *
-                      </Label>
+                <h3 className="text-xs md:text-sm font-semibold text-slate-900 mb-0.5 md:mb-1">
+                  الخبرات
+                </h3>
+                <p className="text-[11px] md:text-xs text-slate-500 mt-0.5 md:mt-1 mb-3 md:mb-4 leading-snug">
+                  أدخل خبراتك المهنية أو الأكاديمية بالترتيب الزمني.
+                </p>
+
+                <div className="space-y-3 md:space-y-4 mb-3 md:mb-4 p-2.5 md:p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-2.5 md:gap-4">
+                    <div className="space-y-1 md:space-y-2 min-w-0">
+                      <Label className={fieldLabelClass}>المسمى الوظيفي *</Label>
                       <Input
                         placeholder="مثال: مطور برمجيات"
                         value={experienceTitle}
                         onChange={(e) => setExperienceTitle(e.target.value)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
+                        className={fieldControlClass}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-slate-600 mb-1 block text-right">
-                        الجهة *
-                      </Label>
+                    <div className="space-y-1 md:space-y-2 min-w-0">
+                      <Label className={fieldLabelClass}>الجهة *</Label>
                       <Input
                         placeholder="مثال: شركة XYZ"
                         value={experienceOrg}
                         onChange={(e) => setExperienceOrg(e.target.value)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
+                        className={fieldControlClass}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-slate-600 mb-1 block text-right">
-                        من *
-                      </Label>
+                    <div className="space-y-1 md:space-y-2 min-w-0">
+                      <Label className={fieldLabelClass}>من *</Label>
                       <Input
                         type="date"
                         max={new Date().toISOString().split("T")[0]}
                         value={experienceStartDate}
                         onChange={(e) => setExperienceStartDate(e.target.value)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                        className={`${fieldControlClass} text-left`}
                         dir="ltr"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-slate-600 mb-1 block text-right">
-                        إلى (اختياري)
-                      </Label>
+                    <div className="space-y-1 md:space-y-2 min-w-0">
+                      <Label className={fieldLabelClass}>إلى (اختياري)</Label>
                       <Input
                         type="date"
                         max={new Date().toISOString().split("T")[0]}
                         value={experienceEndDate}
                         onChange={(e) => setExperienceEndDate(e.target.value)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                        className={`${fieldControlClass} text-left`}
                         dir="ltr"
                       />
                     </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-xs font-medium text-slate-600 mb-1 block text-right">
-                        الوصف (اختياري)
-                      </Label>
+                    <div className="space-y-1 md:space-y-2 col-span-2 min-w-0">
+                      <Label className={fieldLabelClass}>الوصف (اختياري)</Label>
                       <Input
                         placeholder="وصف مختصر للخبرة..."
                         value={experienceDesc}
                         onChange={(e) => setExperienceDesc(e.target.value)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-right"
+                        className={fieldControlClass}
                       />
                     </div>
                   </div>
                   <Button
                     type="button"
                     onClick={handleAddExperience}
-                    disabled={isPending || !experienceTitle.trim() || !experienceOrg.trim() || !experienceStartDate}
-                    className="h-10 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    disabled={
+                      isPending ||
+                      !experienceTitle.trim() ||
+                      !experienceOrg.trim() ||
+                      !experienceStartDate
+                    }
+                    className="h-9 md:h-10 w-full md:w-auto rounded-lg md:rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs md:text-sm"
                   >
-                    <Plus className="h-4 w-4 ml-2" />
+                    <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
                     إضافة خبرة
                   </Button>
                 </div>
 
-                {/* Experiences List */}
                 {profileCv?.experiences && profileCv.experiences.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 md:space-y-3">
                     {profileCv.experiences.map((exp) => {
                       const startDate = new Date(exp.startDate);
                       const endDate = exp.endDate ? new Date(exp.endDate) : null;
                       return (
                         <div
                           key={exp.id}
-                          className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 group hover:bg-slate-100/50 transition-colors"
+                          className="p-2.5 md:p-4 rounded-xl border border-slate-200 bg-slate-50/50 group hover:bg-slate-100/50 transition-colors"
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="text-sm font-semibold text-gray-900 mb-1">{exp.title}</h4>
-                              <p className="text-xs text-slate-600 mb-2">{exp.organization}</p>
-                              <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs md:text-sm font-semibold text-gray-900 mb-0.5 md:mb-1">
+                                {exp.title}
+                              </h4>
+                              <p className="text-[11px] md:text-xs text-slate-600 mb-1 md:mb-2">
+                                {exp.organization}
+                              </p>
+                              <div className="flex items-center gap-2 text-[10px] md:text-xs text-slate-500">
                                 <span>
-                                  {startDate.getFullYear()} - {endDate ? endDate.getFullYear() : "حتى الآن"}
+                                  {startDate.getFullYear()} -{" "}
+                                  {endDate ? endDate.getFullYear() : "حتى الآن"}
                                 </span>
                               </div>
                               {exp.description && (
-                                <p className="text-xs text-slate-600 mt-2 leading-relaxed">{exp.description}</p>
+                                <p className="text-[11px] md:text-xs text-slate-600 mt-1.5 md:mt-2 leading-relaxed">
+                                  {exp.description}
+                                </p>
                               )}
                             </div>
                             <button
                               type="button"
                               onClick={() => handleDeleteExperience(exp.id)}
                               disabled={isPending}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 ml-2"
+                              className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 shrink-0"
+                              aria-label="حذف الخبرة"
                             >
                               <X className="h-4 w-4" />
                             </button>
@@ -1061,39 +1154,46 @@ export function CvEditClient({ initialProfileCv }: CvEditClientProps) {
                     })}
                   </div>
                 ) : (
-                  <div className="border-dashed border-slate-200 rounded-xl text-center py-6">
-                    <Briefcase className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-slate-700 mb-1">لم تتم إضافة عناصر بعد</p>
-                    <p className="text-xs text-slate-500">ابدأ بإضافة البيانات لتحسين ملفك البحثي</p>
+                  <div className="border border-dashed border-slate-200 rounded-xl text-center py-4 md:py-6">
+                    <Briefcase className="h-6 w-6 md:h-8 md:w-8 text-slate-300 mx-auto mb-1.5 md:mb-2" />
+                    <p className="text-xs md:text-sm font-medium text-slate-700 mb-0.5 md:mb-1">
+                      لم تتم إضافة عناصر بعد
+                    </p>
+                    <p className="text-[11px] md:text-xs text-slate-500">
+                      ابدأ بإضافة البيانات لتحسين ملفك البحثي
+                    </p>
                   </div>
                 )}
               </Card>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
+          {/* Footer — موبايل: شريط سفلي ثابت */}
+          <div className="mt-4 md:mt-8 pt-3 md:pt-6 border-t border-slate-200 flex justify-stretch md:justify-end gap-2 md:gap-3 sticky bottom-0 md:static bg-[#F5F7FB]/95 md:bg-transparent backdrop-blur md:backdrop-blur-none pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-0 z-10">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.push("/researcher/cv")}
               disabled={isPending}
-              className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              className="h-9 md:h-10 flex-1 md:flex-none px-3 md:px-4 rounded-lg md:rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs md:text-sm"
             >
               إلغاء
             </Button>
             <Button
               type="submit"
               disabled={isPending || !isDirty}
-              className="h-10 px-5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-9 md:h-10 flex-1 md:flex-none px-3 md:px-5 rounded-lg md:rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
             >
               {isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2 animate-spin" />
                   جاري الحفظ...
                 </>
               ) : (
-                "حفظ السيرة الذاتية"
+                <>
+                  <span className="md:hidden">حفظ</span>
+                  <span className="hidden md:inline">حفظ السيرة الذاتية</span>
+                </>
               )}
             </Button>
           </div>

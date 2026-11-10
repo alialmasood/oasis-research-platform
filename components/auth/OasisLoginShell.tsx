@@ -335,6 +335,10 @@ export function OasisLoginShell({ children }: OasisLoginShellProps) {
         >
           © {new Date().getFullYear()} جامعة البصرة
         </p>
+        {/* رابط للفهرسة فقط — غير ظاهر في الواجهة */}
+        <a href="/about/creator" className="sr-only">
+          مصمم ومبرمج ومبتكر منصة واحة الباحث: علي حسين مزهر المسعود — Ali Hussein Mezher Almasood
+        </a>
       </section>
 
       <section

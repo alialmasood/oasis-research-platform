@@ -21,20 +21,25 @@ model User {
   fullNameAr     String?   @map("full_name_ar")
   fullNameEn     String?   @map("full_name_en")
   phone          String?
-  
+
   academicTitle  String?   @map("academic_title")
   entity         String?
   department     String?   @map("department")
   generalSpecialization  String?  @map("general_specialization")  // التخصص العام
   specificSpecialization String?  @map("specific_specialization") // التخصص الدقيق
-  
+
   gender         String?   // ذكر / أنثى
   dateOfBirth    DateTime? @map("date_of_birth")
   employeeNumber String?   @map("employee_number")
   appointmentYear Int?     @map("appointment_year")
-  
+
+  /** رابط السيرة العامة: /cv/{profileSlug} من الاسم الإنجليزي */
+  profileSlug       String?  @unique @map("profile_slug")
+  /** تفعيل مشاهدة السيرة بدون تسجيل دخول */
+  cvPublicEnabled   Boolean  @default(true) @map("cv_public_enabled")
+
   role           String    @default("RESEARCHER")
-  
+
   departmentId   String?   @map("department_id")
   isActive       Boolean   @default(true) @map("is_active")
   sessionVersion Int       @default(0) @map("session_version")

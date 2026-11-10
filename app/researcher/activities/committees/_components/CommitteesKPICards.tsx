@@ -85,67 +85,121 @@ export function useCommitteesStats(committees: Committee[]): CommitteesStats {
 }
 
 export function CommitteesKPICards({ stats }: { stats: CommitteesStats }) {
+  const mobileItems = [
+    {
+      label: "الإجمالي",
+      value: String(stats.total),
+      icon: Users,
+      softBg: "bg-blue-50",
+      softText: "text-blue-600",
+    },
+    {
+      label: "آخر 12 شهر",
+      value: String(stats.last12Months),
+      icon: Calendar,
+      softBg: "bg-green-50",
+      softText: "text-green-600",
+    },
+    {
+      label: "كعضو لجنة",
+      value: String(stats.asMember),
+      icon: UserCheck,
+      softBg: "bg-purple-50",
+      softText: "text-purple-600",
+    },
+    {
+      label: "كرئيس لجنة",
+      value: String(stats.asChairperson),
+      icon: Crown,
+      softBg: "bg-amber-50",
+      softText: "text-amber-600",
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      {/* إجمالي اللجان */}
-      <Card className="border border-slate-100 border-r-4 border-r-blue-500 bg-white shadow-lg min-h-[92px]">
-        <CardContent className="p-4 h-full flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="bg-blue-500/10 p-2 rounded-lg flex-shrink-0">
-              <Users className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="text-xl md:text-2xl font-black text-gray-900">
-              {stats.total}
+    <>
+      <div className="grid grid-cols-2 gap-2 md:hidden">
+        {mobileItems.map(({ label, value, icon: Icon, softBg, softText }) => (
+          <div
+            key={label}
+            className="h-[64px] rounded-xl border border-slate-100 bg-white px-2.5 py-2 min-w-0 shadow-sm flex items-center"
+          >
+            <div className="flex items-center gap-2 min-w-0 w-full">
+              <div className={`h-8 w-8 rounded-lg ${softBg} flex items-center justify-center shrink-0`}>
+                <Icon className={`h-3.5 w-3.5 ${softText}`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold tabular-nums text-gray-900 leading-none truncate">
+                  {value}
+                </div>
+                <p className="mt-1 text-[10px] text-slate-500 leading-tight truncate">{label}</p>
+              </div>
             </div>
           </div>
-          <p className="text-xs text-slate-500 leading-tight">إجمالي اللجان</p>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
 
-      {/* آخر 12 شهر */}
-      <Card className="border border-slate-100 border-r-4 border-r-green-500 bg-white shadow-lg min-h-[92px]">
-        <CardContent className="p-4 h-full flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="bg-green-500/10 p-2 rounded-lg flex-shrink-0">
-              <Calendar className="h-4 w-4 text-green-600" />
+      <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* إجمالي اللجان */}
+        <Card className="border border-slate-100 border-r-4 border-r-blue-500 bg-white shadow-lg min-h-[92px]">
+          <CardContent className="p-4 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="bg-blue-500/10 p-2 rounded-lg flex-shrink-0">
+                <Users className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="text-xl md:text-2xl font-black text-gray-900">
+                {stats.total}
+              </div>
             </div>
-            <div className="text-xl md:text-2xl font-black text-gray-900">
-              {stats.last12Months}
-            </div>
-          </div>
-          <p className="text-xs text-slate-500 leading-tight">آخر 12 شهر</p>
-        </CardContent>
-      </Card>
+            <p className="text-xs text-slate-500 leading-tight">إجمالي اللجان</p>
+          </CardContent>
+        </Card>
 
-      {/* كعضو لجنة */}
-      <Card className="border border-slate-100 border-r-4 border-r-purple-500 bg-white shadow-lg min-h-[92px]">
-        <CardContent className="p-4 h-full flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="bg-purple-500/10 p-2 rounded-lg flex-shrink-0">
-              <UserCheck className="h-4 w-4 text-purple-600" />
+        {/* آخر 12 شهر */}
+        <Card className="border border-slate-100 border-r-4 border-r-green-500 bg-white shadow-lg min-h-[92px]">
+          <CardContent className="p-4 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="bg-green-500/10 p-2 rounded-lg flex-shrink-0">
+                <Calendar className="h-4 w-4 text-green-600" />
+              </div>
+              <div className="text-xl md:text-2xl font-black text-gray-900">
+                {stats.last12Months}
+              </div>
             </div>
-            <div className="text-xl md:text-2xl font-black text-gray-900">
-              {stats.asMember}
-            </div>
-          </div>
-          <p className="text-xs text-slate-500 leading-tight">كعضو لجنة</p>
-        </CardContent>
-      </Card>
+            <p className="text-xs text-slate-500 leading-tight">آخر 12 شهر</p>
+          </CardContent>
+        </Card>
 
-      {/* كرئيس لجنة */}
-      <Card className="border border-slate-100 border-r-4 border-r-amber-500 bg-white shadow-lg min-h-[92px]">
-        <CardContent className="p-4 h-full flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="bg-amber-500/10 p-2 rounded-lg flex-shrink-0">
-              <Crown className="h-4 w-4 text-amber-600" />
+        {/* كعضو لجنة */}
+        <Card className="border border-slate-100 border-r-4 border-r-purple-500 bg-white shadow-lg min-h-[92px]">
+          <CardContent className="p-4 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="bg-purple-500/10 p-2 rounded-lg flex-shrink-0">
+                <UserCheck className="h-4 w-4 text-purple-600" />
+              </div>
+              <div className="text-xl md:text-2xl font-black text-gray-900">
+                {stats.asMember}
+              </div>
             </div>
-            <div className="text-xl md:text-2xl font-black text-gray-900">
-              {stats.asChairperson}
+            <p className="text-xs text-slate-500 leading-tight">كعضو لجنة</p>
+          </CardContent>
+        </Card>
+
+        {/* كرئيس لجنة */}
+        <Card className="border border-slate-100 border-r-4 border-r-amber-500 bg-white shadow-lg min-h-[92px]">
+          <CardContent className="p-4 h-full flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="bg-amber-500/10 p-2 rounded-lg flex-shrink-0">
+                <Crown className="h-4 w-4 text-amber-600" />
+              </div>
+              <div className="text-xl md:text-2xl font-black text-gray-900">
+                {stats.asChairperson}
+              </div>
             </div>
-          </div>
-          <p className="text-xs text-slate-500 leading-tight">كرئيس لجنة</p>
-        </CardContent>
-      </Card>
-    </div>
+            <p className="text-xs text-slate-500 leading-tight">كرئيس لجنة</p>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

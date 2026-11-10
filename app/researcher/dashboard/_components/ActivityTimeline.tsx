@@ -224,13 +224,15 @@ export function ActivityTimeline({ initialActivities }: ActivityTimelineProps) {
   ];
 
   return (
-    <Card className="border-slate-100 bg-white shadow-lg">
-      <CardHeader className="pb-2 p-3 md:p-6 pt-0">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between md:gap-4 flex-wrap">
-          <CardTitle className="text-base md:text-xl font-semibold text-gray-900">آخر النشاطات</CardTitle>
-          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+    <Card className="border-0 md:border md:border-slate-100 bg-white/80 md:bg-white shadow-none md:shadow-lg overflow-hidden rounded-xl md:rounded-xl">
+      <CardHeader className="pb-2 p-3 md:p-6 pt-3 md:pt-6">
+        <div className="flex flex-row items-center justify-between gap-2 md:gap-4">
+          <CardTitle className="text-sm md:text-xl font-semibold text-gray-900 shrink-0">
+            آخر النشاطات
+          </CardTitle>
+          <div className="flex items-center gap-1.5 min-w-0 md:gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] h-9 text-sm border-gray-200">
+              <SelectTrigger className="w-[7.5rem] md:w-[140px] h-8 md:h-9 text-[11px] md:text-sm border-gray-200 px-2">
                 <SelectValue placeholder="فلتر الحالة" />
               </SelectTrigger>
               <SelectContent>
@@ -244,9 +246,10 @@ export function ActivityTimeline({ initialActivities }: ActivityTimelineProps) {
             <Button
               onClick={() => setShowAll(!showAll)}
               variant="outline"
-              className="h-9 px-4 text-sm border-gray-200 text-gray-700 hover:bg-gray-50"
+              className="h-8 md:h-9 px-2.5 md:px-4 text-[11px] md:text-sm border-gray-200 text-gray-700 hover:bg-gray-50 whitespace-nowrap shrink-0"
             >
-              {showAll ? "عرض أقل" : "عرض الكل"}
+              <span className="md:hidden">{showAll ? "أقل" : "الكل"}</span>
+              <span className="hidden md:inline">{showAll ? "عرض أقل" : "عرض الكل"}</span>
             </Button>
           </div>
         </div>
@@ -260,51 +263,49 @@ export function ActivityTimeline({ initialActivities }: ActivityTimelineProps) {
           />
         ) : (
           <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute right-6 top-0 bottom-0 w-0.5 bg-slate-200" />
+            <div className="absolute right-4 md:right-6 top-0 bottom-0 w-0.5 bg-slate-200" />
 
-            <div className="space-y-2 md:space-y-4">
-              {displayedActivities.map((activity, index) => {
-              const typeInfo = typeConfig[activity.type];
-              const statusInfo = statusConfig[activity.status];
-              const TypeIcon = typeInfo.icon;
-              const StatusIcon = statusInfo.icon;
+            <div className="space-y-2.5 md:space-y-4">
+              {displayedActivities.map((activity) => {
+                const typeInfo = typeConfig[activity.type];
+                const statusInfo = statusConfig[activity.status];
+                const TypeIcon = typeInfo.icon;
+                const StatusIcon = statusInfo.icon;
 
-              return (
-                <div key={activity.id} className="relative flex items-start gap-2 md:gap-4">
-                  <div className="relative z-10 flex-shrink-0">
-                    <div
-                      className={`h-10 w-10 md:h-12 md:w-12 rounded-full ${typeInfo.bgColor} ${typeInfo.borderColor} border-2 flex items-center justify-center`}
-                    >
-                      <TypeIcon className={`h-4 w-4 md:h-5 md:w-5 ${typeInfo.color}`} />
+                return (
+                  <div
+                    key={activity.id}
+                    className="relative flex items-start gap-2.5 md:gap-4"
+                  >
+                    <div className="relative z-10 flex-shrink-0">
+                      <div
+                        className={`h-8 w-8 md:h-12 md:w-12 rounded-full ${typeInfo.bgColor} ${typeInfo.borderColor} border-2 flex items-center justify-center`}
+                      >
+                        <TypeIcon className={`h-3.5 w-3.5 md:h-5 md:w-5 ${typeInfo.color}`} />
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex-1 pt-0.5 min-w-0">
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                          <Badge
-                            className={`h-5 px-2 text-xs ${typeInfo.bgColor} ${typeInfo.color} ${typeInfo.borderColor} border`}
-                          >
-                            {typeInfo.label}
-                          </Badge>
-                          <Badge
-                            className={`h-5 px-2 text-xs bg-slate-100 text-slate-700 border-slate-200`}
-                          >
-                            <StatusIcon className={`h-3 w-3 ${statusInfo.color} ml-1`} />
-                            {statusInfo.label}
-                          </Badge>
-                        </div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-0.5">{activity.title}</h4>
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(activity.date)}
-                        </div>
+                    <div className="flex-1 pt-0.5 min-w-0 rounded-xl border border-slate-100 bg-slate-50/40 p-2.5 md:rounded-none md:border-0 md:bg-transparent md:p-0">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <Badge
+                          className={`h-5 px-1.5 md:px-2 text-[10px] md:text-xs ${typeInfo.bgColor} ${typeInfo.color} ${typeInfo.borderColor} border`}
+                        >
+                          {typeInfo.label}
+                        </Badge>
+                        <Badge className="h-5 px-1.5 md:px-2 text-[10px] md:text-xs bg-slate-100 text-slate-700 border-slate-200">
+                          <StatusIcon className={`h-3 w-3 ${statusInfo.color} ml-1`} />
+                          {statusInfo.label}
+                        </Badge>
+                      </div>
+                      <h4 className="text-xs md:text-sm font-medium text-gray-900 mb-0.5 leading-snug line-clamp-2">
+                        {activity.title}
+                      </h4>
+                      <div className="flex items-center gap-1 text-[10px] md:text-xs text-slate-500">
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{formatDate(activity.date)}</span>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
+                );
               })}
             </div>
           </div>

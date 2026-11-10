@@ -148,22 +148,38 @@ export function ResearchFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[600px] sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl">
         <DialogHeader>
-          <DialogTitle>{editingResearch ? "تعديل بحث" : "إضافة بحث"}</DialogTitle>
-          <DialogDescription>أدخل معلومات البحث</DialogDescription>
+          <DialogTitle className="text-base md:text-lg">
+            {editingResearch ? "تعديل بحث" : "إضافة بحث"}
+          </DialogTitle>
+          <DialogDescription className="text-xs md:text-sm">
+            أدخل معلومات البحث
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
           <ResearchFormFields
             editingResearch={editingResearch}
             formData={formData}
             onFieldChange={handleFieldChange}
           />
-          <div className="flex items-center justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
+          <div className="flex items-center justify-end gap-2 md:gap-3 pt-3 md:pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              disabled={isPending}
+              className="h-9"
+            >
               إلغاء
             </Button>
-            <Button type="submit" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isPending}
+              className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-9"
+            >
               {isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 ml-2 animate-spin" />

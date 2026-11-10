@@ -88,7 +88,7 @@ export default async function ResearcherComparisonPage({
       : "سجّل المزيد من النشاطات لبناء تحليل أدق.";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 min-w-0">
       <ComparisonHeader
         name={data.currentUser.fullName}
         academicTitle={data.currentUser.academicTitle}
@@ -104,17 +104,17 @@ export default async function ResearcherComparisonPage({
         }}
       />
 
-      <Card className="border border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden">
-        <CardHeader className="pb-3 pt-4 px-4 md:px-5 border-b border-slate-100">
+      <Card className="border border-slate-200 bg-white shadow-sm rounded-xl overflow-hidden gap-0">
+        <CardHeader className="pb-2 md:pb-3 pt-3 md:pt-4 px-3 md:px-5 border-b border-slate-100">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <CardTitle className="text-base font-semibold text-slate-900">
+            <CardTitle className="text-sm md:text-base font-semibold text-slate-900">
               موقعك الحالي
             </CardTitle>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
               <RaisePointsHelpButton />
-              <div className="h-10 min-w-[148px] inline-flex items-center justify-center gap-2 rounded-lg bg-slate-50 border border-slate-200 px-3">
-                <span className="text-xs font-medium text-slate-500">إجمالي النقاط</span>
-                <span className="text-lg font-black tabular-nums text-slate-900 leading-none">
+              <div className="h-8 md:h-10 min-w-0 md:min-w-[148px] inline-flex items-center justify-center gap-1.5 md:gap-2 rounded-lg bg-slate-50 border border-slate-200 px-2 md:px-3">
+                <span className="text-[10px] md:text-xs font-medium text-slate-500">النقاط</span>
+                <span className="text-sm md:text-lg font-black tabular-nums text-slate-900 leading-none">
                   {data.currentUser.totalPoints}
                 </span>
               </div>
@@ -124,31 +124,31 @@ export default async function ResearcherComparisonPage({
         <CardContent className="p-0">
           <div className="grid grid-cols-1 md:grid-cols-2 md:items-stretch">
             {/* الهوية والترتيب */}
-            <div className="p-4 md:p-5 flex flex-col justify-center gap-3 border-b md:border-b-0 md:border-l border-slate-200">
+            <div className="p-3 md:p-5 flex flex-col justify-center gap-2 md:gap-3 border-b md:border-b-0 md:border-l border-slate-200">
               <div>
-                <p className="font-semibold text-slate-900 text-base leading-snug">
+                <p className="font-semibold text-slate-900 text-[13px] md:text-base leading-snug">
                   {data.currentUser.academicTitle} {data.currentUser.fullName}
                 </p>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-[10px] md:text-sm text-slate-500 mt-0.5 md:mt-1">
                   {data.currentUser.collegeName} — {data.currentUser.departmentName}
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-2 py-2 text-center">
-                  <p className="text-[10px] text-slate-500 mb-0.5">الجامعة</p>
-                  <p className="text-lg font-bold text-slate-900 tabular-nums">
+              <div className="grid grid-cols-3 gap-1.5 md:gap-2">
+                <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-1.5 py-1.5 md:px-2 md:py-2 text-center min-h-[52px] md:min-h-0 flex flex-col justify-center">
+                  <p className="text-[9px] md:text-[10px] text-slate-500 mb-0.5">الجامعة</p>
+                  <p className="text-base md:text-lg font-bold text-slate-900 tabular-nums">
                     {data.ranks.universityRank}
                   </p>
                 </div>
-                <div className="rounded-lg border border-blue-200 bg-blue-50/50 px-2 py-2 text-center">
-                  <p className="text-[10px] text-slate-500 mb-0.5">الكلية</p>
-                  <p className="text-lg font-bold text-slate-900 tabular-nums">
+                <div className="rounded-lg border border-blue-200 bg-blue-50/50 px-1.5 py-1.5 md:px-2 md:py-2 text-center min-h-[52px] md:min-h-0 flex flex-col justify-center">
+                  <p className="text-[9px] md:text-[10px] text-slate-500 mb-0.5">الكلية</p>
+                  <p className="text-base md:text-lg font-bold text-slate-900 tabular-nums">
                     {data.ranks.collegeRank}
                   </p>
                 </div>
-                <div className="rounded-lg border border-violet-200 bg-violet-50/50 px-2 py-2 text-center">
-                  <p className="text-[10px] text-slate-500 mb-0.5">القسم</p>
-                  <p className="text-lg font-bold text-slate-900 tabular-nums">
+                <div className="rounded-lg border border-violet-200 bg-violet-50/50 px-1.5 py-1.5 md:px-2 md:py-2 text-center min-h-[52px] md:min-h-0 flex flex-col justify-center">
+                  <p className="text-[9px] md:text-[10px] text-slate-500 mb-0.5">القسم</p>
+                  <p className="text-base md:text-lg font-bold text-slate-900 tabular-nums">
                     {data.ranks.departmentRank}
                   </p>
                 </div>
@@ -156,31 +156,31 @@ export default async function ResearcherComparisonPage({
             </div>
 
             {/* التحليل والتوصية */}
-            <div className="p-3 md:p-4 grid grid-rows-3 gap-2 bg-slate-50/40">
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 flex items-center justify-between gap-3">
+            <div className="p-2.5 md:p-4 grid grid-cols-1 grid-rows-none md:grid-rows-3 gap-1.5 md:gap-2 bg-slate-50/40">
+              <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 md:px-3 md:py-2 flex items-center justify-between gap-2 md:gap-3 min-h-[52px] md:min-h-0">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-medium text-slate-500 mb-0.5">أفضل سنة نشاطًا</p>
-                  <p className="text-base font-bold text-slate-900 tabular-nums">{bestActivityYearLabel}</p>
+                  <p className="text-[10px] md:text-[11px] font-medium text-slate-500 mb-0.5">أفضل سنة</p>
+                  <p className="text-sm md:text-base font-bold text-slate-900 tabular-nums">{bestActivityYearLabel}</p>
                 </div>
-                <div className="min-w-0 flex-1 text-end border-r border-slate-100 pr-3">
-                  <p className="text-[11px] font-medium text-slate-500 mb-0.5">تحديد الاتجاه</p>
-                  <p className="text-xs text-slate-800 leading-snug line-clamp-2">{positionTrendLabel}</p>
+                <div className="min-w-0 flex-1 text-end border-r border-slate-100 pr-2 md:pr-3">
+                  <p className="text-[10px] md:text-[11px] font-medium text-slate-500 mb-0.5">الاتجاه</p>
+                  <p className="text-[10px] md:text-xs text-slate-800 leading-snug line-clamp-2">{positionTrendLabel}</p>
                 </div>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 flex flex-col justify-center">
-                <p className="text-[11px] font-medium text-slate-500 mb-0.5">التوصية</p>
-                <p className="text-xs text-slate-700 leading-snug line-clamp-2">{positionMotivationLabel}</p>
+              <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 md:px-3 md:py-2 flex flex-col justify-center min-h-[48px] md:min-h-0">
+                <p className="text-[10px] md:text-[11px] font-medium text-slate-500 mb-0.5">التوصية</p>
+                <p className="text-[10px] md:text-xs text-slate-700 leading-snug line-clamp-2">{positionMotivationLabel}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 flex flex-col justify-center">
-                <p className="text-[11px] font-medium text-slate-500 mb-0.5">تحليل ذكي</p>
-                <p className="text-xs text-slate-700 leading-snug line-clamp-2">{smartInsightLabel}</p>
+              <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 md:px-3 md:py-2 flex flex-col justify-center min-h-[48px] md:min-h-0">
+                <p className="text-[10px] md:text-[11px] font-medium text-slate-500 mb-0.5">تحليل ذكي</p>
+                <p className="text-[10px] md:text-xs text-slate-700 leading-snug line-clamp-2">{smartInsightLabel}</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="mb-6">
+      <div className="mb-3 md:mb-6">
         <ActivityTrendsCard trends={data.activityTrends} />
       </div>
 
@@ -195,40 +195,40 @@ export default async function ResearcherComparisonPage({
         activitiesCount={data.overview.activitiesCount}
       />
 
-      <Card className="border-slate-100 bg-white shadow-lg overflow-hidden">
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg overflow-hidden gap-0 rounded-xl md:rounded-2xl">
         <CardContent className="p-0">
           <div className="grid grid-cols-1 md:grid-cols-2 md:items-stretch">
-            <div className="p-4 md:p-5 border-b md:border-b-0 md:border-l border-slate-200 space-y-3">
-              <h3 className="text-base font-semibold text-slate-900">
+            <div className="p-3 md:p-5 border-b md:border-b-0 md:border-l border-slate-200 space-y-2 md:space-y-3">
+              <h3 className="text-sm md:text-base font-semibold text-slate-900">
                 مقارنة مع متوسطات الكلية والقسم
               </h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-slate-100 px-4 py-3">
-                  <p className="text-xs text-slate-500">متوسط الكلية</p>
-                  <p className="text-lg font-semibold text-slate-900">
+              <div className="grid grid-cols-2 gap-1.5 md:gap-3">
+                <div className="rounded-xl border border-slate-100 px-2.5 py-2 md:px-4 md:py-3 min-h-[64px] h-full">
+                  <p className="text-[10px] md:text-xs text-slate-500">متوسط الكلية</p>
+                  <p className="text-base md:text-lg font-semibold text-slate-900">
                     {data.overview.collegeAveragePoints}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-[10px] md:text-xs text-slate-500 mt-0.5 md:mt-1">
                     فرقك: {data.currentUser.totalPoints - data.overview.collegeAveragePoints}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-100 px-4 py-3">
-                  <p className="text-xs text-slate-500">متوسط القسم</p>
-                  <p className="text-lg font-semibold text-slate-900">
+                <div className="rounded-xl border border-slate-100 px-2.5 py-2 md:px-4 md:py-3 min-h-[64px] h-full">
+                  <p className="text-[10px] md:text-xs text-slate-500">متوسط القسم</p>
+                  <p className="text-base md:text-lg font-semibold text-slate-900">
                     {data.overview.departmentAveragePoints}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-[10px] md:text-xs text-slate-500 mt-0.5 md:mt-1">
                     فرقك: {data.currentUser.totalPoints - data.overview.departmentAveragePoints}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 md:p-5 flex flex-col justify-center gap-2 bg-slate-50/40">
-              <h3 className="text-base font-semibold text-slate-900">
+            <div className="p-3 md:p-5 flex flex-col justify-center gap-1.5 md:gap-2 bg-slate-50/40">
+              <h3 className="text-sm md:text-base font-semibold text-slate-900">
                 خطوتك التالية لرفع ترتيبك
               </h3>
-              <p className="text-sm text-slate-700 leading-relaxed">
+              <p className="text-[11px] md:text-sm text-slate-700 leading-relaxed line-clamp-3 md:line-clamp-none">
                 {data.nextStep.estimatedCollegeRankGain > 0 ? (
                   <>
                     إذا رفعت معيار {data.nextStep.metricLabel} +{data.nextStep.pointsToAdd} نقطة
@@ -248,22 +248,27 @@ export default async function ResearcherComparisonPage({
 
       <LeaderboardTop entries={data.top3University} />
 
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between gap-3">
-          <CardTitle className="text-base font-semibold text-slate-900">
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl md:rounded-2xl">
+        <CardHeader className="pb-2 md:pb-3 px-3 md:px-6 pt-3 md:pt-6 flex flex-row items-center justify-between gap-2 md:gap-3">
+          <CardTitle className="text-sm md:text-base font-semibold text-slate-900">
             أفضل 10 تدريسيين في الجامعة
           </CardTitle>
-          <Button asChild variant="outline" size="sm" className="h-8 rounded-lg shrink-0">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-lg shrink-0 text-[10px] md:text-sm px-2 md:px-3"
+          >
             <Link href={{ pathname: "/researcher/comparison/top-university", query: linkQuery }}>
               عرض الكل
             </Link>
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 md:px-6 pb-3 md:pb-6">
           {data.top10University.length === 0 ? (
-            <div className="text-sm text-slate-500">لا توجد بيانات كافية لبناء الترتيب.</div>
+            <div className="text-[10px] md:text-sm text-slate-500">لا توجد بيانات كافية لبناء الترتيب.</div>
           ) : (
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-1.5 md:gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-5">
               {data.top10University.map((entry, index) => (
                 <LeaderboardCardRow
                   key={entry.id}
@@ -278,42 +283,46 @@ export default async function ResearcherComparisonPage({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+      <div className="grid gap-2.5 md:gap-4 lg:grid-cols-2 lg:items-stretch">
         <BadgesPanel badges={data.badges} />
         <SimilarFaculty items={data.similar} />
       </div>
 
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-slate-900">مقارنات تخصصية</CardTitle>
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl md:rounded-2xl">
+        <CardHeader className="pb-2 md:pb-3 px-3 md:px-6 pt-3 md:pt-6">
+          <CardTitle className="text-sm md:text-base font-semibold text-slate-900">
+            مقارنات تخصصية
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="title" className="gap-4">
-            <TabsList className="h-auto w-full flex flex-wrap justify-start gap-1 rounded-xl bg-slate-100 p-1 sm:w-fit">
+        <CardContent className="px-3 md:px-6 pb-3 md:pb-6">
+          <Tabs defaultValue="title" className="gap-3 md:gap-4">
+            <TabsList className="h-auto w-full flex flex-nowrap md:flex-wrap justify-start gap-1 rounded-xl bg-slate-100 p-1 sm:w-fit overflow-x-auto">
               <TabsTrigger
                 value="title"
-                className="rounded-lg px-3 py-2 text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
+                className="rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-sm shrink-0 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
               >
                 نفس اللقب العلمي
               </TabsTrigger>
               <TabsTrigger
                 value="specialization"
-                className="rounded-lg px-3 py-2 text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
+                className="rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-sm shrink-0 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
               >
                 نفس التخصص
-                {data.specialization.specializationLabel
-                  ? ` (${data.specialization.specializationLabel})`
-                  : ""}
+                <span className="hidden md:inline">
+                  {data.specialization.specializationLabel
+                    ? ` (${data.specialization.specializationLabel})`
+                    : ""}
+                </span>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="title">
               {data.specialization.sameAcademicTitle.length === 0 ? (
-                <div className="min-h-[120px] flex items-center justify-center text-sm text-slate-500 text-center px-4">
+                <div className="min-h-[96px] md:min-h-[120px] flex items-center justify-center text-[10px] md:text-sm text-slate-500 text-center px-4">
                   لا توجد بيانات كافية لنفس اللقب العلمي.
                 </div>
               ) : (
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="grid gap-1.5 md:gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-5">
                   {data.specialization.sameAcademicTitle.map((entry, index) => (
                     <LeaderboardCardRow
                       key={entry.id}
@@ -329,11 +338,11 @@ export default async function ResearcherComparisonPage({
 
             <TabsContent value="specialization">
               {data.specialization.sameSpecialization.length === 0 ? (
-                <div className="min-h-[120px] flex items-center justify-center text-sm text-slate-500 text-center px-4">
+                <div className="min-h-[96px] md:min-h-[120px] flex items-center justify-center text-[10px] md:text-sm text-slate-500 text-center px-4">
                   لا توجد بيانات كافية لنفس التخصص.
                 </div>
               ) : (
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="grid gap-1.5 md:gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-5">
                   {data.specialization.sameSpecialization.map((entry, index) => (
                     <LeaderboardCardRow
                       key={entry.id}

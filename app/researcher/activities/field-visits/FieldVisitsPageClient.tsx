@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,7 +39,7 @@ import { Toast } from "@/components/ui/toast";
 import { BarChart } from "@/components/charts/bar-chart";
 import { PieChart } from "@/components/charts/pie-chart";
 import { EmptyChartState } from "@/app/researcher/dashboard/_components/EmptyChartState";
-import { Plus, MoreVertical, Eye, Trash2, MapPin, Loader2, Pencil } from "lucide-react";
+import { Plus, MoreVertical, Eye, Trash2, MapPin, Loader2, Pencil, Calendar, MessageCircle } from "lucide-react";
 import {
   createFieldVisit,
   updateFieldVisit,
@@ -63,6 +63,12 @@ const TYPE_LABELS: Record<string, string> = {
   SERVICE_OUTSIDE_MINISTRY: "خدمة / استشارة / ندوة خارج الوزارة — 6 درجات",
 };
 
+const TYPE_LABELS_SHORT: Record<string, string> = {
+  FIELD_VISIT_SUPERVISION: "زيارة ميدانية",
+  VOLUNTARY_INSIDE_MINISTRY: "تطوع داخل الوزارة",
+  SERVICE_OUTSIDE_MINISTRY: "خدمة خارج الوزارة",
+};
+
 const MAX_SECTION_POINTS = 30;
 
 function formatDate(d: Date) {
@@ -77,9 +83,17 @@ function getTodayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function computeTotalPoints(items: FieldVisit[]): number {
-  const total = items.reduce((sum, item) => sum + (POINTS[item.type] ?? 0), 0);
-  return Math.min(total, MAX_SECTION_POINTS);
+function getContextSummary(
+  items: FieldVisit[],
+  stats: ReturnType<typeof useFieldVisitsStats>
+): string {
+  if (items.length === 0) {
+    return "لم تُسجّل بعد أي زيارة ميدانية. ابدأ بإضافة زيارة جديدة.";
+  }
+  if (items.length === 1) {
+    return "لديك زيارة ميدانية / نشاط واحد.";
+  }
+  return `لديك ${stats.total} سجل (${stats.totalPoints}/${MAX_SECTION_POINTS} درجة).`;
 }
 
 interface FieldVisitsPageClientProps {
@@ -239,11 +253,13 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
   };
 
   const filteredForDisplay = items;
-  const totalPoints = computeTotalPoints(filteredForDisplay);
   const stats = useFieldVisitsStats(filteredForDisplay);
   const uniqueYears = Array.from(
     new Set(items.map((i) => new Date(i.activityDate).getFullYear()))
   ).sort((a, b) => b - a);
+
+  const hasActiveFilters =
+    Boolean(search) || typeFilter !== "__all__" || yearFilter !== "__all__";
 
   const [formData, setFormData] = useState({
     type: "FIELD_VISIT_SUPERVISION" as "FIELD_VISIT_SUPERVISION" | "VOLUNTARY_INSIDE_MINISTRY" | "SERVICE_OUTSIDE_MINISTRY",
@@ -341,38 +357,193 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
     setIsDetailsOpen(true);
   };
 
+  const shareViaWhatsApp = (item: FieldVisit) => {
+    const lines: string[] = [
+      `*${item.title}*`,
+      `نوع النشاط: ${TYPE_LABELS[item.type]}`,
+      `التاريخ: ${formatDate(item.activityDate)}`,
+      `الدرجة: ${POINTS[item.type] ?? 0} درجة`,
+    ];
+    if (item.documentationRef) {
+      lines.push(`التوثيق: ${item.documentationRef}`);
+    }
+    if (item.description) {
+      lines.push(`الوصف: ${item.description}`);
+    }
+    const text = lines.join("\n");
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const fieldVisitActionsMenu = (row: FieldVisit) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => handleView(row)}>
+          <Eye className="h-4 w-4 ml-2" />
+          عرض التفاصيل
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenAdd(row)}>
+          <Pencil className="h-4 w-4 ml-2" />
+          تعديل
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-red-600"
+          onClick={() => {
+            if (confirm("هل أنت متأكد من حذف هذا السجل؟")) {
+              startTransition(async () => {
+                const res = await deleteFieldVisit(row.id);
+                if (res.error) showToast(res.error, "error");
+                else {
+                  showToast("✅ تم حذف السجل بنجاح");
+                  loadItems();
+                  notifyDashboardUpdate("activities");
+                }
+              });
+            }
+          }}
+        >
+          <Trash2 className="h-4 w-4 ml-2" />
+          حذف
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   const byYearChartData = stats.byYear.map((item) => ({ name: item.name, "عدد النشاطات": item.value }));
   const byTypeBarData = stats.byType.map((item) => ({ name: item.name, "عدد النشاطات": item.value }));
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto" dir="rtl">
+    <div className="space-y-3 md:space-y-6 min-w-0" dir="rtl">
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg md:text-2xl font-semibold text-gray-900">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base md:text-2xl font-semibold text-gray-900 truncate">
             الزيارات الميدانية والحقلية والأعمال التطوعية
           </h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1">
+          <p className="hidden md:block text-sm text-slate-500 mt-1">
             زيارة ميدانية لإشراف الطلبة، عمل تطوعي داخل الوزارة، أو خدمة/استشارة خارج الوزارة. الحد الأقصى للفقرة 30 درجة.
+          </p>
+          <p
+            className="text-[11px] md:text-sm text-slate-500 md:text-slate-600 mt-0.5 md:mt-1.5 md:font-medium line-clamp-2 md:line-clamp-none"
+            aria-live="polite"
+          >
+            {getContextSummary(filteredForDisplay, stats)}
           </p>
         </div>
         <Button
           onClick={() => handleOpenAdd()}
-          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex-shrink-0 w-full md:w-auto"
+          size="sm"
+          className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-8 md:h-10 shrink-0 px-2.5 md:px-4 text-xs md:text-sm"
         >
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة زيارة ميدانية
+          <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+          <span className="md:hidden">إضافة</span>
+          <span className="hidden md:inline">إضافة زيارة ميدانية</span>
         </Button>
       </div>
 
       <FieldVisitsKPICards stats={stats} />
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">الرسوم البيانية</h3>
-        <div className="grid grid-cols-12 gap-4">
+        <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-2.5 md:mb-4">الرسوم البيانية</h3>
+
+        {/* موبايل: تخطيط متناسق */}
+        <div className="md:hidden space-y-2">
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">حسب السنة</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {byYearChartData.length > 0 ? (
+                  <BarChart
+                    data={byYearChartData}
+                    dataKeys={["عدد النشاطات"]}
+                    colors={["#2563EB"]}
+                    tooltipLabel={(year, count) => `عدد النشاطات في ${year}: ${count}`}
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  أنواع النشاط
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1">
+                <div className="h-[130px]">
+                  {stats.byType.length > 0 ? (
+                    <PieChart
+                      data={stats.byType}
+                      outerRadius={40}
+                      innerRadius={14}
+                      legendLayout="horizontal"
+                      legendVerticalAlign="bottom"
+                      legendWrapperStyle={{ fontSize: 10, paddingTop: 0 }}
+                      tooltipLabel={(name, value) => `${name}: ${value}`}
+                    />
+                  ) : (
+                    <EmptyChartState type="pie" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl h-[168px]">
+              <CardHeader className="px-2 pt-2 pb-0">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                  ملخص النشاطات
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 pt-1 flex items-center justify-center h-[130px]">
+                <div className="text-center">
+                  <div className="text-2xl font-black tabular-nums text-gray-900 leading-none">
+                    {stats.total}
+                  </div>
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    {stats.totalPoints}/{MAX_SECTION_POINTS} درجة · {stats.fieldVisitCount} زيارة
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-slate-100 bg-white shadow-sm gap-0 overflow-hidden rounded-xl">
+            <CardHeader className="px-2.5 pt-2 pb-0">
+              <CardTitle className="text-[11px] font-semibold text-gray-900">حسب النوع</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2.5 pt-1">
+              <div className="h-[132px]">
+                {byTypeBarData.length > 0 ? (
+                  <BarChart
+                    data={byTypeBarData}
+                    dataKeys={["عدد النشاطات"]}
+                    colors={["#2563EB", "#10b981", "#f59e0b"]}
+                    tooltipLabel={(name, count) => `${name}: ${count}`}
+                    tickFontSize={10}
+                  />
+                ) : (
+                  <EmptyChartState type="bar" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* حاسوب: التخطيط السابق */}
+        <div className="hidden md:grid grid-cols-12 gap-4">
           <Card className="border border-slate-100 bg-white shadow-lg col-span-12 lg:col-span-8">
             <CardContent className="pt-4 pb-4 px-4">
               <h4 className="text-base font-semibold text-gray-900 mb-3">عدد النشاطات حسب السنة</h4>
@@ -436,74 +607,162 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
         </div>
       </div>
 
-      <Card className="border-slate-100 bg-white shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="text-base font-semibold text-slate-800">جدول الزيارات الميدانية والنشاطات</div>
-            <div className="flex items-center gap-2">
+      {/* آخر زيارة ميدانية مضافة */}
+      {items.length > 0 && (
+        <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg border-l-4 border-l-blue-500 gap-0 overflow-hidden rounded-xl">
+          <CardContent className="p-2.5 md:p-4">
+            <div className="flex items-center justify-between gap-2 md:gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+                  <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-[10px] md:text-xs font-medium text-slate-500">آخر زيارة ميدانية مضافة</span>
+                </div>
+                <h3 className="text-xs md:text-base font-semibold text-slate-900 mb-0.5 md:mb-1 line-clamp-1" dir="rtl">
+                  {items[0].title}
+                </h3>
+                <p className="text-[10px] md:text-sm text-slate-600 truncate">
+                  {[
+                    formatDate(items[0].activityDate),
+                    TYPE_LABELS_SHORT[items[0].type] ?? TYPE_LABELS[items[0].type],
+                    `${POINTS[items[0].type] ?? 0} درجة`,
+                  ].join(" · ")}
+                </p>
+              </div>
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                onClick={() => handleView(items[0])}
+                className="flex-shrink-0 h-8 px-2.5 text-[11px] md:text-sm"
+              >
+                <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 ml-1 md:ml-2" />
+                عرض
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl">
+        <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
+          <div className="flex items-center justify-between gap-2 mb-3 md:mb-4">
+            <div className="text-sm md:text-base font-semibold text-slate-800 truncate">جدول الزيارات الميدانية والنشاطات</div>
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportExcel}
                 disabled={isExporting}
               >
-                تصدير Excel
+                <span className="md:hidden">Excel</span>
+                <span className="hidden md:inline">تصدير Excel</span>
               </Button>
               <Button
                 variant="outline"
-                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                size="sm"
+                className="border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-2.5 md:px-3 text-[11px] md:text-sm"
                 onClick={handleExportPDF}
                 disabled={isExporting}
               >
-                تصدير PDF
+                <span className="md:hidden">PDF</span>
+                <span className="hidden md:inline">تصدير PDF</span>
               </Button>
             </div>
           </div>
-          <h3 className="text-base font-semibold text-slate-800 mb-4">قائمة الزيارات الميدانية والنشاطات</h3>
-          <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                  <Input
-                    placeholder="عنوان النشاط أو الوصف..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                  />
-                  <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
-                    بحث
-                  </Button>
-                </div>
+
+          {/* فلاتر موبايل: سطر واحد */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="md:hidden rounded-xl bg-slate-50 p-1.5 mb-3"
+          >
+            <div className="flex items-center gap-1 flex-nowrap min-w-0">
+              <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 min-w-0 flex-[1.2]">
+                <Input
+                  placeholder="بحث..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-8 min-w-0 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 text-[10px] px-1.5"
+                />
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 rounded-md px-2 text-[10px] shrink-0"
+                >
+                  بحث
+                </Button>
               </div>
-              <div className="min-w-[220px]">
-                <label className="block text-sm font-medium text-slate-700 mb-2">نوع النشاط</label>
+              <Select
+                value={typeFilter}
+                onValueChange={(v) => {
+                  setTypeFilter(v);
+                  loadItems({ type: v });
+                }}
+              >
+                <SelectTrigger
+                  className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                  aria-label="نوع النشاط"
+                >
+                  <SelectValue placeholder="النوع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">كل الأنواع</SelectItem>
+                  {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {uniqueYears.length > 0 && (
                 <Select
-                  value={typeFilter}
+                  value={yearFilter}
                   onValueChange={(v) => {
-                    setTypeFilter(v);
-                    loadItems({ type: v });
+                    setYearFilter(v);
+                    loadItems({ year: v });
                   }}
                 >
-                  <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
-                    <SelectValue placeholder="الكل" />
+                  <SelectTrigger
+                    className="h-8 rounded-lg bg-white text-[10px] px-1.5 min-w-0 flex-1"
+                    aria-label="السنة"
+                  >
+                    <SelectValue placeholder="السنة" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__all__">الكل</SelectItem>
-                    {Object.entries(TYPE_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    <SelectItem value="__all__">كل السنوات</SelectItem>
+                    {uniqueYears.map((y) => (
+                      <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              {uniqueYears.length > 0 && (
-                <div className="min-w-[120px]">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+              )}
+            </div>
+          </form>
+
+          {/* فلاتر حاسوب */}
+          <div className="hidden md:block">
+            <h3 className="text-base font-semibold text-slate-800 mb-4">قائمة الزيارات الميدانية والنشاطات</h3>
+            <form onSubmit={handleSearchSubmit} className="w-full bg-slate-50 rounded-xl px-4 py-4 mb-6">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">البحث</label>
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    <Input
+                      placeholder="عنوان النشاط أو الوصف..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="h-10 flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0"
+                    />
+                    <Button type="submit" variant="secondary" size="sm" className="h-10 rounded-lg px-4 flex-shrink-0">
+                      بحث
+                    </Button>
+                  </div>
+                </div>
+                <div className="min-w-[220px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">نوع النشاط</label>
                   <Select
-                    value={yearFilter}
+                    value={typeFilter}
                     onValueChange={(v) => {
-                      setYearFilter(v);
-                      loadItems({ year: v });
+                      setTypeFilter(v);
+                      loadItems({ type: v });
                     }}
                   >
                     <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
@@ -511,38 +770,60 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">الكل</SelectItem>
-                      {uniqueYears.map((y) => (
-                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                      {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
-            </div>
-          </form>
+                {uniqueYears.length > 0 && (
+                  <div className="min-w-[120px]">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">السنة</label>
+                    <Select
+                      value={yearFilter}
+                      onValueChange={(v) => {
+                        setYearFilter(v);
+                        loadItems({ year: v });
+                      }}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 w-full">
+                        <SelectValue placeholder="الكل" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">الكل</SelectItem>
+                        {uniqueYears.map((y) => (
+                          <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
 
           {filteredForDisplay.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-              <div className="rounded-full bg-white border border-slate-200 p-6 mb-5 shadow-sm">
-                <MapPin className="h-14 w-14 text-slate-400" />
+            <div className="flex flex-col items-center justify-center py-10 md:py-20 px-4 md:px-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+              <div className="rounded-full bg-white border border-slate-200 p-4 md:p-6 mb-4 md:mb-5 shadow-sm">
+                <MapPin className="h-10 w-10 md:h-14 md:w-14 text-slate-400" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2">
-                {search || typeFilter !== "__all__" || yearFilter !== "__all__"
+              <h3 className="text-base md:text-xl font-semibold text-slate-800 mb-2">
+                {hasActiveFilters
                   ? "لا توجد نتائج"
                   : "لم يتم تسجيل أي زيارة ميدانية أو نشاط بعد"}
               </h3>
-              <p className="text-sm text-slate-600 text-center max-w-md mb-6">
-                {search || typeFilter !== "__all__" || yearFilter !== "__all__"
+              <p className="text-xs md:text-sm text-slate-600 text-center max-w-md mb-4 md:mb-6">
+                {hasActiveFilters
                   ? "لا توجد سجلات تطابق الفلاتر. جرّب تغيير البحث أو الفلاتر."
                   : "ابدأ بإضافة أول زيارة ميدانية أو عمل تطوعي أو خدمة (وفق الدليل الإرشادي)."}
               </p>
-              {!search && typeFilter === "__all__" && yearFilter === "__all__" && (
+              {!hasActiveFilters && (
                 <Button
                   onClick={() => handleOpenAdd()}
-                  size="lg"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm"
+                  size="sm"
+                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-sm h-9 md:h-10"
                 >
-                  <Plus className="h-5 w-5 ml-2" />
+                  <Plus className="h-4 w-4 md:h-5 md:w-5 ml-2" />
                   إضافة زيارة ميدانية
                 </Button>
               )}
@@ -574,42 +855,7 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
                       {filteredForDisplay.map((row) => (
                         <TableRow key={row.id} className="hover:bg-slate-50/50">
                           <TableCell className="align-middle whitespace-nowrap">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => handleView(row)}>
-                                  <Eye className="h-4 w-4 ml-2" />
-                                  عرض التفاصيل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenAdd(row)}>
-                                  <Pencil className="h-4 w-4 ml-2" />
-                                  تعديل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => {
-                                    if (confirm("هل أنت متأكد من حذف هذا السجل؟")) {
-                                      startTransition(async () => {
-                                        const res = await deleteFieldVisit(row.id);
-                                        if (res.error) showToast(res.error, "error");
-                                        else {
-                                          showToast("✅ تم حذف السجل بنجاح");
-                                          loadItems();
-                                          notifyDashboardUpdate("activities");
-                                        }
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 ml-2" />
-                                  حذف
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            {fieldVisitActionsMenu(row)}
                           </TableCell>
                           <TableCell className="align-middle">
                             <Badge variant="secondary" className="bg-slate-100 text-slate-800 whitespace-normal text-right">
@@ -643,83 +889,47 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
                 </div>
               </div>
 
-              <div className="md:hidden space-y-3">
+              {/* Mobile Cards List */}
+              <div className="md:hidden space-y-2">
                 {filteredForDisplay.map((row) => (
-                  <Card key={row.id} className="border-slate-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-slate-900 text-base mb-1" dir="rtl">
-                            {row.title}
-                          </h3>
-                          <Badge variant="secondary" className="mt-1 bg-slate-100 text-slate-800 text-xs">
-                            {TYPE_LABELS[row.type]} — {POINTS[row.type]} درجة
-                          </Badge>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handleView(row)}>
-                              <Eye className="h-4 w-4 ml-2" />
-                              عرض
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenAdd(row)}>
-                              <Pencil className="h-4 w-4 ml-2" />
-                              تعديل
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => {
-                                if (confirm("هل أنت متأكد من حذف هذا السجل؟")) {
-                                  startTransition(async () => {
-                                    const res = await deleteFieldVisit(row.id);
-                                    if (res.error) showToast(res.error, "error");
-                                    else {
-                                      showToast("✅ تم حذف السجل بنجاح");
-                                      loadItems();
-                                      notifyDashboardUpdate("activities");
-                                    }
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 ml-2" />
-                              حذف
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      <div className="grid grid-cols-1 gap-2 text-sm">
-                        <div>
-                          <span className="text-slate-500">التاريخ: </span>
-                          <span className="text-slate-900">{formatDate(row.activityDate)}</span>
-                        </div>
-                        {row.documentationRef && (
-                          <div>
-                            <span className="text-slate-500">التوثيق: </span>
-                            <span className="text-slate-900" dir="rtl">{row.documentationRef}</span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-slate-500">الدرجة: </span>
-                          <Badge className="bg-emerald-100 text-emerald-800">{POINTS[row.type]} درجة</Badge>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3 w-full"
+                  <div
+                    key={row.id}
+                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm min-h-[96px]"
+                  >
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
                         onClick={() => handleView(row)}
+                        className="min-w-0 flex-1 text-right space-y-0.5"
                       >
-                        <Eye className="h-4 w-4 ml-2" />
-                        عرض التفاصيل
-                      </Button>
-                    </CardContent>
-                  </Card>
+                        <p className="text-[12px] font-semibold text-slate-900 line-clamp-1 leading-snug" dir="rtl">
+                          {row.title}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {[
+                            formatDate(row.activityDate),
+                            TYPE_LABELS_SHORT[row.type] ?? row.type,
+                            `${POINTS[row.type] ?? 0} درجة`,
+                          ].join(" · ")}
+                        </p>
+                      </button>
+                      {fieldVisitActionsMenu(row)}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">نوع النشاط</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate">
+                          {TYPE_LABELS_SHORT[row.type] ?? TYPE_LABELS[row.type]}
+                        </p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">التوثيق</p>
+                        <p className="text-[11px] font-medium text-slate-800 truncate" dir="rtl">
+                          {row.documentationRef || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </>
@@ -729,27 +939,27 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
 
       {/* نافذة الإضافة / التعديل */}
       <Dialog open={isAddOpen} onOpenChange={(open) => !open && handleCloseAdd()}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base md:text-lg">
               {editingItem ? "تعديل زيارة ميدانية / نشاط" : "إضافة زيارة ميدانية جديدة"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs md:text-sm">
               {editingItem
                 ? "تعديل بيانات السجل."
                 : "اختر نوع النشاط (زيارة ميدانية 12 درجة، عمل تطوعي داخل الوزارة 8 درجات، خدمة خارج الوزارة 6 درجات). الحد الأقصى للفقرة 30 درجة."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddSubmit} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-3 md:space-y-4">
             <div>
-              <Label>نوع النشاط *</Label>
+              <Label className="text-xs md:text-sm">نوع النشاط *</Label>
               <Select
                 value={formData.type}
                 onValueChange={(v: "FIELD_VISIT_SUPERVISION" | "VOLUNTARY_INSIDE_MINISTRY" | "SERVICE_OUTSIDE_MINISTRY") =>
                   setFormData((p) => ({ ...p, type: v }))
                 }
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 h-9 md:h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -760,7 +970,7 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
               </Select>
             </div>
             <div>
-              <Label htmlFor="title">عنوان النشاط *</Label>
+              <Label htmlFor="title" className="text-xs md:text-sm">عنوان النشاط *</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -768,48 +978,50 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
                 placeholder="مثال: زيارة ميدانية لمختبر التحليلات، حملة تشجير..."
                 required
                 minLength={2}
-                className="mt-1"
+                className="mt-1 h-9 md:h-10 text-sm"
               />
             </div>
-            <div>
-              <Label htmlFor="activityDate">تاريخ النشاط *</Label>
-              <Input
-                id="activityDate"
-                type="date"
-                value={formData.activityDate}
-                max={getTodayISO()}
-                onChange={(e) => setFormData((p) => ({ ...p, activityDate: e.target.value }))}
-                required
-                className="mt-1"
-              />
-              <p className="text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4">
+              <div className="min-w-0">
+                <Label htmlFor="activityDate" className="text-xs md:text-sm">تاريخ النشاط *</Label>
+                <Input
+                  id="activityDate"
+                  type="date"
+                  value={formData.activityDate}
+                  max={getTodayISO()}
+                  onChange={(e) => setFormData((p) => ({ ...p, activityDate: e.target.value }))}
+                  required
+                  className="mt-1 h-9 md:h-10 text-sm"
+                />
+                <p className="text-[10px] md:text-xs text-slate-500 mt-1">لا يمكن اختيار تاريخ في المستقبل</p>
+              </div>
+              <div className="min-w-0">
+                <Label htmlFor="documentationRef" className="text-xs md:text-sm">التوثيق (اختياري)</Label>
+                <Input
+                  id="documentationRef"
+                  value={formData.documentationRef}
+                  onChange={(e) => setFormData((p) => ({ ...p, documentationRef: e.target.value }))}
+                  placeholder="استمارة أو كتاب رسمي"
+                  className="mt-1 h-9 md:h-10 text-sm"
+                />
+              </div>
             </div>
             <div>
-              <Label htmlFor="documentationRef">التوثيق (اختياري)</Label>
-              <Input
-                id="documentationRef"
-                value={formData.documentationRef}
-                onChange={(e) => setFormData((p) => ({ ...p, documentationRef: e.target.value }))}
-                placeholder="استمارة الدليل الإرشادي أو كتاب رسمي من التشكيل/الجامعة"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">الوصف (اختياري)</Label>
+              <Label htmlFor="description" className="text-xs md:text-sm">الوصف (اختياري)</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                 placeholder="وصف مختصر للنشاط..."
                 rows={3}
-                className="mt-1"
+                className="mt-1 min-h-[72px] md:min-h-[80px] text-sm"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleCloseAdd}>
+              <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleCloseAdd}>
                 إلغاء
               </Button>
-              <Button type="submit" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+              <Button type="submit" size="sm" disabled={isPending} className="bg-[#2563EB] hover:bg-[#1D4ED8] h-9">
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : editingItem ? (
@@ -828,60 +1040,126 @@ export function FieldVisitsPageClient({ initialItems }: FieldVisitsPageClientPro
         open={isDetailsOpen}
         onOpenChange={(open) => !open && (setIsDetailsOpen(false), setViewingItem(null))}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md p-4 md:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-right" dir="rtl">
+            <DialogTitle className="text-right text-base md:text-lg" dir="rtl">
               تفاصيل الزيارة الميدانية / النشاط
             </DialogTitle>
+            <DialogDescription className="sr-only">عرض تفاصيل الزيارة الميدانية المحددة</DialogDescription>
           </DialogHeader>
           {viewingItem && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900" dir="rtl">
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-sm md:text-lg font-semibold text-slate-900 line-clamp-2" dir="rtl">
                 {viewingItem.title}
               </h3>
-              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
-                <span className="text-slate-500">نوع النشاط</span>
-                <span className="font-medium text-slate-900">{TYPE_LABELS[viewingItem.type]}</span>
-                <span className="text-slate-500">التاريخ</span>
-                <span className="font-medium text-slate-900">{formatDate(viewingItem.activityDate)}</span>
-                <span className="text-slate-500">الدرجة</span>
-                <span className="font-medium text-slate-900">{POINTS[viewingItem.type]} درجة</span>
+              <p className="text-[11px] md:text-xs text-slate-500 line-clamp-2" dir="rtl">
+                {[
+                  TYPE_LABELS_SHORT[viewingItem.type] ?? TYPE_LABELS[viewingItem.type],
+                  formatDate(viewingItem.activityDate),
+                  `${POINTS[viewingItem.type] ?? 0} درجة`,
+                ].join(" · ")}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 md:hidden">
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">نوع النشاط</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {TYPE_LABELS_SHORT[viewingItem.type] ?? TYPE_LABELS[viewingItem.type]}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                  <p className="text-[10px] text-slate-400">الدرجة</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {POINTS[viewingItem.type] ?? 0} درجة
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0 col-span-2">
+                  <p className="text-[10px] text-slate-400">التاريخ</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {formatDate(viewingItem.activityDate)}
+                  </p>
+                </div>
                 {viewingItem.documentationRef && (
-                  <>
-                    <span className="text-slate-500">التوثيق</span>
-                    <span className="font-medium text-slate-900" dir="rtl">{viewingItem.documentationRef}</span>
-                  </>
+                  <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">التوثيق</p>
+                    <p className="text-xs font-medium text-slate-900" dir="rtl">
+                      {viewingItem.documentationRef}
+                    </p>
+                  </div>
                 )}
                 {viewingItem.description && (
-                  <>
-                    <span className="text-slate-500">الوصف</span>
-                    <span className="font-medium text-slate-900" dir="rtl">{viewingItem.description}</span>
-                  </>
+                  <div className="col-span-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                    <p className="text-[10px] text-slate-400">الوصف</p>
+                    <p className="text-xs font-medium text-slate-900 whitespace-pre-wrap" dir="rtl">
+                      {viewingItem.description}
+                    </p>
+                  </div>
                 )}
               </div>
-              <div className="flex flex-wrap justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => (setIsDetailsOpen(false), setViewingItem(null))}>
-                  إغلاق
-                </Button>
+              <div className="hidden md:block">
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
+                  <span className="text-slate-500">نوع النشاط</span>
+                  <span className="font-medium text-slate-900">{TYPE_LABELS[viewingItem.type]}</span>
+                  <span className="text-slate-500">التاريخ</span>
+                  <span className="font-medium text-slate-900">{formatDate(viewingItem.activityDate)}</span>
+                  <span className="text-slate-500">الدرجة</span>
+                  <span className="font-medium text-slate-900">{POINTS[viewingItem.type]} درجة</span>
+                  {viewingItem.documentationRef && (
+                    <>
+                      <span className="text-slate-500">التوثيق</span>
+                      <span className="font-medium text-slate-900" dir="rtl">{viewingItem.documentationRef}</span>
+                    </>
+                  )}
+                  {viewingItem.description && (
+                    <>
+                      <span className="text-slate-500">الوصف</span>
+                      <span className="font-medium text-slate-900" dir="rtl">{viewingItem.description}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row md:flex-wrap md:justify-end gap-2 pt-2 md:pt-4">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setIsDetailsOpen(false);
-                    handleOpenAdd(viewingItem);
-                    setViewingItem(null);
-                  }}
+                  size="sm"
+                  className="h-9 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 justify-center"
+                  onClick={() => shareViaWhatsApp(viewingItem)}
                 >
-                  <Pencil className="h-4 w-4 ml-2" />
-                  تعديل
+                  <MessageCircle className="h-4 w-4 ml-2" />
+                  <span className="md:hidden">واتساب</span>
+                  <span className="hidden md:inline">إرسال عبر واتساب</span>
                 </Button>
-                <Button
-                  variant="outline"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(viewingItem.id)}
-                  disabled={isPending}
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
-                </Button>
+                <div className="grid grid-cols-3 gap-2 md:contents">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => (setIsDetailsOpen(false), setViewingItem(null))}
+                  >
+                    إغلاق
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9"
+                    onClick={() => {
+                      setIsDetailsOpen(false);
+                      handleOpenAdd(viewingItem);
+                      setViewingItem(null);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 ml-1 md:ml-2" />
+                    تعديل
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-red-600 hover:bg-red-50"
+                    onClick={() => handleDelete(viewingItem.id)}
+                    disabled={isPending}
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حذف"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

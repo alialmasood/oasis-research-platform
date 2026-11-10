@@ -82,17 +82,23 @@ export function ResearchChartsSection({ stats, hiddenCharts = [] }: ResearchChar
   ].filter((d) => d.value > 0);
   const hasPlannedVsUnplanned = plannedVsUnplannedData.length > 0;
 
+  const chartCardClass =
+    "border-slate-100 bg-white shadow-sm md:shadow-lg gap-0 overflow-hidden rounded-xl";
+  const chartTitleClass = "text-sm md:text-base font-semibold text-gray-900";
+  const chartHeightClass = "h-[180px] md:h-[220px]";
+  const showCompleted = !hidden.has("completedVsInProgress");
+  const showPlanned = !hidden.has("plannedVsUnplanned");
+
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900">الرسوم البيانية</h3>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* byYear (bar) */}
-        <Card className="border-slate-100 bg-white shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">حسب السنة</CardTitle>
+    <div className="space-y-2.5 md:space-y-6">
+      <h3 className="text-sm md:text-lg font-semibold text-gray-900">الرسوم البيانية</h3>
+      <div className="grid gap-2.5 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <Card className={chartCardClass}>
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className={chartTitleClass}>حسب السنة</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div style={{ height: "220px" }}>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className={chartHeightClass}>
               {hasByYear ? (
                 <BarChart data={byYearData} dataKeys={[COUNT_KEY]} colors={["#2563EB"]} />
               ) : (
@@ -102,13 +108,58 @@ export function ResearchChartsSection({ stats, hiddenCharts = [] }: ResearchChar
           </CardContent>
         </Card>
 
-        {!hidden.has("completedVsInProgress") && (
-          <Card className="border-slate-100 bg-white shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">منجز مقابل غير منجز</CardTitle>
+        {/* موبايل: البطاقتان الدائريتان متجاورتان */}
+        {(showCompleted || showPlanned) && (
+          <div className="grid grid-cols-2 gap-2 md:hidden">
+            {showCompleted && (
+              <Card className={chartCardClass}>
+                <CardHeader className="p-2 pb-1">
+                  <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                    منجز / غير منجز
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2 pt-0">
+                  <div className="h-[130px]">
+                    {hasCompletedVsInProgress ? (
+                      <PieChart data={completedVsInProgressData} />
+                    ) : (
+                      <EmptyChartState type="pie" />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {showPlanned && (
+              <Card className={chartCardClass}>
+                <CardHeader className="p-2 pb-1">
+                  <CardTitle className="text-[11px] font-semibold text-gray-900 leading-tight">
+                    مخطط / غير مخطط
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2 pt-0">
+                  <div className="h-[130px]">
+                    {hasPlannedVsUnplanned ? (
+                      <PieChart data={plannedVsUnplannedData} />
+                    ) : (
+                      <EmptyChartState type="pie" />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* حاسوب: منجز مقابل غير منجز */}
+        {showCompleted && (
+          <Card className={`${chartCardClass} hidden md:block`}>
+            <CardHeader className="p-6 pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900">
+                منجز مقابل غير منجز
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div style={{ height: "220px" }}>
+            <CardContent className="p-6 pt-0">
+              <div className="h-[220px]">
                 {hasCompletedVsInProgress ? (
                   <PieChart data={completedVsInProgressData} />
                 ) : (
@@ -120,12 +171,12 @@ export function ResearchChartsSection({ stats, hiddenCharts = [] }: ResearchChar
         )}
 
         {!hidden.has("publishedVsUnpublished") && (
-          <Card className="border-slate-100 bg-white shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">منشور مقابل غير منشور</CardTitle>
+          <Card className={chartCardClass}>
+            <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+              <CardTitle className={chartTitleClass}>منشور مقابل غير منشور</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div style={{ height: "220px" }}>
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+              <div className={chartHeightClass}>
                 {hasPublishedVsUnpublished ? (
                   <BarChart
                     data={publishedVsUnpublishedData}
@@ -140,13 +191,12 @@ export function ResearchChartsSection({ stats, hiddenCharts = [] }: ResearchChar
           </Card>
         )}
 
-        {/* نوع النشر (bar) */}
-        <Card className="border-slate-100 bg-white shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">نوع النشر</CardTitle>
+        <Card className={chartCardClass}>
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className={chartTitleClass}>نوع النشر</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div style={{ height: "220px" }}>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className={chartHeightClass}>
               {hasPublishType ? (
                 <BarChart
                   data={publishTypeData}
@@ -160,13 +210,12 @@ export function ResearchChartsSection({ stats, hiddenCharts = [] }: ResearchChar
           </CardContent>
         </Card>
 
-        {/* scopus quartiles (bar) — Q1..Q4 دائمًا معروضة حتى لو صفر */}
-        <Card className="border-slate-100 bg-white shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">سكوبس حسب الربع</CardTitle>
+        <Card className={chartCardClass}>
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-3">
+            <CardTitle className={chartTitleClass}>سكوبس حسب الربع</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div style={{ height: "220px" }}>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className={chartHeightClass}>
               <BarChart
                 data={scopusData}
                 dataKeys={[COUNT_KEY]}
@@ -176,13 +225,16 @@ export function ResearchChartsSection({ stats, hiddenCharts = [] }: ResearchChar
           </CardContent>
         </Card>
 
-        {!hidden.has("plannedVsUnplanned") && (
-          <Card className="border-slate-100 bg-white shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">مخطط مقابل غير مخطط</CardTitle>
+        {/* حاسوب: مخطط مقابل غير مخطط */}
+        {showPlanned && (
+          <Card className={`${chartCardClass} hidden md:block`}>
+            <CardHeader className="p-6 pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900">
+                مخطط مقابل غير مخطط
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div style={{ height: "220px" }}>
+            <CardContent className="p-6 pt-0">
+              <div className="h-[220px]">
                 {hasPlannedVsUnplanned ? (
                   <PieChart data={plannedVsUnplannedData} />
                 ) : (
