@@ -73,11 +73,17 @@ export function AcademicDegreeDialog({
 
   // لا حاجة لـ useEffect - key prop في المكون الأب يعيد تعيين المكون تلقائياً
 
+  const showMajorSpecific = degree !== "BACHELORS" && degree !== "DIPLOMA";
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     formData.set("degree", degree);
     formData.set("graduationYear", graduationYear);
+    // عند البكالوريوس/الدبلوم لا يُرسل تخصص دقيق
+    if (!showMajorSpecific) {
+      formData.set("majorSpecific", "");
+    }
     onSubmitAction(formData);
   };
 
@@ -155,18 +161,20 @@ export function AcademicDegreeDialog({
             />
           </div>
 
-          <div className="space-y-1 md:space-y-2">
-            <Label htmlFor="majorSpecific" className={labelClass}>
-              التخصص الدقيق (اختياري)
-            </Label>
-            <Input
-              id="majorSpecific"
-              name="majorSpecific"
-              defaultValue={editingDegree?.majorSpecific || ""}
-              placeholder="مثال: الذكاء الاصطناعي"
-              className={controlClass}
-            />
-          </div>
+          {showMajorSpecific ? (
+            <div className="space-y-1 md:space-y-2">
+              <Label htmlFor="majorSpecific" className={labelClass}>
+                التخصص الدقيق (اختياري)
+              </Label>
+              <Input
+                id="majorSpecific"
+                name="majorSpecific"
+                defaultValue={editingDegree?.majorSpecific || ""}
+                placeholder="مثال: الذكاء الاصطناعي"
+                className={controlClass}
+              />
+            </div>
+          ) : null}
 
           {/* موبايل: الجامعة + الدولة بنفس السطر. حاسوب: كل حقل بعرض كامل كما كان */}
           <div className="grid grid-cols-2 md:grid-cols-1 gap-2.5 md:gap-4">

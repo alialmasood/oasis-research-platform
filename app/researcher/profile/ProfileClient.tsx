@@ -71,9 +71,7 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
       profile.user.specificSpecialization
     );
 
-  const isAdminInfoComplete = !!(
-    profile.user.employeeNumber && profile.user.appointmentYear
-  );
+  const isAdminInfoComplete = !!profile.user.appointmentYear;
 
   const completionItems = [
     { label: "المعلومات الأساسية", shortLabel: "أساسي", completed: isBasicInfoComplete },
@@ -611,25 +609,7 @@ export function ProfileClient({ initialData }: { initialData: ProfileData }) {
                 <p className="text-[11px] md:text-xs font-semibold text-slate-500 tracking-wide">
                   المعلومات الإدارية
                 </p>
-                {/* الموبايل: الرقم الوظيفي وسنة التعيين بنفس السطر */}
-                <div className="grid grid-cols-2 gap-x-2.5 md:gap-x-4 gap-y-3 md:gap-y-3.5">
-                  <div className="space-y-1 md:space-y-1.5 min-w-0">
-                    <Label className={labelClass}>الرقم الوظيفي</Label>
-                    <Input
-                      value={
-                        isEditingBasicInfo
-                          ? basicInfoForm.employeeNumber
-                          : (profile.user.employeeNumber ?? "")
-                      }
-                      readOnly={!isEditingBasicInfo}
-                      onChange={(e) =>
-                        isEditingBasicInfo &&
-                        setBasicInfoForm((f) => ({ ...f, employeeNumber: e.target.value }))
-                      }
-                      className={isEditingBasicInfo ? editInputClass : readonlyInputClass}
-                      dir="ltr"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2.5 md:gap-x-4 gap-y-3 md:gap-y-3.5">
                   <div className="space-y-1 md:space-y-1.5 min-w-0">
                     <Label className={labelClass}>سنة التعيين</Label>
                     <Input

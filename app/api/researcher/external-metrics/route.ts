@@ -23,11 +23,12 @@ export async function GET() {
   const preferredName =
     profile?.fullNameEn?.trim() ||
     profile?.fullNameAr?.trim() ||
-    profile?.email ||
     null;
 
   const metrics = await resolveExternalProfileMetrics({
     links,
+    // مرجع الهوية الأساسي حسب توجيه إدارة الجامعة
+    officialEmail: profile?.email ?? null,
     preferredName,
     nameCandidates: [profile?.fullNameEn, profile?.fullNameAr],
   });
@@ -36,6 +37,7 @@ export async function GET() {
     researcher: {
       id: user.id,
       name: preferredName,
+      email: profile?.email ?? null,
       fullNameAr: profile?.fullNameAr ?? null,
       fullNameEn: profile?.fullNameEn ?? null,
     },

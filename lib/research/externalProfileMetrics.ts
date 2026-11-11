@@ -1,10 +1,19 @@
 /**
  * استخراج مؤشرات بحثية من روابط الباحث عبر مصادر مفتوحة موثوقة.
- * الأولوية: ORCID → OpenAlex → Semantic Scholar (مساند)
- * يُرفض أي مرشح اسمه لا يطابق اسم الباحث على المنصة (لتجنب خلط الباحثين).
+ * مرجع الهوية الأساسي (بتوجيه إدارة الجامعة): البريد الإلكتروني الرسمي.
+ * ترتيب الاستخراج:
+ * 1) ORCID من الروابط إن وُجد
+ * 2) اكتشاف ORCID عبر البريد الرسمي (ORCID Public API)
+ * 3) OpenAlex / Semantic Scholar
+ * 4) بحث بالاسم كاحتياط أخير فقط (الأسماء تختلف بين الأبحاث)
  */
 
-export type ExternalMetricSource = "openalex" | "semanticscholar" | "orcid" | "name_search";
+export type ExternalMetricSource =
+  | "openalex"
+  | "semanticscholar"
+  | "orcid"
+  | "email_orcid"
+  | "name_search";
 
 export type IdentityMatchStatus = "matched" | "mismatch" | "uncertain" | "unavailable";
 
@@ -250,9 +259,39 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T | null> 
   }
 }
 
+function normalizeEmail(raw?: string | null): string | null {
+  const email = raw?.trim().toLowerCase();
+  if (!email || !email.includes("@")) return null;
+  return email;
+}
+
 async function fetchOpenAlexByOrcid(orcid: string): Promise<OpenAlexAuthor | null> {
   const url = `https://api.openalex.org/authors/https://orcid.org/${orcid}?${mailtoParam()}`;
   return fetchJson<OpenAlexAuthor>(url);
+}
+
+/**
+ * يبحث عن ORCID مرتبط بالبريد الرسمي عبر واجهة ORCID العامة.
+ * يعمل فقط إذا كان البريد ظاهراً/قابلاً للبحث في سجل ORCID.
+ */
+async function searchOrcidByEmail(email: string): Promise<string | null> {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return null;
+
+  const url = `https://pub.orcid.org/v3.0/search/?q=${encodeURIComponent(`email:${normalized}`)}`;
+  const data = await fetchJson<{
+    result?: Array<{
+      "orcid-identifier"?: { path?: string; uri?: string };
+    }>;
+    "num-found"?: number;
+  }>(url, {
+    headers: {
+      Accept: "application/vnd.orcid+json",
+    },
+  });
+
+  const path = data?.result?.[0]?.["orcid-identifier"]?.path;
+  return extractOrcid(path ?? null);
 }
 
 async function searchOpenAlexByName(name: string): Promise<OpenAlexAuthor[]> {
@@ -263,17 +302,65 @@ async function searchOpenAlexByName(name: string): Promise<OpenAlexAuthor[]> {
   return data?.results ?? [];
 }
 
-async function fetchOpenAlexWorks(authorId: string, limit = 8): Promise<ExternalPublication[]> {
-  const id = authorId.replace("https://openalex.org/", "");
-  const url = `https://api.openalex.org/works?filter=author.id:${id}&sort=publication_year:desc&per_page=${limit}&${mailtoParam()}`;
-  const data = await fetchJson<{ results?: OpenAlexWork[] }>(url);
-  return (data?.results ?? []).map((work) => ({
+const OPENALEX_WORKS_PAGE_SIZE = 200;
+/** سقف أمان لمنع انتهاء مهلة الطلب على الملفات الضخمة جداً */
+const OPENALEX_WORKS_HARD_CAP = 1000;
+
+function mapOpenAlexWork(work: OpenAlexWork): ExternalPublication {
+  return {
     title: work.display_name || work.title || "بدون عنوان",
     year: work.publication_year ?? null,
     citedByCount: work.cited_by_count ?? 0,
     doi: work.doi ? work.doi.replace("https://doi.org/", "") : null,
     openAlexUrl: work.id ?? null,
-  }));
+  };
+}
+
+/**
+ * يجلب كل أعمال المؤلف من OpenAlex عبر ترقيم الصفحات (cursor)،
+ * مرتبة من الأحدث للأقدم — وليس أحدث 8 فقط.
+ */
+async function fetchAllOpenAlexWorks(
+  authorId: string,
+  options?: { maxWorks?: number }
+): Promise<{ works: ExternalPublication[]; truncated: boolean; totalFetched: number }> {
+  const id = authorId.replace("https://openalex.org/", "");
+  const maxWorks = Math.min(
+    Math.max(options?.maxWorks ?? OPENALEX_WORKS_HARD_CAP, 1),
+    OPENALEX_WORKS_HARD_CAP
+  );
+
+  const works: ExternalPublication[] = [];
+  let cursor: string | null = "*";
+  let pages = 0;
+  const maxPages = Math.ceil(maxWorks / OPENALEX_WORKS_PAGE_SIZE) + 1;
+
+  while (cursor && works.length < maxWorks && pages < maxPages) {
+    pages += 1;
+    const url =
+      `https://api.openalex.org/works?filter=author.id:${encodeURIComponent(id)}` +
+      `&sort=publication_year:desc&per_page=${OPENALEX_WORKS_PAGE_SIZE}` +
+      `&cursor=${encodeURIComponent(cursor)}&${mailtoParam()}`;
+
+    const data = await fetchJson<{
+      results?: OpenAlexWork[];
+      meta?: { next_cursor?: string | null; count?: number };
+    }>(url);
+
+    const batch = data?.results ?? [];
+    if (batch.length === 0) break;
+
+    for (const work of batch) {
+      works.push(mapOpenAlexWork(work));
+      if (works.length >= maxWorks) break;
+    }
+
+    const next = data?.meta?.next_cursor ?? null;
+    cursor = next && next.length > 0 ? next : null;
+  }
+
+  const truncated = Boolean(cursor) || works.length >= maxWorks;
+  return { works, truncated, totalFetched: works.length };
 }
 
 async function fetchSemanticScholarByOrcid(orcid: string): Promise<{
@@ -330,10 +417,13 @@ function emptyResult(
 
 export async function resolveExternalProfileMetrics(args: {
   links: ResearcherLinksLike | null | undefined;
+  /** البريد الرسمي للباحث — مرجع الهوية الأساسي */
+  officialEmail?: string | null;
   preferredName?: string | null;
   nameCandidates?: Array<string | null | undefined>;
 }): Promise<ExternalProfileMetrics> {
   const links = args.links ?? {};
+  const officialEmail = normalizeEmail(args.officialEmail);
   const platformName =
     pickPreferredPlatformName([...(args.nameCandidates ?? []), args.preferredName]) ?? null;
 
@@ -347,8 +437,12 @@ export async function resolveExternalProfileMetrics(args: {
   const notes: string[] = [];
   const sourcesUsed: ExternalMetricSource[] = [];
 
+  notes.push(
+    "مرجع الهوية المعتمد: البريد الإلكتروني الرسمي للباحث (حسب توجيه إدارة الجامعة)، لأن الأسماء قد تختلف بين الأبحاث."
+  );
+
   if (linksDetected.hasGoogleScholar) {
-    notes.push("رابط Google Scholar موجود، لكن لا يتم سحبه مباشرة؛ نعتمد ORCID/OpenAlex مع فحص تطابق الاسم.");
+    notes.push("رابط Google Scholar موجود، لكن لا يتم سحبه مباشرة؛ نعتمد البريد/ORCID ثم OpenAlex.");
   }
   if (linksDetected.hasResearchGate) {
     notes.push("رابط ResearchGate محفوظ للمرجع فقط.");
@@ -357,52 +451,71 @@ export async function resolveExternalProfileMetrics(args: {
     notes.push("رابط Scopus محفوظ للمرجع؛ الاستخراج الحالي يعتمد OpenAlex/ORCID بدون مفتاح Scopus مدفوع.");
   }
 
-  const orcid = extractOrcid(links.orcid);
+  let orcid = extractOrcid(links.orcid);
+  let orcidResolvedViaEmail = false;
   let author: OpenAlexAuthor | null = null;
   let usedNameSearch = false;
   let identityMatch: IdentityMatchStatus = "unavailable";
   let matchScore: number | null = null;
 
+  // 1) ORCID من الروابط
   if (orcid) {
     author = await fetchOpenAlexByOrcid(orcid);
     if (author) {
       sourcesUsed.push("orcid", "openalex");
+      identityMatch = "matched";
+      matchScore = 100;
+      notes.push("تم اعتماد ORCID المحفوظ في روابط الباحث كمعرّف ثابت.");
     } else {
       notes.push("تعذر إيجاد ملف مطابق في OpenAlex لـ ORCID المدخل.");
     }
-  } else {
-    notes.push("لا يوجد ORCID في روابط الباحث — الدقة أعلى بكثير عند إضافة ORCID الصحيح.");
   }
 
-  if (author) {
-    const compatibility = evaluateNameCompatibility(platformName, author.display_name);
-    matchScore = compatibility.score;
-    if (!compatibility.compatible) {
-      notes.push(compatibility.reason);
+  // 2) اكتشاف ORCID عبر البريد الرسمي (مرجع الجامعة)
+  if (!author && officialEmail) {
+    const emailOrcid = await searchOrcidByEmail(officialEmail);
+    if (emailOrcid) {
+      orcid = emailOrcid;
+      orcidResolvedViaEmail = true;
+      author = await fetchOpenAlexByOrcid(emailOrcid);
+      if (author) {
+        sourcesUsed.push("email_orcid", "orcid", "openalex");
+        identityMatch = "matched";
+        matchScore = 100;
+        notes.push(
+          `تم ربط الهوية عبر البريد الرسمي (${officialEmail}) واكتشاف ORCID المطابق.`
+        );
+      } else {
+        notes.push(
+          `عُثر على ORCID عبر البريد الرسمي، لكن تعذر جلب ملف OpenAlex له (${emailOrcid}).`
+        );
+      }
+    } else {
       notes.push(
-        `اسم المنصة: «${platformName || "—"}» ≠ اسم المصدر: «${author.display_name || "—"}».`
+        "لم يُعثر على ORCID عام مرتبط بالبريد الرسمي. تأكد أن البريد ظاهر/مرتبط في حساب ORCID، أو أضف ORCID يدوياً في الروابط."
       );
-      return emptyResult({
-        ok: false,
-        message:
-          "تم رفض النتيجة لأن اسم الباحث في المصدر لا يطابق اسمك على المنصة (تجنّبًا لخلط باحثين مختلفين).",
-        platformName,
-        displayName: author.display_name ?? null,
-        identityMatch: "mismatch",
-        matchScore,
-        orcid,
-        openAlexId: author.id ?? null,
-        openAlexUrl: author.id ?? null,
-        linksDetected,
-        notes,
-        sourcesUsed,
-      });
+    }
+  } else if (!author && !officialEmail) {
+    notes.push("لا يوجد بريد رسمي على الحساب لاعتماده كمرجع هوية.");
+  }
+
+  // عند وجود ORCID موثوق: اختلاف كتابة الاسم لا يرفض النتيجة (الأسماء تتغير بين الأبحاث)
+  if (author && (orcidResolvedViaEmail || extractOrcid(links.orcid))) {
+    const compatibility = evaluateNameCompatibility(platformName, author.display_name);
+    matchScore = matchScore ?? compatibility.score;
+    if (!compatibility.compatible) {
+      notes.push(
+        `ملاحظة: اختلاف في كتابة الاسم («${platformName || "—"}» vs «${author.display_name || "—"}») — تم تجاهله لأن المرجع هو البريد/ORCID.`
+      );
+    } else {
+      notes.push(compatibility.reason);
     }
     identityMatch = "matched";
-    notes.push(compatibility.reason);
   }
 
+  // 3) احتياط أخير: بحث بالاسم فقط إن تعذر البريد/ORCID
   if (!author && platformName) {
+    notes.push("الانتقال لاحتياط البحث بالاسم لأن البريد/ORCID لم يُنتجا ملفاً موثوقاً.");
     const candidates = await searchOpenAlexByName(platformName);
     const ranked = candidates
       .map((candidate) => ({
@@ -419,21 +532,19 @@ export async function resolveExternalProfileMetrics(args: {
       matchScore = ranked[0].compatibility.score;
       sourcesUsed.push("name_search", "openalex");
       notes.push(ranked[0].compatibility.reason);
-      if (identityMatch === "uncertain") {
-        notes.push("المطابقة بالاسم مقبولة بحذر؛ يُفضّل تأكيد الهوية عبر ORCID.");
-      }
+      notes.push("يُفضّل لاحقاً ربط البريد الرسمي بـ ORCID لرفع موثوقية المطابقة.");
     } else if (candidates.length > 0) {
       const nearest = candidates
         .map((candidate) => evaluateNameCompatibility(platformName, candidate.display_name))
         .sort((a, b) => b.score - a.score)[0];
       notes.push(
         nearest?.reason ||
-          "وُجدت نتائج بالاسم لكنها رُفضت لعدم تطابق الهوية (مثل اختلاف اللقب العائلي)."
+          "وُجدت نتائج بالاسم لكنها غير كافية كتأكيد هوية بدون بريد/ORCID."
       );
       return emptyResult({
         ok: false,
         message:
-          "لم نقبل أي مرشح لأن الأسماء غير متطابقة مع ملفك. راجع ORCID/الاسم الإنجليزي في الملف الشخصي.",
+          "تعذر تأكيد الهوية بالبريد الرسمي أو ORCID. أضف ORCID في الروابط أو اربطه ببريدك الجامعي الظاهر.",
         platformName,
         displayName: candidates[0]?.display_name ?? null,
         identityMatch: "mismatch",
@@ -449,7 +560,9 @@ export async function resolveExternalProfileMetrics(args: {
   if (!author) {
     return emptyResult({
       ok: false,
-      message: "تعذر استخراج المؤشرات بشكل موثوق. أضف ORCID الصحيح المطابق لاسمك ثم أعد المحاولة.",
+      message: officialEmail
+        ? "تعذر استخراج المؤشرات. اربط بريدك الرسمي بحساب ORCID (أو أضف ORCID في الروابط) ثم أعد المحاولة."
+        : "تعذر استخراج المؤشرات. تأكد من وجود بريد رسمي على الحساب وأضف ORCID في الروابط.",
       platformName,
       orcid,
       identityMatch: "unavailable",
@@ -460,50 +573,61 @@ export async function resolveExternalProfileMetrics(args: {
   }
 
   const openAlexId = author.id ?? null;
-  const recentWorks = openAlexId ? await fetchOpenAlexWorks(openAlexId) : [];
+  const worksResult = openAlexId
+    ? await fetchAllOpenAlexWorks(openAlexId)
+    : { works: [] as ExternalPublication[], truncated: false, totalFetched: 0 };
+  const recentWorks = worksResult.works;
+
+  if (worksResult.truncated) {
+    notes.push(
+      `تم جلب ${worksResult.totalFetched} منشوراً كحد أقصى للأمان؛ قد يكون لدى المؤلف المزيد على OpenAlex.`
+    );
+  } else if (recentWorks.length > 0) {
+    notes.push(`تم جلب جميع المنشورات المتاحة لهذا المؤلف من OpenAlex (${recentWorks.length}).`);
+  }
 
   let hIndex = author.summary_stats?.h_index ?? null;
   let publications = author.works_count ?? null;
   let citedByCount = author.cited_by_count ?? null;
   let semanticScholarUrl: string | null = null;
 
+  // إن وُجدت قائمة أعمال كاملة، طابق عدد المنشورات المعروض مع ما جُلب إن كان أعلى من الإحصاء
+  if (publications == null || (recentWorks.length > 0 && recentWorks.length > (publications ?? 0))) {
+    publications = Math.max(publications ?? 0, recentWorks.length);
+  }
+
   if (orcid) {
     const ss = await fetchSemanticScholarByOrcid(orcid);
     if (ss) {
-      if (ss.name) {
+      // مع ORCID/البريد لا نرفض Semantic Scholar بسبب اختلاف الاسم
+      sourcesUsed.push("semanticscholar");
+      semanticScholarUrl = ss.url;
+      if (hIndex == null && ss.hIndex != null) hIndex = ss.hIndex;
+      if (publications == null && ss.paperCount != null) publications = ss.paperCount;
+      if (citedByCount == null && ss.citationCount != null) citedByCount = ss.citationCount;
+      if (ss.hIndex != null && hIndex != null && ss.hIndex !== hIndex) {
+        notes.push(`فروقات مصادر طبيعية: H-Index OpenAlex=${hIndex} / Semantic Scholar=${ss.hIndex}.`);
+      }
+      if (ss.name && platformName) {
         const ssCompatibility = evaluateNameCompatibility(platformName, ss.name);
         if (!ssCompatibility.compatible) {
           notes.push(
-            `تجاهلنا Semantic Scholar لأن الاسم هناك («${ss.name}») لا يطابق اسمك.`
+            `اختلاف اسم في Semantic Scholar («${ss.name}») — مقبول لأن المرجع هو البريد/ORCID.`
           );
-        } else {
-          sourcesUsed.push("semanticscholar");
-          semanticScholarUrl = ss.url;
-          if (hIndex == null && ss.hIndex != null) hIndex = ss.hIndex;
-          if (publications == null && ss.paperCount != null) publications = ss.paperCount;
-          if (citedByCount == null && ss.citationCount != null) citedByCount = ss.citationCount;
-          if (ss.hIndex != null && hIndex != null && ss.hIndex !== hIndex) {
-            notes.push(`فروقات مصادر طبيعية: H-Index OpenAlex=${hIndex} / Semantic Scholar=${ss.hIndex}.`);
-          }
         }
-      } else {
-        sourcesUsed.push("semanticscholar");
-        semanticScholarUrl = ss.url;
-        if (hIndex == null && ss.hIndex != null) hIndex = ss.hIndex;
-        if (publications == null && ss.paperCount != null) publications = ss.paperCount;
-        if (citedByCount == null && ss.citationCount != null) citedByCount = ss.citationCount;
       }
     }
   }
 
   return {
     ok: true,
-    message:
-      identityMatch === "uncertain"
-        ? "تم استخراج مؤشرات بحذر بعد فحص تطابق الاسم."
+    message: orcidResolvedViaEmail
+      ? "تم استخراج المؤشرات بالاعتماد على البريد الرسمي وربطه بـ ORCID."
+      : identityMatch === "uncertain"
+        ? "تم استخراج مؤشرات بحذر (احتياط بالاسم). يُفضّل تأكيد الهوية عبر البريد/ORCID."
         : usedNameSearch
-          ? "تم استخراج المؤشرات بعد مطابقة الاسم مع ملفك."
-          : "تم استخراج المؤشرات بنجاح مع التحقق من تطابق الهوية.",
+          ? "تم استخراج المؤشرات باحتياط الاسم؛ المرجع الأفضل هو البريد الرسمي المرتبط بـ ORCID."
+          : "تم استخراج المؤشرات بنجاح مع اعتماد معرّف ثابت (ORCID/البريد).",
     platformName,
     displayName: author.display_name ?? platformName,
     identityMatch,

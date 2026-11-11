@@ -19,7 +19,13 @@ import {
 import type { ExternalProfileMetrics } from "@/lib/research/externalProfileMetrics";
 
 type ApiResponse = {
-  researcher: { id: string; name: string | null };
+  researcher: {
+    id: string;
+    name: string | null;
+    email?: string | null;
+    fullNameAr?: string | null;
+    fullNameEn?: string | null;
+  };
   metrics: ExternalProfileMetrics;
 };
 
@@ -189,7 +195,7 @@ export function ResearchDataClient() {
             البيانات البحثية
           </h1>
           <p className="text-[13px] text-slate-500 leading-relaxed max-w-2xl">
-            مؤشراتك الخارجية مثل H-Index والمنشورات والاستشهادات، مع التحقق من تطابق الهوية قبل العرض.
+            مؤشراتك الخارجية مثل H-Index والمنشورات والاستشهادات، مع اعتماد البريد الرسمي كمرجع للهوية.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -260,6 +266,12 @@ export function ResearchDataClient() {
             <CardContent className="px-3 py-2.5 space-y-2">
               <div className="rounded-lg border border-slate-200/60 bg-slate-50/40 px-2.5 py-2">
                 <div className="grid grid-cols-2 gap-2">
+                  <div className="min-w-0 col-span-2">
+                    <p className="text-[10px] text-slate-500 leading-none">البريد الرسمي (مرجع الهوية)</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-800 leading-snug break-all" dir="ltr">
+                      {data?.researcher.email || "—"}
+                    </p>
+                  </div>
                   <div className="min-w-0">
                     <p className="text-[10px] text-slate-500 leading-none">اسمك على المنصة</p>
                     <p className="mt-1 text-[11px] font-medium text-slate-800 leading-snug truncate" dir="auto">
@@ -285,8 +297,8 @@ export function ResearchDataClient() {
 
               {metrics.identityMatch === "mismatch" ? (
                 <div className="rounded-lg border border-rose-200/80 bg-rose-50/60 px-2.5 py-2 text-[10px] text-rose-900 leading-snug">
-                  رُفضت النتيجة لحماية دقة البيانات: المصدر يشير إلى اسم مختلف عن ملفك.
-                  راجع ORCID أو الاسم الإنجليزي في الملف الشخصي.
+                  تعذر تأكيد الهوية عبر البريد الرسمي أو ORCID.
+                  اربط بريدك الجامعي بحساب ORCID أو أضفه في روابط الباحث.
                 </div>
               ) : null}
 
@@ -364,7 +376,13 @@ export function ResearchDataClient() {
 
             <CardContent className="px-5 py-4 space-y-3">
               <div className="rounded-xl border border-slate-200/60 bg-slate-50/40 px-3.5 py-2.5">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:items-start">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-start">
+                  <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+                    <p className="text-[11px] text-slate-500 leading-none">البريد الرسمي (مرجع الهوية)</p>
+                    <p className="mt-1 text-sm font-medium text-slate-800 leading-snug break-all" dir="ltr">
+                      {data?.researcher.email || "—"}
+                    </p>
+                  </div>
                   <div className="min-w-0">
                     <p className="text-[11px] text-slate-500 leading-none">اسمك على المنصة</p>
                     <p className="mt-1 text-sm font-medium text-slate-800 leading-snug truncate" dir="auto">
@@ -377,7 +395,7 @@ export function ResearchDataClient() {
                       {metrics.displayName || "—"}
                     </p>
                   </div>
-                  <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+                  <div className="min-w-0">
                     <p className="text-[11px] text-slate-500 leading-none">
                       <span dir="ltr">ORCID</span>
                     </p>
@@ -390,8 +408,8 @@ export function ResearchDataClient() {
 
               {metrics.identityMatch === "mismatch" ? (
                 <div className="rounded-xl border border-rose-200/80 bg-rose-50/60 px-3.5 py-2.5 text-sm text-rose-900">
-                  رُفضت النتيجة لحماية دقة البيانات: المصدر يشير إلى اسم مختلف عن ملفك
-                  (مثل إضافة لقب عائلي غير موجود). راجع ORCID أو الاسم الإنجليزي في الملف الشخصي.
+                  تعذر تأكيد الهوية عبر البريد الرسمي أو ORCID.
+                  اربط بريدك الجامعي بحساب ORCID (ويُفضّل أن يكون ظاهراً للبحث) أو أضفه في روابط الباحث.
                 </div>
               ) : null}
 
@@ -452,7 +470,7 @@ export function ResearchDataClient() {
                   <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-[12px] font-semibold text-slate-900 flex items-center gap-1.5 leading-snug min-w-0">
                       <BookOpen className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                      <span className="truncate">أحدث المنشورات</span>
+                      <span className="truncate">المنشورات المستخرجة</span>
                     </CardTitle>
                     <span className="inline-flex items-center rounded-md border border-slate-200/80 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 tabular-nums shrink-0">
                       {metrics.recentWorks.length.toLocaleString("ar-IQ")}
@@ -537,7 +555,7 @@ export function ResearchDataClient() {
                   <div className="flex items-center justify-between gap-3">
                     <CardTitle className="text-[15px] font-semibold text-slate-900 flex items-center gap-2 leading-snug">
                       <BookOpen className="h-4 w-4 text-slate-500 shrink-0" />
-                      أحدث المنشورات المستخرجة
+                      المنشورات المستخرجة
                     </CardTitle>
                     <span className="inline-flex items-center rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 tabular-nums">
                       {metrics.recentWorks.length.toLocaleString("ar-IQ")} منشور
