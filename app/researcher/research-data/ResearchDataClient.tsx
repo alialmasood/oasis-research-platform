@@ -214,7 +214,7 @@ export function ResearchDataClient() {
             البيانات البحثية
           </h1>
           <p className="text-[13px] text-slate-500 leading-relaxed max-w-2xl">
-            مؤشراتك الخارجية مثل H-Index والمنشورات والاستشهادات، مع اعتماد البريد الرسمي كمرجع للهوية.
+            مؤشراتك الخارجية مثل H-Index والمنشورات والاستشهادات، بالاعتماد فقط على بريدك الجامعي @uobasrah.edu.iq.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -286,19 +286,19 @@ export function ResearchDataClient() {
               <div className="rounded-lg border border-slate-200/60 bg-slate-50/40 px-2.5 py-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="min-w-0 col-span-2">
-                    <p className="text-[10px] text-slate-500 leading-none">البريد الرسمي (مرجع الهوية)</p>
+                    <p className="text-[10px] text-slate-500 leading-none">البريد الجامعي (مرجع الهوية الوحيد)</p>
                     <p className="mt-1 text-[11px] font-medium text-slate-800 leading-snug break-all" dir="ltr">
                       {data?.researcher.email || "—"}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-slate-500 leading-none">اسمك على المنصة</p>
+                    <p className="text-[10px] text-slate-500 leading-none">اسم العرض</p>
                     <p className="mt-1 text-[11px] font-medium text-slate-800 leading-snug truncate" dir="auto">
                       {metrics.platformName || data?.researcher.name || "—"}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-slate-500 leading-none">الاسم الخارجي</p>
+                    <p className="text-[10px] text-slate-500 leading-none">الاسم في المصدر (للعرض فقط)</p>
                     <p className="mt-1 text-[11px] font-medium text-slate-800 leading-snug truncate" dir="auto">
                       {metrics.displayName || "—"}
                     </p>
@@ -316,8 +316,7 @@ export function ResearchDataClient() {
 
               {metrics.identityMatch === "mismatch" ? (
                 <div className="rounded-lg border border-rose-200/80 bg-rose-50/60 px-2.5 py-2 text-[10px] text-rose-900 leading-snug">
-                  تعذر تأكيد الهوية عبر البريد الرسمي أو ORCID.
-                  اربط بريدك الجامعي بحساب ORCID أو أضفه في روابط الباحث.
+                  البريد المسجّل ليس من النطاق الجامعي @uobasrah.edu.iq المعتمد للهوية والبيانات البحثية.
                 </div>
               ) : null}
 
@@ -397,19 +396,19 @@ export function ResearchDataClient() {
               <div className="rounded-xl border border-slate-200/60 bg-slate-50/40 px-3.5 py-2.5">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-start">
                   <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-                    <p className="text-[11px] text-slate-500 leading-none">البريد الرسمي (مرجع الهوية)</p>
+                    <p className="text-[11px] text-slate-500 leading-none">البريد الجامعي (مرجع الهوية الوحيد)</p>
                     <p className="mt-1 text-sm font-medium text-slate-800 leading-snug break-all" dir="ltr">
                       {data?.researcher.email || "—"}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] text-slate-500 leading-none">اسمك على المنصة</p>
+                    <p className="text-[11px] text-slate-500 leading-none">اسم العرض</p>
                     <p className="mt-1 text-sm font-medium text-slate-800 leading-snug truncate" dir="auto">
                       {metrics.platformName || data?.researcher.name || "—"}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] text-slate-500 leading-none">الاسم في المصدر الخارجي</p>
+                    <p className="text-[11px] text-slate-500 leading-none">الاسم في المصدر (للعرض فقط)</p>
                     <p className="mt-1 text-sm font-medium text-slate-800 leading-snug truncate" dir="auto">
                       {metrics.displayName || "—"}
                     </p>
@@ -427,8 +426,7 @@ export function ResearchDataClient() {
 
               {metrics.identityMatch === "mismatch" ? (
                 <div className="rounded-xl border border-rose-200/80 bg-rose-50/60 px-3.5 py-2.5 text-sm text-rose-900">
-                  تعذر تأكيد الهوية عبر البريد الرسمي أو ORCID.
-                  اربط بريدك الجامعي بحساب ORCID (ويُفضّل أن يكون ظاهراً للبحث) أو أضفه في روابط الباحث.
+                  البريد المسجّل ليس من النطاق الجامعي @uobasrah.edu.iq المعتمد للهوية وH-Index والمنشورات والاستشهادات.
                 </div>
               ) : null}
 
@@ -439,19 +437,19 @@ export function ResearchDataClient() {
                       label="H-Index"
                       value={metrics.hIndex}
                       tone="blue"
-                      hint="OpenAlex / Semantic Scholar"
+                      hint="عبر البريد الجامعي → ORCID"
                     />
                     <MetricTile
                       label="Publications"
                       value={metrics.publications}
                       tone="emerald"
-                      hint="عدد الأعمال المفهرسة"
+                      hint="عبر البريد الجامعي والمصادر المرتبطة"
                     />
                     <MetricTile
                       label="Citations"
                       value={metrics.citedByCount}
                       tone="amber"
-                      hint="إجمالي الاستشهادات"
+                      hint="عبر البريد الجامعي → ORCID"
                     />
                     <MetricTile
                       label="i10-Index"
