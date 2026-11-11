@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getSiteOrigin } from "@/lib/cv/siteUrl";
-import { buildPublicCvPath, ensureUserProfileSlug } from "@/lib/cv/slug";
+import { buildPublicCvPath } from "@/lib/cv/slug";
 
 export const revalidate = 1800;
 
@@ -24,21 +24,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+/**
+ * دليل الباحثين للقراءة فقط.
+ * لا يكتب على قاعدة البيانات أثناء البناء/التوليد —
+ * الروابط الناقصة تُملأ عبر التسجيل أو تصدير السيرة أو السكربت المستقل.
+ */
 export default async function PublicResearchersDirectoryPage() {
-  // ضمان وجود slug لمن ليس لديهم بعد (دفعة محدودة)
-  const missingSlug = await prisma.user.findMany({
-    where: {
-      role: "RESEARCHER",
-      isActive: true,
-      cvPublicEnabled: true,
-      profileSlug: null,
-      fullNameEn: { not: null },
-    },
-    select: { id: true },
-    take: 50,
-  });
-  await Promise.all(missingSlug.map((u) => ensureUserProfileSlug(u.id)));
-
   const researchers = await prisma.user.findMany({
     where: {
       role: "RESEARCHER",
