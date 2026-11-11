@@ -337,10 +337,11 @@ async function fetchAllOpenAlexWorks(
 
   while (cursor && works.length < maxWorks && pages < maxPages) {
     pages += 1;
-    const url =
+    const currentCursor: string = cursor;
+    const url: string =
       `https://api.openalex.org/works?filter=author.id:${encodeURIComponent(id)}` +
       `&sort=publication_year:desc&per_page=${OPENALEX_WORKS_PAGE_SIZE}` +
-      `&cursor=${encodeURIComponent(cursor)}&${mailtoParam()}`;
+      `&cursor=${encodeURIComponent(currentCursor)}&${mailtoParam()}`;
 
     const data = await fetchJson<{
       results?: OpenAlexWork[];
