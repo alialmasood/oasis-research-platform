@@ -16,7 +16,12 @@ import {
   MessageSquareQuote,
   Hash,
 } from "lucide-react";
-import type { ExternalProfileMetrics } from "@/lib/research/externalProfileMetrics";
+import type {
+  ExternalProfileMetrics,
+  ExternalPublication,
+  PublicationSourceKind,
+} from "@/lib/research/externalProfileMetrics";
+import { RESEARCH_CATEGORY_LABELS } from "@/lib/research/categoryLabels";
 
 type ApiResponse = {
   researcher: {
@@ -32,11 +37,25 @@ type ApiResponse = {
 const cardShell =
   "rounded-xl border border-slate-200/70 bg-white shadow-sm";
 
+const SOURCE_LABELS: Record<PublicationSourceKind, string> = {
+  local: "محلي (المنصة)",
+  openalex: "OpenAlex",
+  orcid: "ORCID",
+  semanticscholar: "Semantic Scholar",
+};
+
 function parsePublicationTitle(title: string) {
   const retractedPattern = /^\s*\[?\s*RETRACTED\s*\]?\s*[:\-–—]?\s*/i;
   const retracted = retractedPattern.test(title) || /\bRETRACTED\b/i.test(title);
   const displayTitle = title.replace(retractedPattern, "").replace(/\bRETRACTED\b/gi, "").trim() || title;
   return { retracted, displayTitle };
+}
+
+function publicationHref(work: ExternalPublication): string | null {
+  if (work.openAlexUrl) return work.openAlexUrl;
+  if (work.url) return work.url;
+  if (work.doi) return `https://doi.org/${work.doi}`;
+  return null;
 }
 
 function MetricTile({
@@ -462,7 +481,7 @@ export function ResearchDataClient() {
             </CardContent>
           </Card>
 
-          {metrics.ok ? (
+          {metrics.ok || metrics.recentWorks.length > 0 ? (
             <>
               {/* —— موبايل: منشورات كبطاقات مدمجة —— */}
               <Card className={`md:hidden ${cardShell} overflow-hidden gap-0 py-0`}>
@@ -484,9 +503,12 @@ export function ResearchDataClient() {
                     <ul className="space-y-2">
                       {metrics.recentWorks.map((work, index) => {
                         const { retracted, displayTitle } = parsePublicationTitle(work.title);
+                        const href = publicationHref(work);
+                        const categories = work.categories ?? [];
+                        const sources = work.sources ?? [];
                         return (
                           <li
-                            key={`${work.title}-${index}`}
+                            key={`${work.doi || work.title}-${index}`}
                             className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm min-h-[96px] flex flex-col justify-between gap-2"
                           >
                             <div className="min-w-0">
@@ -500,9 +522,9 @@ export function ResearchDataClient() {
                                   className="text-[11px] font-medium text-slate-900 leading-snug min-w-0 line-clamp-2"
                                   dir="auto"
                                 >
-                                  {work.openAlexUrl ? (
+                                  {href ? (
                                     <a
-                                      href={work.openAlexUrl}
+                                      href={href}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="hover:text-blue-700 hover:underline underline-offset-2"
@@ -514,6 +536,26 @@ export function ResearchDataClient() {
                                   )}
                                 </p>
                               </div>
+                              {(categories.length > 0 || sources.length > 0) ? (
+                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                  {categories.map((cat) => (
+                                    <span
+                                      key={cat}
+                                      className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] font-medium text-slate-600"
+                                    >
+                                      {RESEARCH_CATEGORY_LABELS[cat] ?? cat}
+                                    </span>
+                                  ))}
+                                  {sources.map((src) => (
+                                    <span
+                                      key={src}
+                                      className="inline-flex items-center rounded-md border border-blue-100 bg-blue-50/70 px-1.5 py-0.5 text-[9px] font-medium text-blue-700"
+                                    >
+                                      {SOURCE_LABELS[src] ?? src}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
                             </div>
                             <div className="flex items-center justify-between gap-2 min-w-0">
                               <p className="text-[10px] text-slate-500 leading-snug truncate min-w-0" dir="ltr">
@@ -549,7 +591,7 @@ export function ResearchDataClient() {
                 </CardContent>
               </Card>
 
-              {/* —— سطح المكتب: منشورات بدون تغيير —— */}
+              {/* —— سطح المكتب: منشورات —— */}
               <Card className={`hidden md:block ${cardShell} overflow-hidden gap-0 py-0`}>
                 <CardHeader className="px-5 py-3 border-b border-slate-100 gap-0 space-y-0 [.border-b]:pb-3">
                   <div className="flex items-center justify-between gap-3">
@@ -569,8 +611,11 @@ export function ResearchDataClient() {
                     <ul className="divide-y divide-slate-100">
                       {metrics.recentWorks.map((work, index) => {
                         const { retracted, displayTitle } = parsePublicationTitle(work.title);
+                        const href = publicationHref(work);
+                        const categories = work.categories ?? [];
+                        const sources = work.sources ?? [];
                         return (
-                          <li key={`${work.title}-${index}`} className="py-2.5 first:pt-1.5 last:pb-1.5">
+                          <li key={`${work.doi || work.title}-${index}`} className="py-2.5 first:pt-1.5 last:pb-1.5">
                             <div className="flex items-start gap-2.5 min-w-0">
                               <div className="min-w-0 flex-1 overflow-hidden">
                                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
@@ -580,9 +625,9 @@ export function ResearchDataClient() {
                                     </span>
                                   ) : null}
                                   <p className="text-sm font-medium text-slate-900 leading-snug min-w-0 break-words" dir="auto">
-                                    {work.openAlexUrl ? (
+                                    {href ? (
                                       <a
-                                        href={work.openAlexUrl}
+                                        href={href}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="hover:text-blue-700 hover:underline underline-offset-2"
@@ -594,6 +639,26 @@ export function ResearchDataClient() {
                                     )}
                                   </p>
                                 </div>
+                                {(categories.length > 0 || sources.length > 0) ? (
+                                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                    {categories.map((cat) => (
+                                      <span
+                                        key={cat}
+                                        className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600"
+                                      >
+                                        {RESEARCH_CATEGORY_LABELS[cat] ?? cat}
+                                      </span>
+                                    ))}
+                                    {sources.map((src) => (
+                                      <span
+                                        key={src}
+                                        className="inline-flex items-center rounded-md border border-blue-100 bg-blue-50/70 px-1.5 py-0.5 text-[10px] font-medium text-blue-700"
+                                      >
+                                        {SOURCE_LABELS[src] ?? src}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : null}
                                 <p className="mt-1 text-xs text-slate-500 leading-snug break-words" dir="ltr">
                                   <span>{work.year ?? "—"}</span>
                                   {work.doi ? (

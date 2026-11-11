@@ -12,11 +12,26 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [links, profile] = await Promise.all([
+  const [links, profile, localResearch] = await Promise.all([
     prisma.researcherLinks.findUnique({ where: { userId: user.id } }),
     prisma.user.findUnique({
       where: { id: user.id },
       select: { fullNameAr: true, fullNameEn: true, email: true },
+    }),
+    prisma.research.findMany({
+      where: {
+        researcherId: user.id,
+        OR: [{ publishStatus: "PUBLISHED" }, { status: "COMPLETED" }],
+      },
+      select: {
+        title: true,
+        year: true,
+        doi: true,
+        researchUrl: true,
+        downloadUrl: true,
+        categories: true,
+      },
+      orderBy: [{ year: "desc" }, { updatedAt: "desc" }],
     }),
   ]);
 
@@ -31,6 +46,14 @@ export async function GET() {
     officialEmail: profile?.email ?? null,
     preferredName,
     nameCandidates: [profile?.fullNameEn, profile?.fullNameAr],
+    localPublications: localResearch.map((row) => ({
+      title: row.title,
+      year: row.year,
+      doi: row.doi,
+      researchUrl: row.researchUrl,
+      downloadUrl: row.downloadUrl,
+      categories: row.categories,
+    })),
   });
 
   return NextResponse.json({
