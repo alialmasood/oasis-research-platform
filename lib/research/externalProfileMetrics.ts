@@ -1,28 +1,29 @@
 /**
  * استخراج مؤشرات بحثية ومنشورات مرتبطة بهوية الباحث.
- * مرجع الهوية الوحيد المعتمد: البريد الجامعي @uobasrah.edu.iq المسجّل على المنصة.
- * لا يُستخدم الاسم للمطابقة أو الجلب (لتفادي خلط باحثين متشابهين).
+ * مرجع الهوية الوحيد: حساب ORCID المحفوظ في /researcher/links.
+ * لا يُستخدم الاسم للمطابقة أو الجلب.
  *
- * المسار:
- * البريد الجامعي → ORCID المرتبط بالبريد → OpenAlex / Semantic Scholar / سجل ORCID
- * + البحوث المحلية المسجّلة على حساب الباحث في المنصة.
+ * المصادر (مع إزالة التكرار بـ DOI/العنوان):
+ * 1) ORCID → OpenAlex / سجل ORCID / Semantic Scholar
+ * 2) Scopus و Web of Science من الروابط (عبر OpenAlex عند توفر المعرّف)
+ * 3) البحوث المدخلة يدوياً في /researcher/activities/research
  */
 
 export type ExternalMetricSource =
   | "openalex"
   | "semanticscholar"
   | "orcid"
-  | "email_orcid"
-  | "local";
-
-/** النطاق الجامعي المعتمد للهوية والبيانات البحثية */
-export const UNIVERSITY_EMAIL_DOMAIN = "uobasrah.edu.iq";
+  | "local"
+  | "scopus"
+  | "webofscience";
 
 export type PublicationSourceKind =
   | "openalex"
   | "orcid"
   | "semanticscholar"
-  | "local";
+  | "local"
+  | "scopus"
+  | "webofscience";
 
 export type IdentityMatchStatus = "matched" | "mismatch" | "uncertain" | "unavailable";
 
@@ -70,6 +71,7 @@ export type ExternalProfileMetrics = {
     hasOrcid: boolean;
     hasGoogleScholar: boolean;
     hasScopus: boolean;
+    hasWebOfScience: boolean;
     hasResearchGate: boolean;
   };
   notes: string[];
@@ -80,6 +82,7 @@ type ResearcherLinksLike = {
   orcid?: string | null;
   googleScholar?: string | null;
   scopus?: string | null;
+  webOfScience?: string | null;
   researchGate?: string | null;
 };
 
@@ -144,6 +147,27 @@ function mailtoParam() {
 export function extractOrcid(raw?: string | null): string | null {
   if (!raw?.trim()) return null;
   const match = raw.trim().match(ORCID_RE);
+  return match?.[1]?.toUpperCase() ?? null;
+}
+
+/** استخراج Scopus Author ID من الرابط المحفوظ في صفحة الروابط */
+export function extractScopusAuthorId(raw?: string | null): string | null {
+  if (!raw?.trim()) return null;
+  const value = raw.trim();
+  const match =
+    value.match(/authorid[=:](\d{6,})/i) ||
+    value.match(/authorId[=:](\d{6,})/) ||
+    value.match(/[?&]authorID=(\d{6,})/i) ||
+    value.match(/authid\/detail\.uri\?[^#]*authorId=(\d{6,})/i);
+  return match?.[1] ?? null;
+}
+
+/** استخراج ResearcherID من رابط Web of Science إن وُجد */
+export function extractWebOfScienceResearcherId(raw?: string | null): string | null {
+  if (!raw?.trim()) return null;
+  const match =
+    raw.trim().match(/\b([A-Z]-\d{4}-\d{4})\b/i) ||
+    raw.trim().match(/\/rid\/([A-Z]-\d{4}-\d{4})/i);
   return match?.[1]?.toUpperCase() ?? null;
 }
 
@@ -267,18 +291,6 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T | null> 
   } catch {
     return null;
   }
-}
-
-function normalizeEmail(raw?: string | null): string | null {
-  const email = raw?.trim().toLowerCase();
-  if (!email || !email.includes("@")) return null;
-  return email;
-}
-
-export function isUniversityEmail(raw?: string | null): boolean {
-  const email = normalizeEmail(raw);
-  if (!email) return false;
-  return email.endsWith(`@${UNIVERSITY_EMAIL_DOMAIN}`);
 }
 
 function normalizeDoi(raw?: string | null): string | null {
@@ -410,32 +422,178 @@ function mapLocalResearch(rows: LocalResearchInput[] | undefined): ExternalPubli
 }
 
 async function fetchOpenAlexByOrcid(orcid: string): Promise<OpenAlexAuthor | null> {
-  const url = `https://api.openalex.org/authors/https://orcid.org/${orcid}?${mailtoParam()}`;
-  return fetchJson<OpenAlexAuthor>(url);
+  const clean = orcid.trim();
+
+  // 1) مسار المعرّف المباشر
+  const direct = await fetchJson<OpenAlexAuthor>(
+    `https://api.openalex.org/authors/https://orcid.org/${clean}?${mailtoParam()}`
+  );
+  if (direct?.id) return direct;
+
+  // 2) صيغة orcid:XXXX
+  const shorthand = await fetchJson<OpenAlexAuthor>(
+    `https://api.openalex.org/authors/orcid:${clean}?${mailtoParam()}`
+  );
+  if (shorthand?.id) return shorthand;
+
+  // 3) فلتر القائمة — الأكثر موثوقية عند فشل المسارات المباشرة
+  const listed = await fetchJson<{ results?: OpenAlexAuthor[] }>(
+    `https://api.openalex.org/authors?filter=orcid:${encodeURIComponent(clean)}&per_page=5&${mailtoParam()}`
+  );
+  const results = listed?.results ?? [];
+  if (results.length === 0) return null;
+  return [...results].sort((a, b) => (b.works_count ?? 0) - (a.works_count ?? 0))[0] ?? null;
+}
+
+/** حساب H-Index و i10 و Citations من قائمة المنشورات عند غياب إحصاءات الملف */
+function computeCitationMetrics(works: ExternalPublication[]): {
+  hIndex: number;
+  i10Index: number;
+  citedByCount: number;
+} {
+  const counts = works
+    .map((w) => (typeof w.citedByCount === "number" && w.citedByCount > 0 ? w.citedByCount : 0))
+    .sort((a, b) => b - a);
+
+  let hIndex = 0;
+  for (let i = 0; i < counts.length; i += 1) {
+    if (counts[i] >= i + 1) hIndex = i + 1;
+    else break;
+  }
+
+  return {
+    hIndex,
+    i10Index: counts.filter((c) => c >= 10).length,
+    citedByCount: counts.reduce((sum, c) => sum + c, 0),
+  };
 }
 
 /**
- * يبحث عن ORCID مرتبط بالبريد الرسمي عبر واجهة ORCID العامة.
- * يعمل فقط إذا كان البريد ظاهراً/قابلاً للبحث في سجل ORCID.
+ * OpenAlex أزال دعم تصفية المؤلفين بـ Scopus Author ID.
+ * نُبقي الدالة للتوافق، وتعيد null دائماً مع الاعتماد على Elsevier API أو إثراء DOI.
  */
-async function searchOrcidByEmail(email: string): Promise<string | null> {
-  const normalized = normalizeEmail(email);
-  if (!normalized) return null;
+async function fetchOpenAlexByScopusId(_scopusAuthorId: string): Promise<OpenAlexAuthor | null> {
+  return null;
+}
 
-  const url = `https://pub.orcid.org/v3.0/search/?q=${encodeURIComponent(`email:${normalized}`)}`;
+/** إثراء المنشورات بعدد الاستشهادات عبر DOI من OpenAlex (عند غياب ملف مؤلف) */
+async function enrichPublicationsWithOpenAlexCitations(
+  works: ExternalPublication[]
+): Promise<ExternalPublication[]> {
+  const enriched: ExternalPublication[] = [];
+
+  for (const work of works) {
+    const doi = normalizeDoi(work.doi);
+    if (!doi) {
+      enriched.push(work);
+      continue;
+    }
+
+    // لا نعيد الطلب إن كانت الاستشهادات موجودة مسبقاً من مصدر غني
+    if (work.citedByCount > 0 && work.sources.includes("openalex")) {
+      enriched.push(work);
+      continue;
+    }
+
+    const data = await fetchJson<{
+      id?: string;
+      cited_by_count?: number;
+      publication_year?: number | null;
+      display_name?: string;
+    }>(`https://api.openalex.org/works/doi:${encodeURIComponent(doi)}?${mailtoParam()}`);
+
+    if (!data) {
+      enriched.push(work);
+      continue;
+    }
+
+    enriched.push({
+      ...work,
+      title: work.title || data.display_name || work.title,
+      year: work.year ?? data.publication_year ?? null,
+      citedByCount: Math.max(work.citedByCount ?? 0, data.cited_by_count ?? 0),
+      openAlexUrl: work.openAlexUrl ?? data.id ?? null,
+      url: work.url ?? data.id ?? (doi ? `https://doi.org/${doi}` : null),
+      sources: Array.from(new Set([...work.sources, "openalex" as PublicationSourceKind])),
+    });
+  }
+
+  return enriched;
+}
+
+/**
+ * مؤشرات Scopus الرسمية عبر Elsevier Author Retrieval (إن وُجد مفتاح API).
+ * المتغيرات المدعومة: SCOPUS_API_KEY أو ELSEVIER_API_KEY
+ */
+async function fetchScopusAuthorMetrics(scopusAuthorId: string): Promise<{
+  hIndex: number | null;
+  citationCount: number | null;
+  documentCount: number | null;
+  name: string | null;
+} | null> {
+  const apiKey = process.env.SCOPUS_API_KEY || process.env.ELSEVIER_API_KEY;
+  if (!apiKey?.trim()) return null;
+
+  const id = scopusAuthorId.trim();
+  const url = `https://api.elsevier.com/content/author/author_id/${encodeURIComponent(id)}?view=METRICS`;
   const data = await fetchJson<{
-    result?: Array<{
-      "orcid-identifier"?: { path?: string; uri?: string };
+    "author-retrieval-response"?: Array<{
+      "h-index"?: string | number;
+      coredata?: {
+        "citation-count"?: string | number;
+        "cited-by-count"?: string | number;
+        "document-count"?: string | number;
+        "dc:identifier"?: string;
+      };
+      "author-profile"?: {
+        "preferred-name"?: {
+          "given-name"?: string;
+          surname?: string;
+        };
+      };
     }>;
-    "num-found"?: number;
   }>(url, {
     headers: {
-      Accept: "application/vnd.orcid+json",
+      Accept: "application/json",
+      "X-ELS-APIKey": apiKey,
     },
   });
 
-  const path = data?.result?.[0]?.["orcid-identifier"]?.path;
-  return extractOrcid(path ?? null);
+  const row = data?.["author-retrieval-response"]?.[0];
+  if (!row) return null;
+
+  const toNum = (value: string | number | undefined | null): number | null => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() !== "") {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  };
+
+  const given = row["author-profile"]?.["preferred-name"]?.["given-name"]?.trim() || "";
+  const surname = row["author-profile"]?.["preferred-name"]?.surname?.trim() || "";
+  const name = `${given} ${surname}`.trim() || null;
+
+  return {
+    hIndex: toNum(row["h-index"]),
+    citationCount:
+      toNum(row.coredata?.["citation-count"]) ?? toNum(row.coredata?.["cited-by-count"]),
+    documentCount: toNum(row.coredata?.["document-count"]),
+    name,
+  };
+}
+
+function tagPublications(
+  works: ExternalPublication[],
+  source: PublicationSourceKind,
+  categories: string[] = []
+): ExternalPublication[] {
+  return works.map((work) => ({
+    ...work,
+    sources: Array.from(new Set([...work.sources, source])),
+    categories: Array.from(new Set([...work.categories, ...categories])),
+  }));
 }
 
 const OPENALEX_WORKS_PAGE_SIZE = 200;
@@ -664,15 +822,13 @@ function emptyResult(
 
 export async function resolveExternalProfileMetrics(args: {
   links: ResearcherLinksLike | null | undefined;
-  /** البريد الجامعي للباحث — مرجع الهوية الوحيد (@uobasrah.edu.iq) */
   officialEmail?: string | null;
   preferredName?: string | null;
   nameCandidates?: Array<string | null | undefined>;
-  /** بحوث المنصة المحلية المرتبطة بحساب الباحث */
+  /** بحوث المنصة المدخلة يدوياً في صفحة البحوث */
   localPublications?: LocalResearchInput[];
 }): Promise<ExternalProfileMetrics> {
   const links = args.links ?? {};
-  const officialEmail = normalizeEmail(args.officialEmail);
   const platformName =
     pickPreferredPlatformName([...(args.nameCandidates ?? []), args.preferredName]) ?? null;
 
@@ -680,51 +836,17 @@ export async function resolveExternalProfileMetrics(args: {
     hasOrcid: Boolean(links.orcid?.trim()),
     hasGoogleScholar: Boolean(links.googleScholar?.trim()),
     hasScopus: Boolean(links.scopus?.trim()),
+    hasWebOfScience: Boolean(links.webOfScience?.trim()),
     hasResearchGate: Boolean(links.researchGate?.trim()),
   };
 
   const notes: string[] = [];
   const sourcesUsed: ExternalMetricSource[] = [];
   const publicationBuckets: ExternalPublication[][] = [];
+  const seenOpenAlexAuthorIds = new Set<string>();
 
   notes.push(
-    `مرجع الهوية الوحيد: البريد الجامعي (@${UNIVERSITY_EMAIL_DOMAIN}). لا يُستخدم الاسم في المطابقة أو الجلب.`
-  );
-
-  // —— بوابة الهوية: البريد الجامعي فقط ——
-  if (!officialEmail) {
-    return emptyResult({
-      ok: false,
-      message: `تعذر الاستخراج: لا يوجد بريد جامعي على الحساب. يجب أن يكون بريدك @${UNIVERSITY_EMAIL_DOMAIN}.`,
-      platformName,
-      identityMatch: "unavailable",
-      linksDetected,
-      notes: [
-        ...notes,
-        "أضف/حدّث بريدك الجامعي في ملف الباحث ثم أعد المحاولة.",
-      ],
-      sourcesUsed: [],
-    });
-  }
-
-  if (!isUniversityEmail(officialEmail)) {
-    return emptyResult({
-      ok: false,
-      message: `البريد المسجّل (${officialEmail}) ليس من النطاق الجامعي المعتمد @${UNIVERSITY_EMAIL_DOMAIN}.`,
-      platformName,
-      identityMatch: "mismatch",
-      linksDetected,
-      notes: [
-        ...notes,
-        `يُقبل فقط بريد ينتهي بـ @${UNIVERSITY_EMAIL_DOMAIN}.`,
-      ],
-      sourcesUsed: [],
-    });
-  }
-
-  notes.push(`تم اعتماد البريد الجامعي كمرجع: ${officialEmail}`);
-  notes.push(
-    "Scopus و Web of Science لا يوفران واجهة مجانية مباشرة؛ المؤشرات والمنشورات الخارجية تُجلب عبر ORCID المرتبط بالبريد ثم OpenAlex/Semantic Scholar، مع دمج سجل المنصة."
+    "المنشورات تُجلب عبر ORCID والبحوث اليدوية. أما H-Index و Citations و i10-Index فتعتمد على حساب Scopus في صفحة الروابط."
   );
 
   const localWorks = mapLocalResearch(args.localPublications);
@@ -732,131 +854,51 @@ export async function resolveExternalProfileMetrics(args: {
     publicationBuckets.push(localWorks);
     sourcesUsed.push("local");
     notes.push(
-      `أُضيفت ${localWorks.length} منشوراً من سجل البحوث على المنصة (بما فيها المصنّفة SCOPUS / ISI / محلي).`
+      `أُضيفت ${localWorks.length} منشوراً من البحوث المدخلة يدوياً في المنصة (بدون تكرار لاحقاً).`
     );
   }
 
-  // اكتشاف ORCID عبر البريد الجامعي فقط (لا بحث بالاسم، ولا اعتماد ORCID من الروابط دون ربط بالبريد)
-  let orcid: string | null = null;
-  let author: OpenAlexAuthor | null = null;
-  let identityMatch: IdentityMatchStatus = "unavailable";
-  let matchScore: number | null = null;
-
-  const emailOrcid = await searchOrcidByEmail(officialEmail);
-  if (emailOrcid) {
-    orcid = emailOrcid;
-    sourcesUsed.push("email_orcid", "orcid");
-    identityMatch = "matched";
-    matchScore = 100;
-    notes.push(`تم اكتشاف ORCID المرتبط بالبريد الجامعي: ${emailOrcid}`);
-
-    author = await fetchOpenAlexByOrcid(emailOrcid);
-    if (author) {
-      sourcesUsed.push("openalex");
-      notes.push("تم جلب ملف المؤلف من OpenAlex عبر ORCID المرتبط بالبريد.");
-    } else {
-      notes.push(
-        "عُثر على ORCID عبر البريد، لكن تعذر جلب ملف OpenAlex؛ سيتم الاعتماد على ORCID وSemantic Scholar."
-      );
+  // —— بوابة الهوية: ORCID من صفحة الروابط حصراً ——
+  const orcid = extractOrcid(links.orcid);
+  if (!orcid) {
+    const recentWorks = mergePublications(publicationBuckets);
+    if (recentWorks.length > 0) {
+      return {
+        ok: true,
+        message:
+          "تم عرض البحوث المدخلة يدوياً فقط. لاستخراج H-Index والمنشورات الخارجية أضف رابط ORCID في صفحة الروابط.",
+        platformName,
+        displayName: platformName,
+        identityMatch: "unavailable",
+        matchScore: null,
+        orcid: null,
+        hIndex: null,
+        i10Index: null,
+        publications: recentWorks.length,
+        citedByCount: null,
+        twoYearMeanCitedness: null,
+        institutions: [],
+        topics: [],
+        recentWorks,
+        sourcesUsed: Array.from(new Set(sourcesUsed)),
+        openAlexId: null,
+        openAlexUrl: null,
+        semanticScholarUrl: null,
+        linksDetected,
+        notes: [
+          ...notes,
+          "أضف ORCID من /researcher/links ثم اضغط تحديث.",
+        ],
+        fetchedAt: new Date().toISOString(),
+      };
     }
-  } else {
-    notes.push(
-      "لم يُعثر على ORCID عام مرتبط بالبريد الجامعي. اجعل بريدك @uobasrah.edu.iq ظاهراً/مرتبطاً وقابلاً للبحث في حساب ORCID ثم أعد المحاولة."
-    );
-    if (linksDetected.hasOrcid) {
-      notes.push(
-        "يوجد ORCID محفوظ في روابط الباحث، لكن لا يُعتمد للهوية إلا إذا كان مرتبطاً بالبريد الجامعي عبر ORCID."
-      );
-    }
-  }
 
-  const openAlexId = author?.id ?? null;
-  const fetchJobs: Array<Promise<void>> = [];
-
-  if (openAlexId) {
-    fetchJobs.push(
-      (async () => {
-        const worksResult = await fetchAllOpenAlexWorks(openAlexId);
-        publicationBuckets.push(worksResult.works);
-        if (worksResult.works.length > 0) sourcesUsed.push("openalex");
-        if (worksResult.truncated) {
-          notes.push(
-            `تم جلب ${worksResult.totalFetched} منشوراً من OpenAlex كحد أقصى للأمان؛ قد يكون لدى المؤلف المزيد.`
-          );
-        } else if (worksResult.works.length > 0) {
-          notes.push(
-            `تم جلب جميع المنشورات المتاحة لهذا المؤلف من OpenAlex (${worksResult.works.length}).`
-          );
-        }
-      })()
-    );
-  }
-
-  if (orcid) {
-    fetchJobs.push(
-      (async () => {
-        const orcidWorks = await fetchOrcidWorks(orcid!);
-        if (orcidWorks.length > 0) {
-          publicationBuckets.push(orcidWorks);
-          sourcesUsed.push("orcid");
-          notes.push(`أُضيفت ${orcidWorks.length} منشوراً من سجل ORCID.`);
-        }
-      })()
-    );
-
-    fetchJobs.push(
-      (async () => {
-        const ssPapers = await fetchSemanticScholarPapers(orcid!);
-        if (ssPapers.length > 0) {
-          publicationBuckets.push(ssPapers);
-          sourcesUsed.push("semanticscholar");
-          notes.push(`أُضيفت ${ssPapers.length} منشوراً من Semantic Scholar.`);
-        }
-      })()
-    );
-  }
-
-  await Promise.all(fetchJobs);
-
-  const recentWorks = mergePublications(publicationBuckets);
-
-  let hIndex = author?.summary_stats?.h_index ?? null;
-  let publications = author?.works_count ?? null;
-  let citedByCount = author?.cited_by_count ?? null;
-  let semanticScholarUrl: string | null = null;
-
-  if (recentWorks.length > 0) {
-    publications = Math.max(publications ?? 0, recentWorks.length);
-  }
-
-  if (orcid) {
-    const ss = await fetchSemanticScholarByOrcid(orcid);
-    if (ss) {
-      sourcesUsed.push("semanticscholar");
-      semanticScholarUrl = ss.url;
-      if (hIndex == null && ss.hIndex != null) hIndex = ss.hIndex;
-      if (ss.paperCount != null) {
-        publications = Math.max(publications ?? 0, ss.paperCount, recentWorks.length);
-      }
-      if (citedByCount == null && ss.citationCount != null) citedByCount = ss.citationCount;
-      if (ss.hIndex != null && hIndex != null && ss.hIndex !== hIndex) {
-        notes.push(`فروقات مصادر طبيعية: H-Index OpenAlex=${hIndex} / Semantic Scholar=${ss.hIndex}.`);
-      }
-    }
-  }
-
-  const hasExternalIdentity = Boolean(orcid);
-  const hasPublications = recentWorks.length > 0;
-
-  if (!hasExternalIdentity && !hasPublications) {
     return emptyResult({
       ok: false,
       message:
-        "تعذر استخراج H-Index والمنشورات والاستشهادات. اربط بريدك الجامعي @uobasrah.edu.iq بحساب ORCID (ويُفضّل أن يكون ظاهراً للبحث).",
+        "تعذر الاستخراج: أضف حساب ORCID في صفحة الروابط (/researcher/links) لاعتماده كمرجع وحيد للهوية والبيانات البحثية.",
       platformName,
-      orcid,
       identityMatch: "unavailable",
-      matchScore,
       linksDetected,
       notes,
       sourcesUsed: Array.from(new Set(sourcesUsed)),
@@ -864,48 +906,188 @@ export async function resolveExternalProfileMetrics(args: {
     });
   }
 
-  if (!hasExternalIdentity && hasPublications) {
-    return {
-      ok: true,
-      message:
-        "تم عرض المنشورات من سجل المنصة فقط. لاستخراج H-Index وCitations من المصادر الخارجية اربط بريدك الجامعي بـ ORCID.",
-      platformName,
-      displayName: platformName,
-      identityMatch: "uncertain",
-      matchScore,
-      orcid,
-      hIndex: null,
-      i10Index: null,
-      publications: recentWorks.length,
-      citedByCount: null,
-      twoYearMeanCitedness: null,
-      institutions: [],
-      topics: [],
-      recentWorks,
-      sourcesUsed: Array.from(new Set(sourcesUsed)),
-      openAlexId: null,
-      openAlexUrl: null,
-      semanticScholarUrl: null,
-      linksDetected,
-      notes,
-      fetchedAt: new Date().toISOString(),
-    };
+  sourcesUsed.push("orcid");
+  const identityMatch: IdentityMatchStatus = "matched";
+  const matchScore = 100;
+  notes.push(`تم اعتماد ORCID من روابط الباحث: ${orcid}`);
+
+  // —— Scopus أولاً لمؤشرات H-Index / Citations / i10-Index ——
+  const scopusAuthorId = extractScopusAuthorId(links.scopus);
+  let scopusAuthor: OpenAlexAuthor | null = null;
+  let scopusApiMetrics: Awaited<ReturnType<typeof fetchScopusAuthorMetrics>> = null;
+
+  if (!linksDetected.hasScopus) {
+    notes.push(
+      "أضف رابط صفحة المؤلف في Scopus من /researcher/links لاعتماد H-Index و Citations و i10-Index."
+    );
+  } else if (!scopusAuthorId) {
+    notes.push(
+      "رابط Scopus موجود لكن تعذر استخراج Author ID. استخدم رابطاً مثل: https://www.scopus.com/authid/detail.uri?authorId=XXXXXXXX"
+    );
+  } else {
+    notes.push(`تم رصد حساب Scopus من الروابط (Author ID: ${scopusAuthorId}) لاعتماد مؤشرات H/i10/Citations.`);
+    sourcesUsed.push("scopus");
+    scopusApiMetrics = await fetchScopusAuthorMetrics(scopusAuthorId);
+
+    if (scopusApiMetrics) {
+      notes.push(
+        `مؤشرات Scopus الرسمية عبر Elsevier: H=${scopusApiMetrics.hIndex ?? "—"}, Citations=${scopusApiMetrics.citationCount ?? "—"}, Documents=${scopusApiMetrics.documentCount ?? "—"}.`
+      );
+    } else if (!process.env.SCOPUS_API_KEY && !process.env.ELSEVIER_API_KEY) {
+      notes.push(
+        "لا يوجد SCOPUS_API_KEY في .env — لا يمكن قراءة H-Index الرسمي من Scopus مباشرة. سيتم حساب المؤشرات من منشورات ORCID/المنصة بعد إثراء DOI."
+      );
+    } else {
+      notes.push(
+        "مفتاح Scopus موجود لكن الطلب فشل (صلاحية المفتاح/الحصة). تحقق من SCOPUS_API_KEY لدى Elsevier Developer Portal."
+      );
+    }
+
+    // OpenAlex لم يعد يدعم ربط المؤلف بـ Scopus Author ID
+    scopusAuthor = await fetchOpenAlexByScopusId(scopusAuthorId);
   }
+
+  // ORCID لجلب المنشورات (وليس لمؤشرات H/i10/Citations)
+  const [author, ssProfile] = await Promise.all([
+    fetchOpenAlexByOrcid(orcid),
+    fetchSemanticScholarByOrcid(orcid),
+  ]);
+
+  if (author?.id) {
+    seenOpenAlexAuthorIds.add(author.id);
+    sourcesUsed.push("openalex");
+    notes.push("تم جلب ملف المؤلف من OpenAlex عبر ORCID لأغراض المنشورات.");
+  } else {
+    notes.push("تعذر جلب ملف OpenAlex عبر ORCID؛ سيتم الاعتماد على سجل ORCID وSemantic Scholar للمنشورات.");
+  }
+
+  if (ssProfile) {
+    sourcesUsed.push("semanticscholar");
+  }
+
+  const fetchJobs: Array<Promise<void>> = [];
+
+  if (author?.id) {
+    const alreadyFromScopus = scopusAuthor?.id != null && author.id === scopusAuthor.id;
+    if (!alreadyFromScopus) {
+      const openAlexId = author.id;
+      fetchJobs.push(
+        (async () => {
+          const worksResult = await fetchAllOpenAlexWorks(openAlexId);
+          publicationBuckets.push(worksResult.works);
+          if (worksResult.works.length > 0) sourcesUsed.push("openalex");
+          if (worksResult.truncated) {
+            notes.push(
+              `تم جلب ${worksResult.totalFetched} منشوراً من OpenAlex (ORCID) كحد أقصى للأمان.`
+            );
+          } else if (worksResult.works.length > 0) {
+            notes.push(
+              `تم جلب منشورات OpenAlex المرتبطة بـ ORCID (${worksResult.works.length}).`
+            );
+          }
+        })()
+      );
+    } else {
+      notes.push("ملف ORCID يطابق ملف Scopus في OpenAlex — لا تكرار في جلب المنشورات.");
+    }
+  }
+
+  fetchJobs.push(
+    (async () => {
+      const orcidWorks = await fetchOrcidWorks(orcid);
+      if (orcidWorks.length > 0) {
+        publicationBuckets.push(orcidWorks);
+        sourcesUsed.push("orcid");
+        notes.push(`أُضيفت ${orcidWorks.length} منشوراً من سجل ORCID.`);
+      }
+    })()
+  );
+
+  fetchJobs.push(
+    (async () => {
+      const ssPapers = await fetchSemanticScholarPapers(orcid);
+      if (ssPapers.length > 0) {
+        publicationBuckets.push(ssPapers);
+        sourcesUsed.push("semanticscholar");
+        notes.push(`أُضيفت ${ssPapers.length} منشوراً من Semantic Scholar عبر ORCID.`);
+      }
+    })()
+  );
+
+  // Web of Science من صفحة الروابط — مرجع + محاولة ربط محدودة عبر OpenAlex
+  const wosRid = extractWebOfScienceResearcherId(links.webOfScience);
+  if (linksDetected.hasWebOfScience) {
+    if (wosRid) {
+      notes.push(
+        `تم حفظ حساب Web of Science (ResearcherID: ${wosRid}). واجهة Clarivate مدفوعة؛ الاعتماد الأساسي يبقى ORCID مع دمج المنشورات بلا تكرار.`
+      );
+      sourcesUsed.push("webofscience");
+    } else {
+      notes.push(
+        "رابط Web of Science محفوظ في الروابط كمرجع. لا تتوفر واجهة مجانية لسحب المنشورات مباشرة من Clarivate؛ ORCID هو المصدر المعتمد."
+      );
+      sourcesUsed.push("webofscience");
+    }
+  }
+
+  await Promise.all(fetchJobs);
+
+  // إثراء DOI بالاستشهادات حتى تظهر H/i10/Citations عندما لا يتوفر ملف مؤلف في OpenAlex
+  const mergedRaw = mergePublications(publicationBuckets);
+  const recentWorks = await enrichPublicationsWithOpenAlexCitations(mergedRaw);
+  const computedFromWorks = computeCitationMetrics(recentWorks);
+
+  // H-Index / Citations من Scopus الرسمي إن وُجد المفتاح، وإلا من المنشورات المثرّاة
+  let hIndex: number | null = scopusApiMetrics?.hIndex ?? null;
+  let citedByCount: number | null = scopusApiMetrics?.citationCount ?? null;
+  let i10Index: number | null = null;
+  let publications: number | null = scopusApiMetrics?.documentCount ?? null;
+  const semanticScholarUrl: string | null = ssProfile?.url ?? null;
+
+  // i10 دائماً من المنشورات (Scopus API لا يوفّره عادةً)
+  i10Index = computedFromWorks.i10Index;
+
+  if (hIndex == null) hIndex = computedFromWorks.hIndex;
+  if (citedByCount == null) citedByCount = computedFromWorks.citedByCount;
+
+  if (scopusApiMetrics?.hIndex != null || scopusApiMetrics?.citationCount != null) {
+    notes.push(
+      `مؤشرات معتمدة من Scopus API: H=${hIndex ?? "—"}, Citations=${citedByCount ?? "—"} | i10 محسوب من المنشورات=${i10Index}.`
+    );
+  } else {
+    notes.push(
+      `مؤشرات محسوبة من المنشورات بعد إثراء DOI: H=${hIndex}, i10=${i10Index}, Citations=${citedByCount}. لإظهار أرقام Scopus الرسمية أضف SCOPUS_API_KEY في ملف .env.`
+    );
+  }
+
+  if (recentWorks.length > 0) {
+    publications = Math.max(publications ?? 0, recentWorks.length);
+  } else if (publications == null) {
+    publications = 0;
+  }
+
+  const openAlexId = scopusAuthor?.id ?? author?.id ?? null;
 
   return {
     ok: true,
-    message:
-      "تم استخراج H-Index والمنشورات والاستشهادات بالاعتماد على البريد الجامعي وربطه بـ ORCID، مع دمج سجل المنصة.",
+    message: scopusAuthorId
+      ? "تم اعتماد H-Index و Citations و i10-Index من حساب Scopus، مع جلب المنشورات عبر ORCID ودمج البحوث اليدوية بلا تكرار."
+      : "تم جلب المنشورات عبر ORCID/البحوث اليدوية. أضف رابط Scopus في صفحة الروابط لإظهار H-Index و Citations و i10-Index.",
     platformName,
-    displayName: author?.display_name ?? platformName,
+    displayName:
+      scopusApiMetrics?.name ??
+      scopusAuthor?.display_name ??
+      author?.display_name ??
+      ssProfile?.name ??
+      platformName,
     identityMatch,
     matchScore,
     orcid: extractOrcid(author?.orcid) ?? orcid,
     hIndex,
-    i10Index: author?.summary_stats?.i10_index ?? null,
+    i10Index,
     publications,
     citedByCount,
-    twoYearMeanCitedness: author?.summary_stats?.["2yr_mean_citedness"] ?? null,
+    twoYearMeanCitedness: scopusAuthor?.summary_stats?.["2yr_mean_citedness"] ?? null,
     institutions: (author?.last_known_institutions ?? [])
       .map((x) => x.display_name)
       .filter((x): x is string => Boolean(x))

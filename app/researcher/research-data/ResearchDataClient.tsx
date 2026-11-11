@@ -42,6 +42,8 @@ const SOURCE_LABELS: Record<PublicationSourceKind, string> = {
   openalex: "OpenAlex",
   orcid: "ORCID",
   semanticscholar: "Semantic Scholar",
+  scopus: "Scopus",
+  webofscience: "Web of Science",
 };
 
 function parsePublicationTitle(title: string) {
@@ -214,7 +216,7 @@ export function ResearchDataClient() {
             البيانات البحثية
           </h1>
           <p className="text-[13px] text-slate-500 leading-relaxed max-w-2xl">
-            مؤشراتك الخارجية مثل H-Index والمنشورات والاستشهادات، بالاعتماد فقط على بريدك الجامعي @uobasrah.edu.iq.
+            المنشورات عبر ORCID والبحوث اليدوية، بينما H-Index و Citations و i10-Index تعتمد على حساب Scopus في صفحة الروابط.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -286,9 +288,11 @@ export function ResearchDataClient() {
               <div className="rounded-lg border border-slate-200/60 bg-slate-50/40 px-2.5 py-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="min-w-0 col-span-2">
-                    <p className="text-[10px] text-slate-500 leading-none">البريد الجامعي (مرجع الهوية الوحيد)</p>
+                    <p className="text-[10px] text-slate-500 leading-none">
+                      <span dir="ltr">ORCID</span> (مرجع الهوية الوحيد)
+                    </p>
                     <p className="mt-1 text-[11px] font-medium text-slate-800 leading-snug break-all" dir="ltr">
-                      {data?.researcher.email || "—"}
+                      {metrics.orcid || "غير متوفر — أضفه من صفحة الروابط"}
                     </p>
                   </div>
                   <div className="min-w-0">
@@ -303,20 +307,25 @@ export function ResearchDataClient() {
                       {metrics.displayName || "—"}
                     </p>
                   </div>
-                  <div className="min-w-0 col-span-2">
-                    <p className="text-[10px] text-slate-500 leading-none">
-                      <span dir="ltr">ORCID</span>
-                    </p>
-                    <p className="mt-1 text-[11px] font-medium text-slate-800 leading-snug break-all" dir="ltr">
-                      {metrics.orcid || "غير متوفر"}
-                    </p>
-                  </div>
                 </div>
               </div>
 
-              {metrics.identityMatch === "mismatch" ? (
-                <div className="rounded-lg border border-rose-200/80 bg-rose-50/60 px-2.5 py-2 text-[10px] text-rose-900 leading-snug">
-                  البريد المسجّل ليس من النطاق الجامعي @uobasrah.edu.iq المعتمد للهوية والبيانات البحثية.
+              {!metrics.orcid ? (
+                <div className="rounded-lg border border-amber-200/80 bg-amber-50/60 px-2.5 py-2 text-[10px] text-amber-900 leading-snug">
+                  أضف حساب ORCID في{" "}
+                  <Link href="/researcher/links" className="underline font-medium">
+                    صفحة الروابط
+                  </Link>{" "}
+                  لجلب المنشورات الخارجية.
+                </div>
+              ) : null}
+              {metrics.orcid && !metrics.linksDetected.hasScopus ? (
+                <div className="rounded-lg border border-amber-200/80 bg-amber-50/60 px-2.5 py-2 text-[10px] text-amber-900 leading-snug">
+                  أضف رابط Scopus في{" "}
+                  <Link href="/researcher/links" className="underline font-medium">
+                    صفحة الروابط
+                  </Link>{" "}
+                  لإظهار H-Index و Citations و i10-Index.
                 </div>
               ) : null}
 
@@ -396,9 +405,11 @@ export function ResearchDataClient() {
               <div className="rounded-xl border border-slate-200/60 bg-slate-50/40 px-3.5 py-2.5">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-start">
                   <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-                    <p className="text-[11px] text-slate-500 leading-none">البريد الجامعي (مرجع الهوية الوحيد)</p>
+                    <p className="text-[11px] text-slate-500 leading-none">
+                      <span dir="ltr">ORCID</span> (مرجع الهوية الوحيد)
+                    </p>
                     <p className="mt-1 text-sm font-medium text-slate-800 leading-snug break-all" dir="ltr">
-                      {data?.researcher.email || "—"}
+                      {metrics.orcid || "غير متوفر — أضفه من صفحة الروابط"}
                     </p>
                   </div>
                   <div className="min-w-0">
@@ -414,19 +425,35 @@ export function ResearchDataClient() {
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] text-slate-500 leading-none">
-                      <span dir="ltr">ORCID</span>
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-800 leading-snug break-all" dir="ltr">
-                      {metrics.orcid || "غير متوفر"}
+                    <p className="text-[11px] text-slate-500 leading-none">Scopus / WoS</p>
+                    <p className="mt-1 text-sm font-medium text-slate-800 leading-snug truncate" dir="ltr">
+                      {[
+                        metrics.linksDetected.hasScopus ? "Scopus" : null,
+                        metrics.linksDetected.hasWebOfScience ? "WoS" : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" + ") || "غير مضاف"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {metrics.identityMatch === "mismatch" ? (
-                <div className="rounded-xl border border-rose-200/80 bg-rose-50/60 px-3.5 py-2.5 text-sm text-rose-900">
-                  البريد المسجّل ليس من النطاق الجامعي @uobasrah.edu.iq المعتمد للهوية وH-Index والمنشورات والاستشهادات.
+              {!metrics.orcid ? (
+                <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 px-3.5 py-2.5 text-sm text-amber-900">
+                  أضف حساب ORCID في{" "}
+                  <Link href="/researcher/links" className="underline font-medium">
+                    صفحة الروابط
+                  </Link>{" "}
+                  لجلب المنشورات الخارجية.
+                </div>
+              ) : null}
+              {metrics.orcid && !metrics.linksDetected.hasScopus ? (
+                <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 px-3.5 py-2.5 text-sm text-amber-900">
+                  أضف رابط صفحة المؤلف في Scopus من{" "}
+                  <Link href="/researcher/links" className="underline font-medium">
+                    صفحة الروابط
+                  </Link>{" "}
+                  لاعتماد H-Index و Citations و i10-Index.
                 </div>
               ) : null}
 
@@ -437,25 +464,25 @@ export function ResearchDataClient() {
                       label="H-Index"
                       value={metrics.hIndex}
                       tone="blue"
-                      hint="عبر البريد الجامعي → ORCID"
+                      hint="Scopus API أو محسوب من المنشورات"
                     />
                     <MetricTile
                       label="Publications"
                       value={metrics.publications}
                       tone="emerald"
-                      hint="عبر البريد الجامعي والمصادر المرتبطة"
+                      hint="ORCID + يدوي بلا تكرار"
                     />
                     <MetricTile
                       label="Citations"
                       value={metrics.citedByCount}
                       tone="amber"
-                      hint="عبر البريد الجامعي → ORCID"
+                      hint="Scopus API أو محسوب من المنشورات"
                     />
                     <MetricTile
                       label="i10-Index"
                       value={metrics.i10Index}
                       tone="slate"
-                      hint="أعمال باستشهاد ≥ 10"
+                      hint="محسوب من المنشورات (استشهاد ≥ 10)"
                     />
                   </div>
 

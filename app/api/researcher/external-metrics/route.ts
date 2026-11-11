@@ -18,11 +18,9 @@ export async function GET() {
       where: { id: user.id },
       select: { fullNameAr: true, fullNameEn: true, email: true },
     }),
+    // كل ما أدخله الباحث يدوياً في صفحة البحوث (مع إزالة التكرار لاحقاً مقابل المصادر الخارجية)
     prisma.research.findMany({
-      where: {
-        researcherId: user.id,
-        OR: [{ publishStatus: "PUBLISHED" }, { status: "COMPLETED" }],
-      },
+      where: { researcherId: user.id },
       select: {
         title: true,
         year: true,
@@ -42,7 +40,6 @@ export async function GET() {
 
   const metrics = await resolveExternalProfileMetrics({
     links,
-    // مرجع الهوية الأساسي حسب توجيه إدارة الجامعة
     officialEmail: profile?.email ?? null,
     preferredName,
     nameCandidates: [profile?.fullNameEn, profile?.fullNameAr],
