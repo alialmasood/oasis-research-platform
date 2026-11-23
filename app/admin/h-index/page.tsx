@@ -11,6 +11,7 @@ export default async function AdminHIndexPage() {
       fullNameAr: true,
       fullNameEn: true,
       email: true,
+      entity: true,
     },
     orderBy: [{ fullNameAr: "asc" }, { fullNameEn: "asc" }, { email: "asc" }],
   });
@@ -21,6 +22,7 @@ export default async function AdminHIndexPage() {
       user.fullNameAr?.trim() ||
       user.fullNameEn?.trim() ||
       user.email,
+    entity: user.entity,
     // منطق الجلب يُضاف لاحقاً
     hIndex: null,
   }));

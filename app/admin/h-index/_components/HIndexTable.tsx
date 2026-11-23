@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 export type HIndexRow = {
   id: string;
   name: string;
+  entity: string | null;
   hIndex: number | null;
 };
 
@@ -39,6 +40,9 @@ export function HIndexTable({ rows }: HIndexTableProps) {
               <TableHead className="text-white font-semibold text-right px-4 py-3">
                 اسم التدريسي / الباحث
               </TableHead>
+              <TableHead className="w-[220px] text-white font-semibold text-right px-4 py-3">
+                اسم التشكيل
+              </TableHead>
               <TableHead className="w-[140px] text-white font-semibold text-center px-3 py-3">
                 H-Index
               </TableHead>
@@ -60,6 +64,11 @@ export function HIndexTable({ rows }: HIndexTableProps) {
                 <TableCell className="text-right px-4 py-3">
                   <span className="font-medium text-slate-900" dir="auto">
                     {row.name}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right px-4 py-3">
+                  <span className="text-slate-700" dir="auto">
+                    {row.entity?.trim() || "—"}
                   </span>
                 </TableCell>
                 <TableCell className="text-center px-3 py-3">
