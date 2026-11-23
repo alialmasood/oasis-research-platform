@@ -4,6 +4,7 @@ import {
   GraduationCap,
   BookOpen,
   Presentation,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 
@@ -57,6 +58,7 @@ export const adminDataMenuItems: AdminDataNavEntry[] = [
     children: adminResearchSubMenuItems,
   },
   { href: "/admin/conferences", label: "المؤتمرات", icon: Presentation },
+  { href: "/admin/h-index", label: "H-Index", icon: BarChart3 },
 ];
 
 export const adminMobileMenuItems: (AdminMenuItem | AdminMenuGroup)[] = [
@@ -74,6 +76,7 @@ export const adminPageTitles: Record<string, string> = {
   "/admin/research/scopus": "البحوث — سكوبس",
   "/admin/research/evaluation": "البحوث — تقييم وانجازات",
   "/admin/conferences": "المؤتمرات",
+  "/admin/h-index": "H-Index",
 };
 
 /** عنوان الصفحة من المسار */
